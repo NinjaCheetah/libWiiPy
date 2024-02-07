@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: libWiiPy_NinjaCheetah
+Version: 0.0.1
+Summary: A Wii-related library for Python
+Author-email: NinjaCheetah <ninjacheetah@ncxprogramming.com>
+Project-URL: Homepage, https://github.com/NinjaCheetah/libWiiPy
+Project-URL: Issues, https://github.com/NinjaCheetah/libWiipy/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# libWiiPy
