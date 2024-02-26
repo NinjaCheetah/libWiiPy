@@ -22,9 +22,10 @@ class TMD:
         self.ca_crl_version: int
         self.signer_crl_version: int
         self.vwii: int
-        self.sys_version: int
+        self.ios_tid: str
+        self.ios_version: int
         self.title_id: str
-        self.title_type: int
+        self.title_type: str
         self.group_id: int  # Publisher of the title
         self.region: int
         self.ratings: int
@@ -49,18 +50,24 @@ class TMD:
             self.signer_crl_version = tmdfile.read(1)
             # If this is a vWii title or not
             tmdfile.seek(0x183)
-            self.vwii = tmdfile.read(1)
-            # IOS version to use TODO: finish this
+            self.vwii = int.from_bytes(tmdfile.read(1))
+            # TID of the IOS to use for the title, set to 0 if this title is the IOS, set to boot2 version if boot2
             tmdfile.seek(0x184)
-            self.sys_version = tmdfile.read(8)
+            ios_version_bin = tmdfile.read(8)
+            ios_version_hex = binascii.hexlify(ios_version_bin)
+            self.ios_tid = str(ios_version_hex.decode())
+            # Get IOS version based on TID
+            self.ios_version = int(self.ios_tid[-2:], 16)
             # Title ID of the title
             tmdfile.seek(0x18C)
-            title_id_hex = tmdfile.read(8)
-            title_id_bin = binascii.hexlify(title_id_hex)
-            self.title_id = str(title_id_bin.decode())
-            # Type of title TODO: finish this
+            title_id_bin = tmdfile.read(8)
+            title_id_hex = binascii.hexlify(title_id_bin)
+            self.title_id = str(title_id_hex.decode())
+            # Type of title
             tmdfile.seek(0x194)
-            self.title_type = tmdfile.read(4)
+            title_type_bin = tmdfile.read(4)
+            title_type_hex = binascii.hexlify(title_type_bin)
+            self.title_type = str(title_type_hex.decode())
             # Publisher of the title
             tmdfile.seek(0x198)
             self.group_id = tmdfile.read(2)
@@ -83,7 +90,7 @@ class TMD:
             # The number of contents listed in the TMD
             tmdfile.seek(0x1DE)
             self.num_contents = tmdfile.read(2)
-            # TODO: label
+            # Content index in content list that contains the boot file
             tmdfile.seek(0x1E0)
             self.boot_index = tmdfile.read(2)
 
@@ -111,3 +118,27 @@ class TMD:
             return True
         else:
             return False
+
+    def get_required_ios_tid(self):
+        return self.ios_tid
+
+    def get_required_ios(self):
+        return self.ios_version
+
+    def get_title_type(self):
+        title_id_high = self.title_id[:8]
+        match title_id_high:
+            case '00000001':
+                return "System"
+            case '00010000':
+                return "Game"
+            case '00010001':
+                return "Channel"
+            case '00010002':
+                return "SystemChannel"
+            case '00010004':
+                return "GameWithChannel"
+            case '00010005':
+                return "DLC"
+            case '00010008':
+                return "HiddenChannel"
