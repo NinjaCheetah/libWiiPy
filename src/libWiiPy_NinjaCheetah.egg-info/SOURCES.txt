@@ -1,9 +1,0 @@
-LICENSE
-README.md
-pyproject.toml
-src/libWiiPy_NinjaCheetah/__init__.py
-src/libWiiPy_NinjaCheetah/example.py
-src/libWiiPy_NinjaCheetah.egg-info/PKG-INFO
-src/libWiiPy_NinjaCheetah.egg-info/SOURCES.txt
-src/libWiiPy_NinjaCheetah.egg-info/dependency_links.txt
-src/libWiiPy_NinjaCheetah.egg-info/top_level.txt
