@@ -1,3 +1,6 @@
+# "tmd.py" from libWiiPy by NinjaCheetah
+# See https://wiibrew.org/wiki/Title_metadata for details about the TMD format
+
 import binascii
 from dataclasses import dataclass
 from typing import List
@@ -5,6 +8,7 @@ from typing import List
 
 @dataclass
 class ContentRecord:
+    """Creates a content record object that contains the details of a content contained in a title."""
     cid: int  # Content ID
     index: int  # Index in the list of contents
     content_type: int  # normal: 0x0001; dlc: 0x4001; shared: 0x8001
@@ -13,11 +17,12 @@ class ContentRecord:
 
 
 class TMD:
+    """Creates a TMD object that can be used to read all the data contained in a TMD."""
     def __init__(self, tmd):
         self.tmd = tmd
         self.sig_type: int
         self.sig: bytearray
-        self.issuer: bytearray  # Root-CA%08x-CP%08x
+        self.issuer: bytearray  # Follows the format "Root-CA%08x-CP%08x"
         self.version: bytearray  # This seems to always be 0 no matter what?
         self.ca_crl_version: int
         self.signer_crl_version: int
