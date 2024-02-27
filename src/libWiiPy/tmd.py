@@ -23,7 +23,7 @@ class TMD:
         self.sig_type: int
         self.sig: bytearray
         self.issuer: bytearray  # Follows the format "Root-CA%08x-CP%08x"
-        self.version: bytearray  # This seems to always be 0 no matter what?
+        self.version: int  # This seems to always be 0 no matter what?
         self.ca_crl_version: int
         self.signer_crl_version: int
         self.vwii: int
@@ -44,9 +44,9 @@ class TMD:
             # Signing certificate issuer
             tmdfile.seek(0x140)
             self.issuer = tmdfile.read(64)
-            # TMD version, always seems to be 0?
+            # TMD version, seems to usually be 0, but I've seen references to other numbers
             tmdfile.seek(0x180)
-            self.version = tmdfile.read(1)
+            self.version = int.from_bytes(tmdfile.read(1))
             # TODO: label
             tmdfile.seek(0x181)
             self.ca_crl_version = tmdfile.read(1)
@@ -94,7 +94,7 @@ class TMD:
             self.title_version = title_version_high + title_version_low
             # The number of contents listed in the TMD
             tmdfile.seek(0x1DE)
-            self.num_contents = tmdfile.read(2)
+            self.num_contents = int.from_bytes(tmdfile.read(2))
             # Content index in content list that contains the boot file
             tmdfile.seek(0x1E0)
             self.boot_index = tmdfile.read(2)
@@ -128,6 +128,10 @@ class TMD:
         else:
             return False
 
+    def get_tmd_version(self):
+        """Returns the version of the TMD."""
+        return self.version
+
     def get_required_ios_tid(self):
         """Returns the TID of the required IOS for the title."""
         return self.ios_tid
@@ -154,3 +158,7 @@ class TMD:
                 return "DLC"
             case '00010008':
                 return "HiddenChannel"
+
+    def get_num_contents(self):
+        """Returns the number of contents listed in the TMD."""
+        return self.num_contents
