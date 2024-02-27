@@ -30,7 +30,7 @@ class TMD:
         self.ios_tid: str
         self.ios_version: int
         self.title_id: str
-        self.title_type: str
+        self.content_type: str
         self.group_id: int  # Publisher of the title
         self.region: int
         self.ratings: int
@@ -68,11 +68,11 @@ class TMD:
             title_id_bin = tmdfile.read(8)
             title_id_hex = binascii.hexlify(title_id_bin)
             self.title_id = str(title_id_hex.decode())
-            # Type of title
+            # Type of content
             tmdfile.seek(0x194)
-            title_type_bin = tmdfile.read(4)
-            title_type_hex = binascii.hexlify(title_type_bin)
-            self.title_type = str(title_type_hex.decode())
+            content_type_bin = tmdfile.read(4)
+            content_type_hex = binascii.hexlify(content_type_bin)
+            self.content_type = str(content_type_hex.decode())
             # Publisher of the title
             tmdfile.seek(0x198)
             self.group_id = tmdfile.read(2)
@@ -158,6 +158,24 @@ class TMD:
                 return "DLC"
             case '00010008':
                 return "HiddenChannel"
+            case _:
+                return "Unknown"
+
+    def get_content_type(self):
+        """Returns the type of content contained in the TMD's associated title."""
+        match self.content_type:
+            case '00000001':
+                return "Normal"
+            case '00000002':
+                return "Development/Unknown"
+            case '00000003':
+                return "Hash Tree"
+            case '00004001':
+                return "DLC"
+            case '00008001':
+                return "Shared"
+            case _:
+                return "Unknown"
 
     def get_num_contents(self):
         """Returns the number of contents listed in the TMD."""
