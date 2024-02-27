@@ -1,5 +1,5 @@
 [project]
-name = "libWiiPy_NinjaCheetah"
+name = "libWiiPy"
 version = "0.0.1"
 authors = [
   { name="NinjaCheetah", email="ninjacheetah@ncxprogramming.com" },

@@ -95,12 +95,15 @@ class TMD:
             self.boot_index = tmdfile.read(2)
 
     def get_title_id(self):
+        """Returns the TID of the TMD's associated title."""
         return self.title_id
 
     def get_title_version(self):
+        """Returns the version of the TMD's associated title."""
         return self.title_version
 
     def get_title_region(self):
+        """Returns the region of the TMD's associated title."""
         match self.region:
             case 0:
                 return "JAP"
@@ -114,18 +117,22 @@ class TMD:
                 return "KOR"
 
     def get_is_vwii_title(self):
+        """Returns whether the TMD is designed for the vWii or not."""
         if self.vwii == 1:
             return True
         else:
             return False
 
     def get_required_ios_tid(self):
+        """Returns the TID of the required IOS for the title."""
         return self.ios_tid
 
     def get_required_ios(self):
+        """Returns the required IOS version for the title."""
         return self.ios_version
 
     def get_title_type(self):
+        """Returns the type of the TMD's associated title."""
         title_id_high = self.title_id[:8]
         match title_id_high:
             case '00000001':
