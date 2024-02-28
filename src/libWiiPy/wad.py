@@ -20,10 +20,10 @@ class ContentRecord:
 
 class wadHeader:
     """Break down 32 byte WAD header."""
-    def __init__(self, wadhdr):
-        self.wadhdr = wadhdr
+    def __init__(self, wad):
+        self.wad = wad
         self.wad_hdr_size: int
-        self.wad_type: int
+        self.wad_type: str
         self.wad_version: int
         # Sizes
         self.wad_cert_size: int
@@ -50,7 +50,7 @@ class wadHeader:
             self.wad_hdr_size = wadfile.read(4)
             # WAD type
             wadfile.seek(0x04)
-            self.wad_type = wadfile.read(2)
+            self.wad_type = str(wadfile.read(2).decode())
             # WAD version
             wadfile.seek(0x06)
             self.wad_version = wadfile.read(2)
@@ -75,28 +75,31 @@ class wadHeader:
             #====================================================================================
             # Calculate file offsets from sizes
             #====================================================================================
-            self.wad_cert_offset + self.wad_hdr_size
+            self.wad_cert_offset = self.wad_hdr_size
             # I've never seen crl used (don't even know what it's for) but still calculating in case...
-            self.wad_crl_offset + self.wad_cert_offset + self.wad_cert_size
-            self.wad_tik_offset + self.wad_crl_offset + self.wad_crl_size
-            self.wad_tmd_offset + self.wad_tik_offset + self.wad_tik_size
-            self.wad_app_offset + self.wad_tmd_offset + self.wad_tmd_size
+            self.wad_crl_offset = self.wad_cert_offset + self.wad_cert_size
+            self.wad_tik_offset = self.wad_crl_offset + self.wad_crl_size
+            self.wad_tmd_offset = self.wad_tik_offset + self.wad_tik_size
+            self.wad_app_offset = self.wad_tmd_offset + self.wad_tmd_size
             # Same with meta. If private Nintendo tools calculate these then maaaaaybe we should too.
-            self.wad_meta_offset + self.wad_app_offset + self.wad_app_size
+            self.wad_meta_offset = self.wad_app_offset + self.wad_app_size
 
     def get_cert_region(self):
-        """Returns the offset and size for the cert"""
+        """Returns the offset and size for the cert."""
         return self.wad_cert_offset, self.wad_cert_size
 
     def get_ticket_region(self):
-        """Returns the offset and size for the ticket"""
+        """Returns the offset and size for the ticket."""
         return self.wad_tik_offset, self.wad_tik_size
 
     def get_tmd_region(self):
-        """Returns the offset and size for the TMD"""
+        """Returns the offset and size for the TMD."""
         return self.wad_tmd_offset, self.wad_tmd_size
 
     def get_app_region(self):
-        """Returns the offset and size for the app"""
+        """Returns the offset and size for the app."""
         return self.wad_app_offset, self.wad_tmd_size
-      
+
+    def get_wad_type(self):
+        """Returns the type of the WAD. This is 'Is' unless the WAD contains boot2 where it is 'ib'."""
+        return self.wad_type

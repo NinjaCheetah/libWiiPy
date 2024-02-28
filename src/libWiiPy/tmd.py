@@ -1,4 +1,5 @@
 # "tmd.py" from libWiiPy by NinjaCheetah
+#
 # See https://wiibrew.org/wiki/Title_metadata for details about the TMD format
 
 import binascii
