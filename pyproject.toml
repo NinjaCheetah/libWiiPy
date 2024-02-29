@@ -1,8 +1,9 @@
 [project]
 name = "libWiiPy"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
-  { name="NinjaCheetah", email="ninjacheetah@ncxprogramming.com" },
+    { name="NinjaCheetah", email="ninjacheetah@ncxprogramming.com" },
+    { name="Lillian Skinner", email="lillian@randommeaninglesscharacters.com" }
 ]
 description = "A Wii-related library for Python"
 readme = "README.md"
