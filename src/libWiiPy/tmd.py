@@ -1,6 +1,9 @@
-# "tmd.py" from libWiiPy by NinjaCheetah
+# "tmd.py" from libWiiPy by NinjaCheetah & Contributors
+# https://github.com/NinjaCheetah/libWiiPy
+#
 # See https://wiibrew.org/wiki/Title_metadata for details about the TMD format
 
+import io
 import binascii
 from dataclasses import dataclass
 from typing import List
@@ -17,7 +20,7 @@ class ContentRecord:
 
 
 class TMD:
-    """Creates a TMD object that can be used to read all the data contained in a TMD."""
+    """Creates a TMD object to parse a TMD file to retrieve information about a title."""
     def __init__(self, tmd):
         self.tmd = tmd
         self.sig_type: int
@@ -40,64 +43,64 @@ class TMD:
         self.boot_index: int
         self.content_record: List[ContentRecord]
         # Load data from TMD file
-        with open(tmd, "rb") as tmdfile:
+        with io.BytesIO(tmd) as tmddata:
             # Signing certificate issuer
-            tmdfile.seek(0x140)
-            self.issuer = tmdfile.read(64)
+            tmddata.seek(0x140)
+            self.issuer = tmddata.read(64)
             # TMD version, seems to usually be 0, but I've seen references to other numbers
-            tmdfile.seek(0x180)
-            self.version = int.from_bytes(tmdfile.read(1))
+            tmddata.seek(0x180)
+            self.version = int.from_bytes(tmddata.read(1))
             # TODO: label
-            tmdfile.seek(0x181)
-            self.ca_crl_version = tmdfile.read(1)
+            tmddata.seek(0x181)
+            self.ca_crl_version = tmddata.read(1)
             # TODO: label
-            tmdfile.seek(0x182)
-            self.signer_crl_version = tmdfile.read(1)
+            tmddata.seek(0x182)
+            self.signer_crl_version = tmddata.read(1)
             # If this is a vWii title or not
-            tmdfile.seek(0x183)
-            self.vwii = int.from_bytes(tmdfile.read(1))
+            tmddata.seek(0x183)
+            self.vwii = int.from_bytes(tmddata.read(1))
             # TID of the IOS to use for the title, set to 0 if this title is the IOS, set to boot2 version if boot2
-            tmdfile.seek(0x184)
-            ios_version_bin = tmdfile.read(8)
+            tmddata.seek(0x184)
+            ios_version_bin = tmddata.read(8)
             ios_version_hex = binascii.hexlify(ios_version_bin)
             self.ios_tid = str(ios_version_hex.decode())
             # Get IOS version based on TID
             self.ios_version = int(self.ios_tid[-2:], 16)
             # Title ID of the title
-            tmdfile.seek(0x18C)
-            title_id_bin = tmdfile.read(8)
+            tmddata.seek(0x18C)
+            title_id_bin = tmddata.read(8)
             title_id_hex = binascii.hexlify(title_id_bin)
             self.title_id = str(title_id_hex.decode())
             # Type of content
-            tmdfile.seek(0x194)
-            content_type_bin = tmdfile.read(4)
+            tmddata.seek(0x194)
+            content_type_bin = tmddata.read(4)
             content_type_hex = binascii.hexlify(content_type_bin)
             self.content_type = str(content_type_hex.decode())
             # Publisher of the title
-            tmdfile.seek(0x198)
-            self.group_id = tmdfile.read(2)
+            tmddata.seek(0x198)
+            self.group_id = tmddata.read(2)
             # Region of the title, 0 = JAP, 1 = USA, 2 = EUR, 3 = NONE, 4 = KOR
-            tmdfile.seek(0x19C)
-            region_hex = tmdfile.read(2)
+            tmddata.seek(0x19C)
+            region_hex = tmddata.read(2)
             self.region = int.from_bytes(region_hex)
             # TODO: figure this one out
-            tmdfile.seek(0x19E)
-            self.ratings = tmdfile.read(16)
+            tmddata.seek(0x19E)
+            self.ratings = tmddata.read(16)
             # Access rights of the title; DVD-video access and AHBPROT
-            tmdfile.seek(0x1D8)
-            self.access_rights = tmdfile.read(4)
+            tmddata.seek(0x1D8)
+            self.access_rights = tmddata.read(4)
             # Calculate the version number by multiplying 0x1DC by 256 and adding 0x1DD
-            tmdfile.seek(0x1DC)
-            title_version_high = int.from_bytes(tmdfile.read(1)) * 256
-            tmdfile.seek(0x1DD)
-            title_version_low = int.from_bytes(tmdfile.read(1))
+            tmddata.seek(0x1DC)
+            title_version_high = int.from_bytes(tmddata.read(1)) * 256
+            tmddata.seek(0x1DD)
+            title_version_low = int.from_bytes(tmddata.read(1))
             self.title_version = title_version_high + title_version_low
             # The number of contents listed in the TMD
-            tmdfile.seek(0x1DE)
-            self.num_contents = int.from_bytes(tmdfile.read(2))
+            tmddata.seek(0x1DE)
+            self.num_contents = int.from_bytes(tmddata.read(2))
             # Content index in content list that contains the boot file
-            tmdfile.seek(0x1E0)
-            self.boot_index = tmdfile.read(2)
+            tmddata.seek(0x1E0)
+            self.boot_index = tmddata.read(2)
 
     def get_title_id(self):
         """Returns the TID of the TMD's associated title."""

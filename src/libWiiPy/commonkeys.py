@@ -1,4 +1,5 @@
-# "commonkeys.py" from libWiiPy by NinjaCheetah
+# "commonkeys.py" from libWiiPy by NinjaCheetah & Contributors
+# https://github.com/NinjaCheetah/libWiiPy
 
 default_key = 'ebe42a225e8593e448d9c5457381aaf7'
 korean_key = '63b82bb4f4614e2e13f2fefbba4c9b7e'
