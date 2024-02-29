@@ -1,105 +1,132 @@
-# Project: libWiiPy by NinjaCheetah
-# File: wad.py by rmc
+# "wad.py" from libWiiPy by NinjaCheetah & Contributors
+# https://github.com/NinjaCheetah/libWiiPy
 #
 # See https://wiibrew.org/wiki/WAD_files for details about the WAD format
 
+import io
 import binascii
-from dataclasses import dataclass
-from typing import List
 
 
-@dataclass
-class ContentRecord:
-    """Creates a content record object that contains the details of a content contained in a title."""
-    cid: int  # Content ID
-    index: int  # Index in the list of contents
-    content_type: int  # normal: 0x0001; dlc: 0x4001; shared: 0x8001
-    content_size: int
-    content_hash: bytearray  # SHA1 hash content
-
-
-class wadHeader:
-    """Break down 32 byte WAD header."""
+class WAD:
+    """Creates a WAD object to parse the header of a WAD file and retrieve the data contained in it."""
     def __init__(self, wad):
         self.wad = wad
         self.wad_hdr_size: int
         self.wad_type: str
         self.wad_version: int
-        # Sizes
+        # === Sizes ===
         self.wad_cert_size: int
         self.wad_crl_size: int
         self.wad_tik_size: int
         self.wad_tmd_size: int
-        self.wad_app_size: int  # Note that this is the size of the app region. This is each individual app file bundled together.
+        # This is the size of the content region, which contains all app files combined.
+        self.wad_content_size: int
         self.wad_meta_size: int
-        # Offsets
+        # === Offsets ===
         self.wad_cert_offset: int
         self.wad_crl_offset: int
         self.wad_tik_offset: int
         self.wad_tmd_offset: int
-        self.wad_app_offset: int
+        self.wad_content_offset: int
         self.wad_meta_offset: int
-        #self.content_record: List[ContentRecord]
-        # Load header data from WAD file
-        with open(wad, "rb") as wadfile:
-            #====================================================================================
-            # Get the sizes of each data region contained within the WAD. Sorry for mid code!
-            #====================================================================================
-            # Header length. Always seems to be 32 so we'll ignore it for now.
-            wadfile.seek(0x0)
-            self.wad_hdr_size = wadfile.read(4)
-            # WAD type
-            wadfile.seek(0x04)
-            self.wad_type = str(wadfile.read(2).decode())
-            # WAD version
-            wadfile.seek(0x06)
-            self.wad_version = wadfile.read(2)
-            # WAD cert size
-            wadfile.seek(0x08)
-            self.wad_cert_size = wadfile.read(4)
-            # WAD crl size
-            wadfile.seek(0x0c)
-            self.wad_crl_size = wadfile.read(4)
-            # WAD ticket size
-            wadfile.seek(0x10)
-            self.wad_tik_size = wadfile.read(4)
-            # WAD TMD size
-            wadfile.seek(0x14)
-            self.wad_tmd_size = wadfile.read(4)
-            # WAD app size
-            wadfile.seek(0x18)
-            self.wad_app_size = wadfile.read(4)
-            # Publisher of the title
-            wadfile.seek(0x1c)
-            self.wad_meta_size = wadfile.read(4)
-            #====================================================================================
-            # Calculate file offsets from sizes
-            #====================================================================================
+        # Load header data from WAD stream
+        with io.BytesIO(wad) as waddata:
+            # ====================================================================================
+            # Get the sizes of each data region contained within the WAD.
+            # ====================================================================================
+            # Header length, which will always be 64 bytes, as it is padded out if it is shorter.
+            self.wad_hdr_size = 64
+            # WAD type, denoting whether this WAD contains boot2 ("ib"), or anything else ("Is").
+            waddata.seek(0x04)
+            self.wad_type = str(waddata.read(2).decode())
+            # WAD version, this is always 0.
+            waddata.seek(0x06)
+            self.wad_version = waddata.read(2)
+            # WAD cert size.
+            waddata.seek(0x08)
+            self.wad_cert_size = int(binascii.hexlify(waddata.read(4)), 16)
+            # WAD crl size.
+            waddata.seek(0x0c)
+            self.wad_crl_size = int(binascii.hexlify(waddata.read(4)), 16)
+            # WAD ticket size.
+            waddata.seek(0x10)
+            self.wad_tik_size = int(binascii.hexlify(waddata.read(4)), 16)
+            # WAD TMD size.
+            waddata.seek(0x14)
+            self.wad_tmd_size = int(binascii.hexlify(waddata.read(4)), 16)
+            # WAD content size.
+            waddata.seek(0x18)
+            self.wad_content_size = int(binascii.hexlify(waddata.read(4)), 16)
+            # Publisher of the title contained in the WAD.
+            waddata.seek(0x1c)
+            self.wad_meta_size = int(binascii.hexlify(waddata.read(4)), 16)
+            # ====================================================================================
+            # Calculate file offsets from sizes. Every section of the WAD is padded out to a multiple of 0x40.
+            # ====================================================================================
             self.wad_cert_offset = self.wad_hdr_size
-            # I've never seen crl used (don't even know what it's for) but still calculating in case...
-            self.wad_crl_offset = self.wad_cert_offset + self.wad_cert_size
-            self.wad_tik_offset = self.wad_crl_offset + self.wad_crl_size
-            self.wad_tmd_offset = self.wad_tik_offset + self.wad_tik_size
-            self.wad_app_offset = self.wad_tmd_offset + self.wad_tmd_size
-            # Same with meta. If private Nintendo tools calculate these then maaaaaybe we should too.
-            self.wad_meta_offset = self.wad_app_offset + self.wad_app_size
+            # crl isn't ever used, however an entry for its size exists in the header, so its calculated just in case.
+            self.wad_crl_offset = int(64 * round((self.wad_cert_offset + self.wad_cert_size) / 64))
+            self.wad_tik_offset = int(64 * round((self.wad_crl_offset + self.wad_crl_size) / 64))
+            self.wad_tmd_offset = int(64 * round((self.wad_tik_offset + self.wad_tik_size) / 64))
+            self.wad_content_offset = int(64 * round((self.wad_tmd_offset + self.wad_tmd_size) / 64))
+            # meta is also never used, but Nintendo's tools calculate it so we should too.
+            self.wad_meta_offset = int(64 * round((self.wad_content_offset + self.wad_content_size) / 64))
 
     def get_cert_region(self):
-        """Returns the offset and size for the cert."""
+        """Returns the offset and size for the cert data."""
         return self.wad_cert_offset, self.wad_cert_size
 
+    def get_crl_region(self):
+        """Returns the offset and size for the crl data."""
+        return self.wad_crl_offset, self.wad_crl_size
+
     def get_ticket_region(self):
-        """Returns the offset and size for the ticket."""
+        """Returns the offset and size for the ticket data."""
         return self.wad_tik_offset, self.wad_tik_size
 
     def get_tmd_region(self):
-        """Returns the offset and size for the TMD."""
+        """Returns the offset and size for the TMD data."""
         return self.wad_tmd_offset, self.wad_tmd_size
 
-    def get_app_region(self):
-        """Returns the offset and size for the app."""
-        return self.wad_app_offset, self.wad_tmd_size
+    def get_content_region(self):
+        """Returns the offset and size for the content of the WAD."""
+        return self.wad_content_offset, self.wad_tmd_size
 
     def get_wad_type(self):
         """Returns the type of the WAD. This is 'Is' unless the WAD contains boot2 where it is 'ib'."""
         return self.wad_type
+
+    def get_cert_data(self):
+        """Returns the certificate data from the WAD."""
+        waddata = io.BytesIO(self.wad)
+        waddata.seek(self.wad_cert_offset)
+        cert_data = waddata.read(self.wad_cert_size)
+        return cert_data
+
+    def get_crl_data(self):
+        """Returns the crl data from the WAD, if it exists."""
+        waddata = io.BytesIO(self.wad)
+        waddata.seek(self.wad_crl_offset)
+        crl_data = waddata.read(self.wad_crl_size)
+        return crl_data
+
+    def get_ticket_data(self):
+        """Returns the ticket data from the WAD."""
+        waddata = io.BytesIO(self.wad)
+        waddata.seek(self.wad_tik_offset)
+        ticket_data = waddata.read(self.wad_tik_size)
+        return ticket_data
+
+    def get_tmd_data(self):
+        """Returns the TMD data from the WAD."""
+        waddata = io.BytesIO(self.wad)
+        waddata.seek(self.wad_tmd_offset)
+        tmd_data = waddata.read(self.wad_tmd_size)
+        return tmd_data
+
+    def get_content_data(self):
+        """Returns the content of the WAD."""
+        waddata = io.BytesIO(self.wad)
+        waddata.seek(self.wad_content_offset)
+        content_data = waddata.read(self.wad_content_size)
+        return content_data
