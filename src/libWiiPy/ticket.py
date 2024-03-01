@@ -4,6 +4,20 @@
 # See https://wiibrew.org/wiki/Ticket for details about the TMD format
 
 import io
+from .crypto import decrypt_title_key
+from dataclasses import dataclass
+from typing import List
+
+
+@dataclass
+class TitleLimit:
+    """Creates a TitleLimit object that contains the type of restriction and the limit."""
+    # The type of play limit applied. The following types exist:
+    # 0 = None, 1 = Time Limit, 3 = None, 4 = Launch Count
+    limit_type: int
+    # The maximum value of the limit applied.
+    # This is either the number of minutes for a time limit, or the number of launches for a launch limit.
+    maximum_usage: int
 
 
 class Ticket:
@@ -28,9 +42,7 @@ class Ticket:
         self.title_export_allowed: int  # Whether title export is allowed with a PRNG key or not.
         self.common_key_index: int  # Which common key should be used. 0 = Common Key, 1 = Korean Key, 2 = vWii Key
         self.content_access_permissions: bytes  # "Content access permissions (one bit for each content)"
-        #self.limit_type: int  # Type of play limit applied to the title.
-        # 0 = None, 1 = Time Limit, 3 = None, 4 = Launch Count
-        #self.maximum_launches: int  # Maximum for the selected limit type, being either minutes or launches.
+        self.title_limits_list: List[TitleLimit] = []  # List of play limits applied to the title.
         # v1 ticket data
         # TODO: Figure out v1 ticket stuff
         with io.BytesIO(self.ticket) as ticketdata:
@@ -85,6 +97,12 @@ class Ticket:
             # Content access permissions
             ticketdata.seek(0x222)
             self.content_access_permissions = ticketdata.read(64)
+            # Content limits
+            ticketdata.seek(0x264)
+            for limit in range(0, 8):
+                limit_type = int.from_bytes(ticketdata.read(4))
+                limit_value = int.from_bytes(ticketdata.read(4))
+                self.title_limits_list.append(TitleLimit(limit_type, limit_value))
 
     def get_signature(self):
         """Returns the signature of the ticket."""
@@ -131,6 +149,6 @@ class Ticket:
 
     def get_title_key(self):
         """Returns the decrypted title key contained in the ticket."""
-        # TODO
-        return b'\x00'
+        title_key = decrypt_title_key(self.title_key_enc, self.common_key_index, self.title_id)
+        return title_key
 
