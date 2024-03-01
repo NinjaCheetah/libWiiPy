@@ -29,21 +29,24 @@ class TMD:
         self.version: int  # This seems to always be 0 no matter what?
         self.ca_crl_version: int
         self.signer_crl_version: int
-        self.vwii: int
-        self.ios_tid: str
-        self.ios_version: int
-        self.title_id: str
-        self.content_type: str
-        self.group_id: int  # Publisher of the title
-        self.region: int
+        self.vwii: int  # Whether the title is for the vWii. 0 = No, 1 = Yes
+        self.ios_tid: str  # The Title ID of the IOS version the associated title runs on.
+        self.ios_version: int  # The IOS version the associated title runs on.
+        self.title_id: str  # The Title ID of the associated title.
+        self.content_type: str  # The type of content contained within the associated title.
+        self.group_id: int  # The ID of the publisher of the associated title.
+        self.region: int  # The ID of the region of the associated title.
         self.ratings: int
         self.access_rights: int
-        self.title_version: int
-        self.num_contents: int
+        self.title_version: int  # The version of the associated title.
+        self.num_contents: int  # The number of contents contained in the associated title.
         self.boot_index: int
         self.content_record: List[ContentRecord]
         # Load data from TMD file
-        with io.BytesIO(tmd) as tmddata:
+        with io.BytesIO(self.tmd) as tmddata:
+            # ====================================================================================
+            # Parses each of the keys contained in the TMD.
+            # ====================================================================================
             # Signing certificate issuer
             tmddata.seek(0x140)
             self.issuer = tmddata.read(64)

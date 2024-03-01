@@ -30,7 +30,7 @@ class WAD:
         self.wad_content_offset: int
         self.wad_meta_offset: int
         # Load header data from WAD stream
-        with io.BytesIO(wad) as waddata:
+        with io.BytesIO(self.wad) as waddata:
             # ====================================================================================
             # Get the sizes of each data region contained within the WAD.
             # ====================================================================================
