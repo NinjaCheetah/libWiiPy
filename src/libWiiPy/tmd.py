@@ -108,7 +108,7 @@ class TMD:
             while i < self.num_contents:
                 tmddata.seek(0x1E4 + (36 * i))
                 self.content_record_hdr = struct.unpack(">LHH4x4s20s", tmddata.read(36))
-                self.content_record.append(ContentRecord(self.content_record_hdr[0], self.content_record_hdr[1], self.content_record_hdr[2], self.content_record_hdr[3], self.content_record_hdr[4]))
+                self.content_record.append(ContentRecord(int(self.content_record_hdr[0]), int(self.content_record_hdr[1]), int(self.content_record_hdr[2]), int.from_bytes(self.content_record_hdr[3]), binascii.hexlify(self.content_record_hdr[4]).decode()))
                 i += 1
 
     def get_title_id(self):
@@ -195,4 +195,7 @@ class TMD:
 
     def get_content_records(self, record):
         """Returns all values for the specified content record."""
-        return  self.content_record[record].cid, self.content_record[record].index, self.content_record[record].content_type, self.content_record[record].content_size, self.content_record[record].content_hash
+        if record <= self.num_contents:
+            return  self.content_record[record].cid, self.content_record[record].index, self.content_record[record].content_type, self.content_record[record].content_size, self.content_record[record].content_hash
+        else:
+            return      
