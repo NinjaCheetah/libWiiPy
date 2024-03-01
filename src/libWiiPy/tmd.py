@@ -5,6 +5,7 @@
 
 import io
 import binascii
+import struct
 from dataclasses import dataclass
 from typing import List
 
@@ -14,9 +15,9 @@ class ContentRecord:
     """Creates a content record object that contains the details of a content contained in a title."""
     cid: int  # Content ID
     index: int  # Index in the list of contents
-    content_type: int  # normal: 0x0001; dlc: 0x4001; shared: 0x8001
+    content_type: int  # Normal: 0x0001, DLC: 0x4001, Shared: 0x8001
     content_size: int
-    content_hash: bytearray  # SHA1 hash content
+    content_hash: bytes  # SHA1 hash content
 
 
 class TMD:
@@ -41,7 +42,7 @@ class TMD:
         self.title_version: int  # The version of the associated title.
         self.num_contents: int  # The number of contents contained in the associated title.
         self.boot_index: int
-        self.content_record: List[ContentRecord]
+        self.content_records: List[ContentRecord] = []
         # Load data from TMD file
         with io.BytesIO(self.tmd) as tmddata:
             # ====================================================================================
@@ -104,6 +105,14 @@ class TMD:
             # Content index in content list that contains the boot file
             tmddata.seek(0x1E0)
             self.boot_index = tmddata.read(2)
+            # Get content records for the number of contents in num_contents.
+            for content in range(0, self.num_contents):
+                tmddata.seek(0x1E4 + (36 * content))
+                content_record_hdr = struct.unpack(">LHH4x4s20s", tmddata.read(36))
+                self.content_records.append(
+                    ContentRecord(int(content_record_hdr[0]), int(content_record_hdr[1]),
+                                  int(content_record_hdr[2]), int.from_bytes(content_record_hdr[3]),
+                                  binascii.hexlify(content_record_hdr[4])))
 
     def get_title_id(self):
         """Returns the TID of the TMD's associated title."""
@@ -186,3 +195,11 @@ class TMD:
     def get_num_contents(self):
         """Returns the number of contents listed in the TMD."""
         return self.num_contents
+
+    def get_content_record(self, record):
+        """Returns the content record at the specified index."""
+        if record < self.num_contents:
+            return self.content_records[record]
+        else:
+            raise IndexError("Invalid content record! TMD lists '" + str(self.num_contents - 1) +
+                             "' contents but index was '" + str(record) + "'!")
