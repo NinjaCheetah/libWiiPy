@@ -290,6 +290,11 @@ class TMD:
     def get_content_record(self, record):
         """Gets the content record at the specified index.
 
+        Parameters
+        ----------
+        record : int
+            The content record to be retrieved.
+
         Returns
         -------
         ContentRecord

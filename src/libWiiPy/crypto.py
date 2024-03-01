@@ -8,9 +8,23 @@ from Crypto.Cipher import AES
 
 
 def decrypt_title_key(title_key_enc, common_key_index, title_id):
-    """
-    Returns the decrypted version of the encrypted Title Key provided.
+    """Gets the decrypted version of the encrypted Title Key provided.
+
     Requires the index of the common key to use, and the Title ID of the title that the Title Key is for.
+
+    Parameters
+    ----------
+    title_key_enc : bytes
+        The encrypted Title Key.
+    common_key_index : int
+        The index of the common key to be returned.
+    title_id : bytes
+        The title ID of the tite that the key is for.
+
+    Returns
+    -------
+    bytes
+        The decrypted Title Key.
     """
     # Load the correct common key for the title.
     common_key = get_common_key(common_key_index)

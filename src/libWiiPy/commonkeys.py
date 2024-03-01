@@ -9,9 +9,19 @@ vwii_key = '30bfc76e7c19afbb23163330ced7c28d'
 
 
 def get_common_key(common_key_index):
-    """
-    Returns the specified Wii Common Key based on the index provided.
+    """Gets the specified Wii Common Key based on the index provided.
+
     Possible values for common_key_index: 0: Common Key, 1: Korean Key, 2: vWii Key
+
+    Parameters
+    ----------
+    common_key_index : int
+        The index of the common key to be returned.
+
+    Returns
+    -------
+    bytes
+        The specified common key, in binary format.
     """
     match common_key_index:
         case 0:
