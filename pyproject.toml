@@ -1,6 +1,6 @@
 [project]
 name = "libWiiPy"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
     { name="NinjaCheetah", email="ninjacheetah@ncxprogramming.com" },
     { name="Lillian Skinner", email="lillian@randommeaninglesscharacters.com" }

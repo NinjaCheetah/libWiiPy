@@ -43,7 +43,10 @@ class TMD:
         self.boot_index: int
         self.content_record: List[ContentRecord]
         # Load data from TMD file
-        with io.BytesIO(tmd) as tmddata:
+        with io.BytesIO(self.tmd) as tmddata:
+            # ====================================================================================
+            # Parses each of the keys contained in the TMD.
+            # ====================================================================================
             # Signing certificate issuer
             tmddata.seek(0x140)
             self.issuer = tmddata.read(64)
