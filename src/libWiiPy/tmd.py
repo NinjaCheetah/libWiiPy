@@ -198,5 +198,5 @@ class TMD:
         if record < self.num_contents:
             return self.content_records[record]
         else:
-            raise IndexError("Invalid content record! TMD lists '" + str(self.num_contents) +
+            raise IndexError("Invalid content record! TMD lists '" + str(self.num_contents - 1) +
                              "' contents but index was '" + str(record) + "'!")
