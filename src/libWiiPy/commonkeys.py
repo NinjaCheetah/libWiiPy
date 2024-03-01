@@ -21,5 +21,5 @@ def get_common_key(common_key_index):
         case 2:
             common_key_bin = binascii.unhexlify(vwii_key)
         case _:
-            raise ValueError("The common key index provided, " + str(common_key_index + ", does not exist."))
+            raise ValueError("The common key index provided, " + str(common_key_index) + ", does not exist.")
     return common_key_bin
