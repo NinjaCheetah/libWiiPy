@@ -5,6 +5,7 @@
 
 import io
 import binascii
+import struct
 from dataclasses import dataclass
 from typing import List
 
@@ -41,7 +42,8 @@ class TMD:
         self.title_version: int
         self.num_contents: int
         self.boot_index: int
-        self.content_record: List[ContentRecord]
+        self.content_record: List[ContentRecord] = []
+        self.content_record_hdr: List = []
         # Load data from TMD file
         with io.BytesIO(tmd) as tmddata:
             # Signing certificate issuer
@@ -101,6 +103,13 @@ class TMD:
             # Content index in content list that contains the boot file
             tmddata.seek(0x1E0)
             self.boot_index = tmddata.read(2)
+            # Got content records for the number of contents in num_contents.
+            i = 0
+            while i < self.num_contents:
+                tmddata.seek(0x1E4 + (36 * i))
+                self.content_record_hdr = struct.unpack(">LHH4x4s20s", tmddata.read(36))
+                self.content_record.append(ContentRecord(self.content_record_hdr[0], self.content_record_hdr[1], self.content_record_hdr[2], self.content_record_hdr[3], self.content_record_hdr[4]))
+                i += 1
 
     def get_title_id(self):
         """Returns the TID of the TMD's associated title."""
@@ -183,3 +192,7 @@ class TMD:
     def get_num_contents(self):
         """Returns the number of contents listed in the TMD."""
         return self.num_contents
+
+    def get_content_records(self, record):
+        """Returns all values for the specified content record."""
+        return  self.content_record[record].cid, self.content_record[record].index, self.content_record[record].content_type, self.content_record[record].content_size, self.content_record[record].content_hash
