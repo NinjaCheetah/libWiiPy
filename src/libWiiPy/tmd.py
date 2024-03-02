@@ -12,7 +12,22 @@ from typing import List
 
 @dataclass
 class ContentRecord:
-    """Creates a content record object that contains the details of a content contained in a title."""
+    """
+    Creates a content record object that contains the details of a content contained in a title.
+
+    Attributes:
+    ----------
+    cid : int
+        ID of the content.
+    index : int
+        Index of the content in the list of contents.
+    content_type : int
+        The type of the content.
+    content_size : int
+        The size of the content.
+    content_hash
+        The SHA-1 hash of the decrypted content.
+    """
     cid: int  # Content ID
     index: int  # Index in the list of contents
     content_type: int  # Normal: 0x0001, DLC: 0x4001, Shared: 0x8001
@@ -21,7 +36,14 @@ class ContentRecord:
 
 
 class TMD:
-    """Creates a TMD object to parse a TMD file to retrieve information about a title."""
+    """
+    Creates a TMD object to parse a TMD file to retrieve information about a title.
+
+    Attributes:
+    ----------
+    tmd : bytes
+        A bytes object containing the contents of a TMD file.
+    """
     def __init__(self, tmd):
         self.tmd = tmd
         self.sig_type: int
@@ -115,15 +137,36 @@ class TMD:
                                   binascii.hexlify(content_record_hdr[4])))
 
     def get_title_id(self):
-        """Returns the TID of the TMD's associated title."""
+        """Gets the TID of the TMD's associated title.
+
+        Returns
+        -------
+        str
+            The Title ID.
+        """
         return self.title_id
 
     def get_title_version(self):
-        """Returns the version of the TMD's associated title."""
+        """Gets the version of the TMD's associated title.
+
+        Returns
+        -------
+        int
+            The version of the title.
+        """
         return self.title_version
 
     def get_title_region(self):
-        """Returns the region of the TMD's associated title."""
+        """Gets the region of the TMD's associated title.
+
+        Can be one of several possible values:
+        'JAP', 'USA', 'EUR', 'NONE', or 'KOR'.
+
+        Returns
+        -------
+        str
+            The region of the title.
+        """
         match self.region:
             case 0:
                 return "JAP"
@@ -137,26 +180,59 @@ class TMD:
                 return "KOR"
 
     def get_is_vwii_title(self):
-        """Returns whether the TMD is designed for the vWii or not."""
+        """Gets whether the TMD is designed for the vWii or not.
+
+        Returns
+        -------
+        bool
+            If the title is for vWii.
+        """
         if self.vwii == 1:
             return True
         else:
             return False
 
     def get_tmd_version(self):
-        """Returns the version of the TMD."""
+        """Gets the version of the TMD.
+
+        Returns
+        -------
+        int
+            The version of the TMD.
+        """
         return self.version
 
     def get_required_ios_tid(self):
-        """Returns the TID of the required IOS for the title."""
+        """Gets the TID of the required IOS for the title.
+
+        Returns
+        -------
+        str
+            The Title ID of the required IOS version.
+        """
         return self.ios_tid
 
     def get_required_ios(self):
-        """Returns the required IOS version for the title."""
+        """Gets the required IOS version for the title.
+
+        Returns
+        -------
+        int
+            The required IOS version.
+        """
         return self.ios_version
 
     def get_title_type(self):
-        """Returns the type of the TMD's associated title."""
+        """Gets the type of the TMD's associated title.
+
+        Can be one of several possible values:
+        'System', 'Game', 'Channel', 'SystemChannel', 'GameWithChannel', or 'HiddenChannel'
+
+        Returns
+        -------
+        str
+            The type of the title.
+        """
         title_id_high = self.title_id[:8]
         match title_id_high:
             case '00000001':
@@ -177,7 +253,16 @@ class TMD:
                 return "Unknown"
 
     def get_content_type(self):
-        """Returns the type of content contained in the TMD's associated title."""
+        """Gets the type of content contained in the TMD's associated title.
+
+        Can be one of several possible values:
+        'Normal', 'Development/Unknown', 'Hash Tree', 'DLC', or 'Shared'
+
+        Returns
+        -------
+        str
+            The type of content.
+        """
         match self.content_type:
             case '00000001':
                 return "Normal"
@@ -193,11 +278,28 @@ class TMD:
                 return "Unknown"
 
     def get_num_contents(self):
-        """Returns the number of contents listed in the TMD."""
+        """Gets the number of contents listed in the TMD.
+
+        Returns
+        -------
+        int
+            The number of contents.
+        """
         return self.num_contents
 
     def get_content_record(self, record):
-        """Returns the content record at the specified index."""
+        """Gets the content record at the specified index.
+
+        Parameters
+        ----------
+        record : int
+            The content record to be retrieved.
+
+        Returns
+        -------
+        ContentRecord
+            A ContentRecord object containing the data in the content record.
+        """
         if record < self.num_contents:
             return self.content_records[record]
         else:

@@ -8,7 +8,14 @@ import binascii
 
 
 class WAD:
-    """Creates a WAD object to parse the header of a WAD file and retrieve the data contained in it."""
+    """
+    Creates a WAD object to parse the header of a WAD file and retrieve the data contained in it.
+
+    Attributes:
+    ----------
+    wad : bytes
+        A bytes object containing the contents of a WAD file.
+    """
     def __init__(self, wad):
         self.wad = wad
         self.wad_hdr_size: int
@@ -73,59 +80,135 @@ class WAD:
             self.wad_meta_offset = int(64 * round((self.wad_content_offset + self.wad_content_size) / 64))
 
     def get_cert_region(self):
-        """Returns the offset and size for the cert data."""
+        """Gets the offset and size of the certificate data.
+
+        Returns
+        -------
+        int
+            The offset of the certificate data in the WAD.
+        int
+            The size of the certificate data in the WAD.
+        """
         return self.wad_cert_offset, self.wad_cert_size
 
     def get_crl_region(self):
-        """Returns the offset and size for the crl data."""
+        """Gets the offset and size of the crl data.
+
+        Returns
+        -------
+        int
+            The offset of the crl data in the WAD.
+        int
+            The size of the crl data in the WAD.
+        """
         return self.wad_crl_offset, self.wad_crl_size
 
     def get_ticket_region(self):
-        """Returns the offset and size for the ticket data."""
+        """Gets the offset and size of the ticket data.
+
+        Returns
+        -------
+        int
+            The offset of the ticket data in the WAD.
+        int
+            The size of the ticket data in the WAD.
+        """
         return self.wad_tik_offset, self.wad_tik_size
 
     def get_tmd_region(self):
-        """Returns the offset and size for the TMD data."""
+        """Gets the offset and size of the TMD data.
+
+        Returns
+        -------
+        int
+            The offset of the TMD data in the WAD.
+        int
+            The size of the TMD data in the WAD.
+        """
         return self.wad_tmd_offset, self.wad_tmd_size
 
     def get_content_region(self):
-        """Returns the offset and size for the content of the WAD."""
+        """Gets the offset and size of the content of the WAD.
+
+        Returns
+        -------
+        int
+            The offset of the content data in the WAD.
+        int
+            The size of the content data in the WAD.
+        """
         return self.wad_content_offset, self.wad_tmd_size
 
     def get_wad_type(self):
-        """Returns the type of the WAD. This is 'Is' unless the WAD contains boot2 where it is 'ib'."""
+        """Gets the type of the WAD.
+
+        Returns
+        -------
+        str
+            The type of the WAD. This is 'Is', unless the WAD contains boot2, where it is 'ib'.
+        """
         return self.wad_type
 
     def get_cert_data(self):
-        """Returns the certificate data from the WAD."""
+        """Gets the certificate data from the WAD.
+
+        Returns
+        -------
+        bytes
+            The certificate data.
+        """
         waddata = io.BytesIO(self.wad)
         waddata.seek(self.wad_cert_offset)
         cert_data = waddata.read(self.wad_cert_size)
         return cert_data
 
     def get_crl_data(self):
-        """Returns the crl data from the WAD, if it exists."""
+        """Gets the crl data from the WAD, if it exists.
+
+        Returns
+        -------
+        bytes
+            The crl data.
+        """
         waddata = io.BytesIO(self.wad)
         waddata.seek(self.wad_crl_offset)
         crl_data = waddata.read(self.wad_crl_size)
         return crl_data
 
     def get_ticket_data(self):
-        """Returns the ticket data from the WAD."""
+        """Gets the ticket data from the WAD.
+
+        Returns
+        -------
+        bytes
+            The ticket data.
+        """
         waddata = io.BytesIO(self.wad)
         waddata.seek(self.wad_tik_offset)
         ticket_data = waddata.read(self.wad_tik_size)
         return ticket_data
 
     def get_tmd_data(self):
-        """Returns the TMD data from the WAD."""
+        """Returns the TMD data from the WAD.
+
+        Returns
+        -------
+        bytes
+            The TMD data.
+        """
         waddata = io.BytesIO(self.wad)
         waddata.seek(self.wad_tmd_offset)
         tmd_data = waddata.read(self.wad_tmd_size)
         return tmd_data
 
     def get_content_data(self):
-        """Returns the content of the WAD."""
+        """Gets the content of the WAD.
+
+        Returns
+        -------
+        bytes
+            The content data.
+        """
         waddata = io.BytesIO(self.wad)
         waddata.seek(self.wad_content_offset)
         content_data = waddata.read(self.wad_content_size)

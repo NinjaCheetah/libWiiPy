@@ -11,7 +11,15 @@ from typing import List
 
 @dataclass
 class TitleLimit:
-    """Creates a TitleLimit object that contains the type of restriction and the limit."""
+    """Creates a TitleLimit object that contains the type of restriction and the limit.
+
+    Attributes:
+    ----------
+    limit_type : int
+        The type of play limit applied.
+    maximum_usage : int
+        The maximum value for the type of play limit applied.
+    """
     # The type of play limit applied. The following types exist:
     # 0 = None, 1 = Time Limit, 3 = None, 4 = Launch Count
     limit_type: int
@@ -105,40 +113,102 @@ class Ticket:
                 self.title_limits_list.append(TitleLimit(limit_type, limit_value))
 
     def get_signature(self):
-        """Returns the signature of the ticket."""
+        """Gets the signature of the ticket.
+
+        Returns
+        -------
+        bytes
+            The signature.
+        """
         return self.signature
 
     def get_ticket_version(self):
-        """Returns the version of the ticket."""
+        """Gets the version of the ticket.
+
+        Returns
+        -------
+        int
+            The version.
+        """
         return self.ticket_version
 
     def get_title_key_enc(self):
-        """Returns the title key contained in the ticket, in encrypted form."""
+        """Gets the Title Key contained in the ticket, in encrypted form.
+
+        Returns
+        -------
+        bytes
+            The encrypted Title Key.
+        """
         return self.title_key_enc
 
     def get_ticket_id(self):
-        """Returns the ID of the ticket."""
+        """Gets the ID of the ticket.
+
+        Returns
+        -------
+        bytes
+            The ID of the ticket.
+        """
         return self.ticket_id
 
     def get_console_id(self):
-        """Returns the ID of the console this ticket is designed for, if the ticket is console-specific."""
+        """Gets the ID of the console this ticket is designed for, if the ticket is console-specific.
+
+        Returns
+        -------
+        bytes
+            The ID of the console.
+        """
         return self.console_id
 
     def get_title_id(self):
-        """Returns the Title ID of the ticket's associated title."""
+        """Gets the Title ID of the ticket's associated title.
+
+        Returns
+        -------
+        str
+            The Title ID of the title.
+        """
         title_id_str = str(self.title_id.decode())
         return title_id_str
 
     def get_title_version(self):
-        """Returns the version of the ticket's associated title that this ticket is designed for."""
+        """Gets the version of the ticket's associated title that this ticket is designed for.
+
+        Returns
+        -------
+        int
+            The version of the title.
+        """
         return self.title_version
 
     def get_common_key_index(self):
-        """Returns the index of the common key used to encrypt the Title Key contained in the ticket."""
+        """Gets the index of the common key used to encrypt the Title Key contained in the ticket.
+
+        Returns
+        -------
+        int
+            The index of the common key required.
+
+        See Also
+        --------
+        commonkeys.get_common_key
+        """
         return self.common_key_index
 
     def get_common_key_type(self):
-        """Returns the name of the common key used to encrypt the Title Key contained in the ticket."""
+        """Gets the name of the common key used to encrypt the Title Key contained in the ticket.
+
+        Returns
+        -------
+        str
+            The name of the common key required.
+
+        See Also
+        --------
+        commonkeys.get_common_key
+        """
         match self.common_key_index:
             case 0:
                 return "Common"
@@ -148,7 +218,13 @@ class Ticket:
                 return "vWii"
 
     def get_title_key(self):
-        """Returns the decrypted title key contained in the ticket."""
+        """Gets the decrypted title key contained in the ticket.
+
+        Returns
+        -------
+        bytes
+            The decrypted title key.
+        """
         title_key = decrypt_title_key(self.title_key_enc, self.common_key_index, self.title_id)
         return title_key
 
