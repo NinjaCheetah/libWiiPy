@@ -61,18 +61,16 @@ def decrypt_content(content_enc, title_key, content_index):
     while len(content_index_bin) < 16:
         content_index_bin += b'\x00'
     # In CBC mode, content must be padded out to a 16-byte boundary, so do that here, and then remove bytes added after.
-    padding_count = 0
-    content_enc = pad(content_enc, 16, "pkcs7")
-    #while (len(content_enc) % 16) != 0:
-        #content_enc += b'\x00'
-        #padding_count += 1
+    padded = False
+    if (len(content_enc) % 64) != 0:
+        print("needs padding to 16 bytes")
+        content_enc = pad(content_enc, 64, "pkcs7")
+        padded = True
     # Create a new AES object with the values provided, with the content's unique ID as the IV.
     aes = AES.new(title_key, AES.MODE_CBC, content_index_bin)
     # Decrypt the content using the AES object.
     content_dec = aes.decrypt(content_enc)
     # Remove padding bytes, if any were added.
-    #content_dec = unpad(content_dec, 128)
-    file = open("out", "wb")
-    file.write(content_dec)
-    file.close()
+    #if padded:
+        #content_dec = unpad(content_dec, AES.block_size)
     return content_dec

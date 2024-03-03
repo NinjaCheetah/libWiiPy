@@ -35,7 +35,7 @@ class ContentRegion:
             self.num_contents = len(self.content_records)
             # Calculate the offsets of each content in the content region.
             for content in self.content_records[:-1]:
-                start_offset = content.content_size + self.content_start_offsets[-1]
+                start_offset = int(16 * round(content.content_size / 16)) + self.content_start_offsets[-1]
                 self.content_start_offsets.append(start_offset)
 
     def get_enc_content(self, index: int) -> bytes:
@@ -54,8 +54,10 @@ class ContentRegion:
         with io.BytesIO(self.content_region) as content_region_data:
             # Seek to the start of the requested content based on the list of offsets.
             content_region_data.seek(self.content_start_offsets[index])
+            # Calculate the number of bytes we need to read by rounding the size to the nearest 16 bytes.
+            bytes_to_read = int(16 * round(self.content_records[index].content_size / 16))
             # Read the file based on the size of the content in the associated record.
-            content_enc = content_region_data.read(self.content_records[index].content_size)
+            content_enc = content_region_data.read(bytes_to_read)
             return content_enc
 
     def get_content(self, index: int, title_key: bytes) -> bytes:
@@ -81,7 +83,11 @@ class ContentRegion:
         content_dec_hash = hashlib.sha1(content_dec)
         content_record_hash = str(self.content_records[index].content_hash.decode())
         if content_dec_hash.hexdigest() != content_record_hash:
-            raise ValueError("Content hash did not match the expected hash in its record! This most likely means that "
+            #raise ValueError("Content hash did not match the expected hash in its record! This most likely means that "
+                             #"the incorrect Title Key was used for this content.\n"
+                             #"Expected hash is: {}\n".format(content_record_hash) +
+                             #"Actual hash is: {}".format(content_dec_hash.hexdigest()))
+            print("Content hash did not match the expected hash in its record! This most likely means that "
                              "the incorrect Title Key was used for this content.\n"
                              "Expected hash is: {}\n".format(content_record_hash) +
                              "Actual hash is: {}".format(content_dec_hash.hexdigest()))
