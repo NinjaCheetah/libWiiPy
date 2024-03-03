@@ -6,33 +6,8 @@
 import io
 import binascii
 import struct
-from dataclasses import dataclass
 from typing import List
-
-
-@dataclass
-class ContentRecord:
-    """
-    Creates a content record object that contains the details of a content contained in a title.
-
-    Attributes:
-    ----------
-    cid : int
-        ID of the content.
-    index : int
-        Index of the content in the list of contents.
-    content_type : int
-        The type of the content.
-    content_size : int
-        The size of the content.
-    content_hash
-        The SHA-1 hash of the decrypted content.
-    """
-    cid: int  # Content ID
-    index: int  # Index in the list of contents
-    content_type: int  # Normal: 0x0001, DLC: 0x4001, Shared: 0x8001
-    content_size: int
-    content_hash: bytes  # SHA1 hash content
+from .types import ContentRecord
 
 
 class TMD:
@@ -66,71 +41,71 @@ class TMD:
         self.boot_index: int
         self.content_records: List[ContentRecord] = []
         # Load data from TMD file
-        with io.BytesIO(self.tmd) as tmddata:
+        with io.BytesIO(self.tmd) as tmd_data:
             # ====================================================================================
             # Parses each of the keys contained in the TMD.
             # ====================================================================================
             # Signing certificate issuer
-            tmddata.seek(0x140)
-            self.issuer = tmddata.read(64)
+            tmd_data.seek(0x140)
+            self.issuer = tmd_data.read(64)
             # TMD version, seems to usually be 0, but I've seen references to other numbers
-            tmddata.seek(0x180)
-            self.version = int.from_bytes(tmddata.read(1))
+            tmd_data.seek(0x180)
+            self.version = int.from_bytes(tmd_data.read(1))
             # TODO: label
-            tmddata.seek(0x181)
-            self.ca_crl_version = tmddata.read(1)
+            tmd_data.seek(0x181)
+            self.ca_crl_version = tmd_data.read(1)
             # TODO: label
-            tmddata.seek(0x182)
-            self.signer_crl_version = tmddata.read(1)
+            tmd_data.seek(0x182)
+            self.signer_crl_version = tmd_data.read(1)
             # If this is a vWii title or not
-            tmddata.seek(0x183)
-            self.vwii = int.from_bytes(tmddata.read(1))
+            tmd_data.seek(0x183)
+            self.vwii = int.from_bytes(tmd_data.read(1))
             # TID of the IOS to use for the title, set to 0 if this title is the IOS, set to boot2 version if boot2
-            tmddata.seek(0x184)
-            ios_version_bin = tmddata.read(8)
+            tmd_data.seek(0x184)
+            ios_version_bin = tmd_data.read(8)
             ios_version_hex = binascii.hexlify(ios_version_bin)
             self.ios_tid = str(ios_version_hex.decode())
             # Get IOS version based on TID
             self.ios_version = int(self.ios_tid[-2:], 16)
             # Title ID of the title
-            tmddata.seek(0x18C)
-            title_id_bin = tmddata.read(8)
+            tmd_data.seek(0x18C)
+            title_id_bin = tmd_data.read(8)
             title_id_hex = binascii.hexlify(title_id_bin)
             self.title_id = str(title_id_hex.decode())
             # Type of content
-            tmddata.seek(0x194)
-            content_type_bin = tmddata.read(4)
+            tmd_data.seek(0x194)
+            content_type_bin = tmd_data.read(4)
             content_type_hex = binascii.hexlify(content_type_bin)
             self.content_type = str(content_type_hex.decode())
             # Publisher of the title
-            tmddata.seek(0x198)
-            self.group_id = tmddata.read(2)
+            tmd_data.seek(0x198)
+            self.group_id = tmd_data.read(2)
             # Region of the title, 0 = JAP, 1 = USA, 2 = EUR, 3 = NONE, 4 = KOR
-            tmddata.seek(0x19C)
-            region_hex = tmddata.read(2)
+            tmd_data.seek(0x19C)
+            region_hex = tmd_data.read(2)
             self.region = int.from_bytes(region_hex)
             # TODO: figure this one out
-            tmddata.seek(0x19E)
-            self.ratings = tmddata.read(16)
+            tmd_data.seek(0x19E)
+            self.ratings = tmd_data.read(16)
             # Access rights of the title; DVD-video access and AHBPROT
-            tmddata.seek(0x1D8)
-            self.access_rights = tmddata.read(4)
+            tmd_data.seek(0x1D8)
+            self.access_rights = tmd_data.read(4)
             # Calculate the version number by multiplying 0x1DC by 256 and adding 0x1DD
-            tmddata.seek(0x1DC)
-            title_version_high = int.from_bytes(tmddata.read(1)) * 256
-            tmddata.seek(0x1DD)
-            title_version_low = int.from_bytes(tmddata.read(1))
+            tmd_data.seek(0x1DC)
+            title_version_high = int.from_bytes(tmd_data.read(1)) * 256
+            tmd_data.seek(0x1DD)
+            title_version_low = int.from_bytes(tmd_data.read(1))
             self.title_version = title_version_high + title_version_low
             # The number of contents listed in the TMD
-            tmddata.seek(0x1DE)
-            self.num_contents = int.from_bytes(tmddata.read(2))
+            tmd_data.seek(0x1DE)
+            self.num_contents = int.from_bytes(tmd_data.read(2))
             # Content index in content list that contains the boot file
-            tmddata.seek(0x1E0)
-            self.boot_index = tmddata.read(2)
+            tmd_data.seek(0x1E0)
+            self.boot_index = tmd_data.read(2)
             # Get content records for the number of contents in num_contents.
             for content in range(0, self.num_contents):
-                tmddata.seek(0x1E4 + (36 * content))
-                content_record_hdr = struct.unpack(">LHH4x4s20s", tmddata.read(36))
+                tmd_data.seek(0x1E4 + (36 * content))
+                content_record_hdr = struct.unpack(">LHH4x4s20s", tmd_data.read(36))
                 self.content_records.append(
                     ContentRecord(int(content_record_hdr[0]), int(content_record_hdr[1]),
                                   int(content_record_hdr[2]), int.from_bytes(content_record_hdr[3]),
