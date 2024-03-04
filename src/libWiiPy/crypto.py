@@ -39,7 +39,7 @@ def decrypt_title_key(title_key_enc, common_key_index, title_id):
     return title_key
 
 
-def decrypt_content(content_enc, title_key, content_index):
+def decrypt_content(content_enc, title_key, content_index, content_length):
     """Gets the decrypted version of the encrypted content.
 
     Requires the index of the common key to use, and the Title ID of the title that the Title Key is for.
@@ -62,15 +62,16 @@ def decrypt_content(content_enc, title_key, content_index):
         content_index_bin += b'\x00'
     # In CBC mode, content must be padded out to a 16-byte boundary, so do that here, and then remove bytes added after.
     padded = False
-    if (len(content_enc) % 64) != 0:
+    if (len(content_enc) % 128) != 0:
         print("needs padding to 16 bytes")
-        content_enc = pad(content_enc, 64, "pkcs7")
+        content_enc = pad(content_enc, 128, "pkcs7")
         padded = True
     # Create a new AES object with the values provided, with the content's unique ID as the IV.
     aes = AES.new(title_key, AES.MODE_CBC, content_index_bin)
     # Decrypt the content using the AES object.
     content_dec = aes.decrypt(content_enc)
     # Remove padding bytes, if any were added.
-    #if padded:
-        #content_dec = unpad(content_dec, AES.block_size)
+    if padded:
+        while len(content_dec) > content_length:
+            content_dec = content_dec[:-1]
     return content_dec

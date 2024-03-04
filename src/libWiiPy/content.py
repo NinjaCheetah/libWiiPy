@@ -35,7 +35,7 @@ class ContentRegion:
             self.num_contents = len(self.content_records)
             # Calculate the offsets of each content in the content region.
             for content in self.content_records[:-1]:
-                start_offset = int(16 * round(content.content_size / 16)) + self.content_start_offsets[-1]
+                start_offset = int(64 * round(content.content_size / 64)) + self.content_start_offsets[-1]
                 self.content_start_offsets.append(start_offset)
 
     def get_enc_content(self, index: int) -> bytes:
@@ -55,7 +55,7 @@ class ContentRegion:
             # Seek to the start of the requested content based on the list of offsets.
             content_region_data.seek(self.content_start_offsets[index])
             # Calculate the number of bytes we need to read by rounding the size to the nearest 16 bytes.
-            bytes_to_read = int(16 * round(self.content_records[index].content_size / 16))
+            bytes_to_read = int(64 * round(self.content_records[index].content_size / 64))
             # Read the file based on the size of the content in the associated record.
             content_enc = content_region_data.read(bytes_to_read)
             return content_enc
@@ -77,7 +77,7 @@ class ContentRegion:
         """
         # Load the encrypted content at the specified index and then decrypt it with the Title Key.
         content_enc = self.get_enc_content(index)
-        content_dec = decrypt_content(content_enc, title_key, self.content_records[index].index)
+        content_dec = decrypt_content(content_enc, title_key, self.content_records[index].index, self.content_records[index].content_size)
         # Hash the decrypted content and ensure that the hash matches the one in its Content Record.
         # If it does not, then something has gone wrong in the decryption, and an error will be thrown.
         content_dec_hash = hashlib.sha1(content_dec)
