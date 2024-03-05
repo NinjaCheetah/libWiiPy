@@ -1,7 +1,7 @@
 # "ticket.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
-# See https://wiibrew.org/wiki/Ticket for details about the TMD format
+# See https://wiibrew.org/wiki/Ticket for details about the ticket format
 
 import io
 from .crypto import decrypt_title_key
@@ -29,7 +29,13 @@ class TitleLimit:
 
 
 class Ticket:
-    """Creates a Ticket object to parse a Ticket file to retrieve the Title Key needed to decrypt it."""
+    """Creates a Ticket object to parse a Ticket file to retrieve the Title Key needed to decrypt it.
+
+    Attributes:
+    ----------
+    ticket : bytes
+        A bytes object containing the contents of a ticket file.
+    """
 
     def __init__(self, ticket):
         self.ticket = ticket
@@ -53,63 +59,63 @@ class Ticket:
         self.title_limits_list: List[TitleLimit] = []  # List of play limits applied to the title.
         # v1 ticket data
         # TODO: Figure out v1 ticket stuff
-        with io.BytesIO(self.ticket) as ticketdata:
+        with io.BytesIO(self.ticket) as ticket_data:
             # ====================================================================================
             # Parses each of the keys contained in the Ticket.
             # ====================================================================================
             # Signature type
-            ticketdata.seek(0x0)
-            self.signature_type = ticketdata.read(4)
+            ticket_data.seek(0x0)
+            self.signature_type = ticket_data.read(4)
             # Signature data
-            ticketdata.seek(0x04)
-            self.signature = ticketdata.read(256)
+            ticket_data.seek(0x04)
+            self.signature = ticket_data.read(256)
             # Signature issuer
-            ticketdata.seek(0x140)
-            self.signature_issuer = str(ticketdata.read(64).decode())
+            ticket_data.seek(0x140)
+            self.signature_issuer = str(ticket_data.read(64).decode())
             # ECDH data
-            ticketdata.seek(0x180)
-            self.ecdh_data = ticketdata.read(60)
+            ticket_data.seek(0x180)
+            self.ecdh_data = ticket_data.read(60)
             # Ticket version
-            ticketdata.seek(0x1BC)
-            self.ticket_version = int.from_bytes(ticketdata.read(1))
+            ticket_data.seek(0x1BC)
+            self.ticket_version = int.from_bytes(ticket_data.read(1))
             # Title Key (Encrypted by a common key)
-            ticketdata.seek(0x1BF)
-            self.title_key_enc = ticketdata.read(16)
+            ticket_data.seek(0x1BF)
+            self.title_key_enc = ticket_data.read(16)
             # Ticket ID
-            ticketdata.seek(0x1D0)
-            self.ticket_id = ticketdata.read(8)
+            ticket_data.seek(0x1D0)
+            self.ticket_id = ticket_data.read(8)
             # Console ID
-            ticketdata.seek(0x1D8)
-            self.console_id = int.from_bytes(ticketdata.read(4))
+            ticket_data.seek(0x1D8)
+            self.console_id = int.from_bytes(ticket_data.read(4))
             # Title ID
-            ticketdata.seek(0x1DC)
-            self.title_id = ticketdata.read(8)
+            ticket_data.seek(0x1DC)
+            self.title_id = ticket_data.read(8)
             # Title version
-            ticketdata.seek(0x1E6)
-            title_version_high = int.from_bytes(ticketdata.read(1)) * 256
-            ticketdata.seek(0x1E7)
-            title_version_low = int.from_bytes(ticketdata.read(1))
+            ticket_data.seek(0x1E6)
+            title_version_high = int.from_bytes(ticket_data.read(1)) * 256
+            ticket_data.seek(0x1E7)
+            title_version_low = int.from_bytes(ticket_data.read(1))
             self.title_version = title_version_high + title_version_low
             # Permitted titles mask
-            ticketdata.seek(0x1E8)
-            self.permitted_titles = ticketdata.read(4)
+            ticket_data.seek(0x1E8)
+            self.permitted_titles = ticket_data.read(4)
             # Permit mask
-            ticketdata.seek(0x1EC)
-            self.permit_mask = ticketdata.read(4)
+            ticket_data.seek(0x1EC)
+            self.permit_mask = ticket_data.read(4)
             # Whether title export with a PRNG key is allowed
-            ticketdata.seek(0x1F0)
-            self.title_export_allowed = int.from_bytes(ticketdata.read(1))
+            ticket_data.seek(0x1F0)
+            self.title_export_allowed = int.from_bytes(ticket_data.read(1))
             # Common key index
-            ticketdata.seek(0x1F1)
-            self.common_key_index = int.from_bytes(ticketdata.read(1))
+            ticket_data.seek(0x1F1)
+            self.common_key_index = int.from_bytes(ticket_data.read(1))
             # Content access permissions
-            ticketdata.seek(0x222)
-            self.content_access_permissions = ticketdata.read(64)
+            ticket_data.seek(0x222)
+            self.content_access_permissions = ticket_data.read(64)
             # Content limits
-            ticketdata.seek(0x264)
+            ticket_data.seek(0x264)
             for limit in range(0, 8):
-                limit_type = int.from_bytes(ticketdata.read(4))
-                limit_value = int.from_bytes(ticketdata.read(4))
+                limit_type = int.from_bytes(ticket_data.read(4))
+                limit_value = int.from_bytes(ticket_data.read(4))
                 self.title_limits_list.append(TitleLimit(limit_type, limit_value))
 
     def get_signature(self):

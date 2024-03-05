@@ -37,36 +37,36 @@ class WAD:
         self.wad_content_offset: int
         self.wad_meta_offset: int
         # Load header data from WAD stream
-        with io.BytesIO(self.wad) as waddata:
+        with io.BytesIO(self.wad) as wad_data:
             # ====================================================================================
             # Get the sizes of each data region contained within the WAD.
             # ====================================================================================
             # Header length, which will always be 64 bytes, as it is padded out if it is shorter.
             self.wad_hdr_size = 64
             # WAD type, denoting whether this WAD contains boot2 ("ib"), or anything else ("Is").
-            waddata.seek(0x04)
-            self.wad_type = str(waddata.read(2).decode())
+            wad_data.seek(0x04)
+            self.wad_type = str(wad_data.read(2).decode())
             # WAD version, this is always 0.
-            waddata.seek(0x06)
-            self.wad_version = waddata.read(2)
+            wad_data.seek(0x06)
+            self.wad_version = wad_data.read(2)
             # WAD cert size.
-            waddata.seek(0x08)
-            self.wad_cert_size = int(binascii.hexlify(waddata.read(4)), 16)
+            wad_data.seek(0x08)
+            self.wad_cert_size = int(binascii.hexlify(wad_data.read(4)), 16)
             # WAD crl size.
-            waddata.seek(0x0c)
-            self.wad_crl_size = int(binascii.hexlify(waddata.read(4)), 16)
+            wad_data.seek(0x0c)
+            self.wad_crl_size = int(binascii.hexlify(wad_data.read(4)), 16)
             # WAD ticket size.
-            waddata.seek(0x10)
-            self.wad_tik_size = int(binascii.hexlify(waddata.read(4)), 16)
+            wad_data.seek(0x10)
+            self.wad_tik_size = int(binascii.hexlify(wad_data.read(4)), 16)
             # WAD TMD size.
-            waddata.seek(0x14)
-            self.wad_tmd_size = int(binascii.hexlify(waddata.read(4)), 16)
+            wad_data.seek(0x14)
+            self.wad_tmd_size = int(binascii.hexlify(wad_data.read(4)), 16)
             # WAD content size.
-            waddata.seek(0x18)
-            self.wad_content_size = int(binascii.hexlify(waddata.read(4)), 16)
+            wad_data.seek(0x18)
+            self.wad_content_size = int(binascii.hexlify(wad_data.read(4)), 16)
             # Publisher of the title contained in the WAD.
-            waddata.seek(0x1c)
-            self.wad_meta_size = int(binascii.hexlify(waddata.read(4)), 16)
+            wad_data.seek(0x1c)
+            self.wad_meta_size = int(binascii.hexlify(wad_data.read(4)), 16)
             # ====================================================================================
             # Calculate file offsets from sizes. Every section of the WAD is padded out to a multiple of 0x40.
             # ====================================================================================
