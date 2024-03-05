@@ -34,8 +34,12 @@ class ContentRegion:
             self.content_region_size = sys.getsizeof(content_region_data)
             self.num_contents = len(self.content_records)
             # Calculate the offsets of each content in the content region.
+            # Content is aligned to 16 bytes, however a new content won't start until the next multiple of 64 bytes.
+            # Because of this, we need to add bytes to the next 64 byte offset if the previous content wasn't that long.
             for content in self.content_records[:-1]:
-                start_offset = int(64 * round(content.content_size / 64)) + self.content_start_offsets[-1]
+                start_offset = content.content_size + self.content_start_offsets[-1]
+                if (content.content_size % 64) != 0:
+                    start_offset += 64 - (content.content_size % 64)
                 self.content_start_offsets.append(start_offset)
 
     def get_enc_content(self, index: int) -> bytes:
@@ -54,8 +58,10 @@ class ContentRegion:
         with io.BytesIO(self.content_region) as content_region_data:
             # Seek to the start of the requested content based on the list of offsets.
             content_region_data.seek(self.content_start_offsets[index])
-            # Calculate the number of bytes we need to read by rounding the size to the nearest 16 bytes.
-            bytes_to_read = int(64 * round(self.content_records[index].content_size / 64))
+            # Calculate the number of bytes we need to read by adding bytes up the nearest multiple of 16 if needed.
+            bytes_to_read = self.content_records[index].content_size
+            if (bytes_to_read % 16) != 0:
+                bytes_to_read += 16 - (bytes_to_read % 16)
             # Read the file based on the size of the content in the associated record.
             content_enc = content_region_data.read(bytes_to_read)
             return content_enc
@@ -77,18 +83,16 @@ class ContentRegion:
         """
         # Load the encrypted content at the specified index and then decrypt it with the Title Key.
         content_enc = self.get_enc_content(index)
-        content_dec = decrypt_content(content_enc, title_key, self.content_records[index].index, self.content_records[index].content_size)
+        content_dec = decrypt_content(content_enc, title_key, self.content_records[index].index,
+                                      self.content_records[index].content_size)
         # Hash the decrypted content and ensure that the hash matches the one in its Content Record.
         # If it does not, then something has gone wrong in the decryption, and an error will be thrown.
         content_dec_hash = hashlib.sha1(content_dec)
         content_record_hash = str(self.content_records[index].content_hash.decode())
+        # Compare the hash and throw a ValueError if the hash doesn't match.
         if content_dec_hash.hexdigest() != content_record_hash:
-            #raise ValueError("Content hash did not match the expected hash in its record! This most likely means that "
-                             #"the incorrect Title Key was used for this content.\n"
-                             #"Expected hash is: {}\n".format(content_record_hash) +
-                             #"Actual hash is: {}".format(content_dec_hash.hexdigest()))
-            print("Content hash did not match the expected hash in its record! This most likely means that "
-                             "the incorrect Title Key was used for this content.\n"
+            raise ValueError("Content hash did not match the expected hash in its record! The incorrect Title Key may"
+                             "have been used!.\n"
                              "Expected hash is: {}\n".format(content_record_hash) +
                              "Actual hash is: {}".format(content_dec_hash.hexdigest()))
         return content_dec

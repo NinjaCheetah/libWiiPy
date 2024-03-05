@@ -1,7 +1,7 @@
 # "ticket.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
-# See https://wiibrew.org/wiki/Ticket for details about the TMD format
+# See https://wiibrew.org/wiki/Ticket for details about the ticket format
 
 import io
 from .crypto import decrypt_title_key

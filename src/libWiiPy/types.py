@@ -22,8 +22,8 @@ class ContentRecord:
     content_hash
         The SHA-1 hash of the decrypted content.
     """
-    content_id: int  # Unique ID for the current content
-    index: int  # Index in the list of contents
-    content_type: int  # Type of content, possible values of: 0x0001: Normal, 0x4001: DLC, 0x8001: Shared
-    content_size: int  # Size of the current content
-    content_hash: bytes  # SHA1 hash of the current content
+    content_id: int  # The unique ID of the content.
+    index: int  # The index of this content in the content record.
+    content_type: int  # Type of content, possible values of: 0x0001: Normal, 0x4001: DLC, 0x8001: Shared.
+    content_size: int  # Size of the content when decrypted.
+    content_hash: bytes  # SHA-1 hash of the content when decrypted.
