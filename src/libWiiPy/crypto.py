@@ -63,7 +63,6 @@ def decrypt_content(content_enc, title_key, content_index, content_length) -> by
         content_index_bin += b'\x00'
     # Align content to 64 bytes to ensure that all the data is being decrypted, and so it works with AES encryption.
     if (len(content_enc) % 64) != 0:
-        print("needs padding to 64 bytes")
         content_enc = content_enc + (b'\x00' * (64 - (len(content_enc) % 64)))
     # Create a new AES object with the values provided, with the content's unique ID as the IV.
     aes = AES.new(title_key, AES.MODE_CBC, content_index_bin)
