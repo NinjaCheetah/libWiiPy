@@ -9,7 +9,7 @@ class ContentRecord:
     """
     Creates a content record object that contains the details of a content contained in a title.
 
-    Attributes:
+    Attributes
     ----------
     content_id : int
         ID of the content.

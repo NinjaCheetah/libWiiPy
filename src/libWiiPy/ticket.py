@@ -13,7 +13,7 @@ from typing import List
 class TitleLimit:
     """Creates a TitleLimit object that contains the type of restriction and the limit.
 
-    Attributes:
+    Attributes
     ----------
     limit_type : int
         The type of play limit applied.
@@ -31,12 +31,28 @@ class TitleLimit:
 class Ticket:
     """Creates a Ticket object to parse a Ticket file to retrieve the Title Key needed to decrypt it.
 
-    Attributes:
+    Parameters
     ----------
     ticket : bytes
         A bytes object containing the contents of a ticket file.
-    """
 
+    Attributes
+    ----------
+    signature : bytes
+        The signature applied to the ticket.
+    ticket_version : int
+        The version of the ticket.
+    title_key_enc : bytes
+        The Title Key contained in the ticket, in encrypted form.
+    ticket_id : bytes
+        The unique ID of this ticket, used for console-specific title installations.
+    console_id : int
+        The unique ID of the console this ticket was designed for, if this is a console-specific ticket.
+    title_version : int
+        The version of the title this ticket was designed for.
+    common_key_index : int
+        The index of the common key required to decrypt this ticket's Title Key.
+    """
     def __init__(self, ticket):
         self.ticket = ticket
         # Signature blob header
@@ -45,7 +61,7 @@ class Ticket:
         # v0 ticket data
         self.signature_issuer: str  # Who issued the signature for the ticket
         self.ecdh_data: bytes  # Involved in created one-time keys for console-specific title installs.
-        self.ticket_version: int  # The version of the ticket format.
+        self.ticket_version: int  # The version of the current ticket file.
         self.title_key_enc: bytes  # The title key of the ticket's respective title, encrypted by a common key.
         self.ticket_id: bytes  # Used as the IV when decrypting the title key for console-specific title installs.
         self.console_id: int  # ID of the console that the ticket was issued for.
@@ -118,56 +134,6 @@ class Ticket:
                 limit_value = int.from_bytes(ticket_data.read(4))
                 self.title_limits_list.append(TitleLimit(limit_type, limit_value))
 
-    def get_signature(self):
-        """Gets the signature of the ticket.
-
-        Returns
-        -------
-        bytes
-            The signature.
-        """
-        return self.signature
-
-    def get_ticket_version(self):
-        """Gets the version of the ticket.
-
-        Returns
-        -------
-        int
-            The version.
-        """
-        return self.ticket_version
-
-    def get_title_key_enc(self):
-        """Gets the Title Key contained in the ticket, in encrypted form.
-
-        Returns
-        -------
-        bytes
-            The encrypted Title Key.
-        """
-        return self.title_key_enc
-
-    def get_ticket_id(self):
-        """Gets the ID of the ticket.
-
-        Returns
-        -------
-        bytes
-            The ID of the ticket.
-        """
-        return self.ticket_id
-
-    def get_console_id(self):
-        """Gets the ID of the console this ticket is designed for, if the ticket is console-specific.
-
-        Returns
-        -------
-        bytes
-            The ID of the console.
-        """
-        return self.console_id
-
     def get_title_id(self):
         """Gets the Title ID of the ticket's associated title.
 
@@ -178,30 +144,6 @@ class Ticket:
         """
         title_id_str = str(self.title_id.decode())
         return title_id_str
-
-    def get_title_version(self):
-        """Gets the version of the ticket's associated title that this ticket is designed for.
-
-        Returns
-        -------
-        int
-            The version of the title.
-        """
-        return self.title_version
-
-    def get_common_key_index(self):
-        """Gets the index of the common key used to encrypt the Title Key contained in the ticket.
-
-        Returns
-        -------
-        int
-            The index of the common key required.
-
-        See Also
-        --------
-        commonkeys.get_common_key
-        """
-        return self.common_key_index
 
     def get_common_key_type(self):
         """Gets the name of the common key used to encrypt the Title Key contained in the ticket.
@@ -233,4 +175,3 @@ class Ticket:
         """
         title_key = decrypt_title_key(self.title_key_enc, self.common_key_index, self.title_id)
         return title_key
-

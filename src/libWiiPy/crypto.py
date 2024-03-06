@@ -4,7 +4,6 @@
 import struct
 from .commonkeys import get_common_key
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad, unpad
 
 
 def decrypt_title_key(title_key_enc, common_key_index, title_id) -> bytes:

@@ -14,17 +14,32 @@ class TMD:
     """
     Creates a TMD object to parse a TMD file to retrieve information about a title.
 
-    Attributes:
+    Parameters
     ----------
     tmd : bytes
         A bytes object containing the contents of a TMD file.
+
+    Attributes
+    ----------
+    title_id : str
+        The title ID of the title listed in the TMD.
+    title_version : int
+        The version of the title listed in the TMD.
+    tmd_version : int
+        The version of the TMD.
+    ios_tid : str
+        The title ID of the IOS the title runs on.
+    ios_version : int
+        The IOS version the title runs on.
+    num_contents : int
+        The number of contents listed in the TMD.
     """
     def __init__(self, tmd):
         self.tmd = tmd
         self.sig_type: int
         self.sig: bytearray
         self.issuer: bytearray  # Follows the format "Root-CA%08x-CP%08x"
-        self.version: int  # This seems to always be 0 no matter what?
+        self.tmd_version: int  # This seems to always be 0 no matter what?
         self.ca_crl_version: int
         self.signer_crl_version: int
         self.vwii: int  # Whether the title is for the vWii. 0 = No, 1 = Yes
@@ -50,7 +65,7 @@ class TMD:
             self.issuer = tmd_data.read(64)
             # TMD version, seems to usually be 0, but I've seen references to other numbers
             tmd_data.seek(0x180)
-            self.version = int.from_bytes(tmd_data.read(1))
+            self.tmd_version = int.from_bytes(tmd_data.read(1))
             # TODO: label
             tmd_data.seek(0x181)
             self.ca_crl_version = tmd_data.read(1)
@@ -111,26 +126,6 @@ class TMD:
                                   int(content_record_hdr[2]), int.from_bytes(content_record_hdr[3]),
                                   binascii.hexlify(content_record_hdr[4])))
 
-    def get_title_id(self):
-        """Gets the TID of the TMD's associated title.
-
-        Returns
-        -------
-        str
-            The Title ID.
-        """
-        return self.title_id
-
-    def get_title_version(self):
-        """Gets the version of the TMD's associated title.
-
-        Returns
-        -------
-        int
-            The version of the title.
-        """
-        return self.title_version
-
     def get_title_region(self):
         """Gets the region of the TMD's associated title.
 
@@ -166,36 +161,6 @@ class TMD:
             return True
         else:
             return False
-
-    def get_tmd_version(self):
-        """Gets the version of the TMD.
-
-        Returns
-        -------
-        int
-            The version of the TMD.
-        """
-        return self.version
-
-    def get_required_ios_tid(self):
-        """Gets the TID of the required IOS for the title.
-
-        Returns
-        -------
-        str
-            The Title ID of the required IOS version.
-        """
-        return self.ios_tid
-
-    def get_required_ios(self):
-        """Gets the required IOS version for the title.
-
-        Returns
-        -------
-        int
-            The required IOS version.
-        """
-        return self.ios_version
 
     def get_title_type(self):
         """Gets the type of the TMD's associated title.
@@ -251,16 +216,6 @@ class TMD:
                 return "Shared"
             case _:
                 return "Unknown"
-
-    def get_num_contents(self):
-        """Gets the number of contents listed in the TMD.
-
-        Returns
-        -------
-        int
-            The number of contents.
-        """
-        return self.num_contents
 
     def get_content_record(self, record):
         """Gets the content record at the specified index.

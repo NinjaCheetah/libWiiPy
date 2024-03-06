@@ -14,7 +14,7 @@ from .crypto import decrypt_content
 class ContentRegion:
     """Creates a ContentRegion object to parse the continuous content region of a WAD.
 
-    Attributes:
+    Parameters
     ----------
     content_region : bytes
         A bytes object containing the content region of a WAD file.

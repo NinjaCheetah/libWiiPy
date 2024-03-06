@@ -11,7 +11,7 @@ class WAD:
     """
     Creates a WAD object to parse the header of a WAD file and retrieve the data contained in it.
 
-    Attributes:
+    Parameters
     ----------
     wad : bytes
         A bytes object containing the contents of a WAD file.
@@ -76,7 +76,7 @@ class WAD:
             self.wad_tik_offset = int(64 * round((self.wad_crl_offset + self.wad_crl_size) / 64))
             self.wad_tmd_offset = int(64 * round((self.wad_tik_offset + self.wad_tik_size) / 64))
             self.wad_content_offset = int(64 * round((self.wad_tmd_offset + self.wad_tmd_size) / 64))
-            # meta is also never used, but Nintendo's tools calculate it so we should too.
+            # meta is also never used, but Nintendo's tools calculate it, so we should too.
             self.wad_meta_offset = int(64 * round((self.wad_content_offset + self.wad_content_size) / 64))
 
     def get_cert_region(self):
@@ -137,7 +137,19 @@ class WAD:
         int
             The size of the content data in the WAD.
         """
-        return self.wad_content_offset, self.wad_tmd_size
+        return self.wad_content_offset, self.wad_content_size
+
+    def get_meta_region(self):
+        """Gets the offset and size of the meta region of the WAD, which is typically unused.
+
+        Returns
+        -------
+        int
+            The offset of the meta region in the WAD.
+        int
+            The size of the meta region in the WAD.
+        """
+        return self.wad_meta_offset, self.wad_meta_size
 
     def get_wad_type(self):
         """Gets the type of the WAD.
@@ -157,9 +169,9 @@ class WAD:
         bytes
             The certificate data.
         """
-        waddata = io.BytesIO(self.wad)
-        waddata.seek(self.wad_cert_offset)
-        cert_data = waddata.read(self.wad_cert_size)
+        wad_data = io.BytesIO(self.wad)
+        wad_data.seek(self.wad_cert_offset)
+        cert_data = wad_data.read(self.wad_cert_size)
         return cert_data
 
     def get_crl_data(self):
@@ -170,9 +182,9 @@ class WAD:
         bytes
             The crl data.
         """
-        waddata = io.BytesIO(self.wad)
-        waddata.seek(self.wad_crl_offset)
-        crl_data = waddata.read(self.wad_crl_size)
+        wad_data = io.BytesIO(self.wad)
+        wad_data.seek(self.wad_crl_offset)
+        crl_data = wad_data.read(self.wad_crl_size)
         return crl_data
 
     def get_ticket_data(self):
@@ -183,9 +195,9 @@ class WAD:
         bytes
             The ticket data.
         """
-        waddata = io.BytesIO(self.wad)
-        waddata.seek(self.wad_tik_offset)
-        ticket_data = waddata.read(self.wad_tik_size)
+        wad_data = io.BytesIO(self.wad)
+        wad_data.seek(self.wad_tik_offset)
+        ticket_data = wad_data.read(self.wad_tik_size)
         return ticket_data
 
     def get_tmd_data(self):
@@ -196,9 +208,9 @@ class WAD:
         bytes
             The TMD data.
         """
-        waddata = io.BytesIO(self.wad)
-        waddata.seek(self.wad_tmd_offset)
-        tmd_data = waddata.read(self.wad_tmd_size)
+        wad_data = io.BytesIO(self.wad)
+        wad_data.seek(self.wad_tmd_offset)
+        tmd_data = wad_data.read(self.wad_tmd_size)
         return tmd_data
 
     def get_content_data(self):
@@ -209,7 +221,20 @@ class WAD:
         bytes
             The content data.
         """
-        waddata = io.BytesIO(self.wad)
-        waddata.seek(self.wad_content_offset)
-        content_data = waddata.read(self.wad_content_size)
+        wad_data = io.BytesIO(self.wad)
+        wad_data.seek(self.wad_content_offset)
+        content_data = wad_data.read(self.wad_content_size)
         return content_data
+
+    def get_meta_data(self):
+        """Gets the meta region of the WAD, which is typically unused.
+
+        Returns
+        -------
+        bytes
+            The meta region.
+        """
+        wad_data = io.BytesIO(self.wad)
+        wad_data.seek(self.wad_meta_offset)
+        meta_data = wad_data.read(self.wad_meta_size)
+        return meta_data
