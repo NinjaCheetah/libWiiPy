@@ -1,3 +1,4 @@
+![libWiiPy](https://github.com/NinjaCheetah/libWiiPy/assets/58050615/80093c68-b86e-4b96-87b7-db3855382ca8)
 # libWiiPy
 libWiiPy is a modern Python 3 library for interacting with and editing files from the Wii. It aims to be simple to use, well maintained, and offer as many features as reasonably possible in one library, so that a newly-written Python program could reasonably do 100% of its Wii-related work with just one library. It also aims to be fully cross-platform, so that any tools written with it can also be cross-platform.
 
@@ -48,3 +49,7 @@ Thank you to all of the contributors to the documentation on the Wiibrew pages t
 - [Title metadata](https://wiibrew.org/wiki/Title_metadata), for the documentation on how a TMD is structured
 - [WAD files](https://wiibrew.org/wiki/WAD_files), for the documentation on how a WAD is structured
 - [IOS history](https://wiibrew.org/wiki/IOS_history), for the documentation on IOS TIDs and how IOS is versioned
+
+### One additional special thanks to [@DamiDoop](https://github.com/DamiDoop)!
+She made the very cool banner you can see at the top of this README, and has also helped greatly with my sanity throughout debugging this library.
+
