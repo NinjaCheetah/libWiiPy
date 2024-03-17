@@ -93,27 +93,21 @@ def encrypt_content(content_dec, title_key, content_index) -> bytes:
     Returns
     -------
     bytes
-        The decrypted content.
+        The encrypted content.
     """
     # Generate the IV from the Content Index of the content to be decrypted.
     content_index_bin = struct.pack('>H', content_index)
     while len(content_index_bin) < 16:
         content_index_bin += b'\x00'
+    # Calculate the intended size of the encrypted content.
+    enc_size = len(content_dec) + (16 - (len(content_dec) % 16))
     # Align content to 64 bytes to ensure that all the data is being encrypted, and so it works with AES encryption.
-    bytes_added = None
     if (len(content_dec) % 64) != 0:
-        bytes_added = len(b'\x00' * (64 - (len(content_dec) % 64)))
-        print(bytes_added)
         content_dec = content_dec + (b'\x00' * (64 - (len(content_dec) % 64)))
     # Create a new AES object with the values provided, with the content's unique ID as the IV.
     aes = AES.new(title_key, AES.MODE_CBC, content_index_bin)
     # Encrypt the content using the AES object.
     content_enc = aes.encrypt(content_dec)
-    # Remove any bytes added.
-    if bytes_added:
-        while bytes_added:
-            content_enc = content_enc[:-1]
-            bytes_added -= 1
-            print("removing " + str(bytes_added))
-    print(str(len(content_enc)))
+    # Trim down the encrypted content.
+    content_enc = content_enc[:enc_size]
     return content_enc
