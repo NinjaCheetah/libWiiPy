@@ -5,6 +5,7 @@
 
 import io
 import binascii
+from .shared import align_value
 
 
 class WAD:
@@ -64,7 +65,7 @@ class WAD:
             # WAD content size.
             wad_data.seek(0x18)
             self.wad_content_size = int(binascii.hexlify(wad_data.read(4)), 16)
-            # Publisher of the title contained in the WAD.
+            # Time/build stamp for the title contained in the WAD.
             wad_data.seek(0x1c)
             self.wad_meta_size = int(binascii.hexlify(wad_data.read(4)), 16)
             # ====================================================================================
@@ -72,12 +73,12 @@ class WAD:
             # ====================================================================================
             self.wad_cert_offset = self.wad_hdr_size
             # crl isn't ever used, however an entry for its size exists in the header, so its calculated just in case.
-            self.wad_crl_offset = int(64 * round((self.wad_cert_offset + self.wad_cert_size) / 64))
-            self.wad_tik_offset = int(64 * round((self.wad_crl_offset + self.wad_crl_size) / 64))
-            self.wad_tmd_offset = int(64 * round((self.wad_tik_offset + self.wad_tik_size) / 64))
-            self.wad_content_offset = int(64 * round((self.wad_tmd_offset + self.wad_tmd_size) / 64))
-            # meta is also never used, but Nintendo's tools calculate it, so we should too.
-            self.wad_meta_offset = int(64 * round((self.wad_content_offset + self.wad_content_size) / 64))
+            self.wad_crl_offset = align_value(self.wad_cert_offset + self.wad_cert_size)
+            self.wad_tik_offset = align_value(self.wad_crl_offset + self.wad_crl_size)
+            self.wad_tmd_offset = align_value(self.wad_tik_offset + self.wad_tik_size)
+            # meta isn't guaranteed to be used, but some older SDK titles use it, and not reading it breaks things.
+            self.wad_meta_offset = align_value(self.wad_tmd_offset + self.wad_tmd_size)
+            self.wad_content_offset = align_value(self.wad_meta_offset + self.wad_meta_size)
 
     def get_cert_region(self):
         """Gets the offset and size of the certificate data.
