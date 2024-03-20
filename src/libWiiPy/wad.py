@@ -39,6 +39,15 @@ class WAD:
         self.wad_meta_offset: int
         # Load header data from WAD stream
         with io.BytesIO(self.wad) as wad_data:
+            # Read the first 8 bytes of the file to ensure that it's a WAD. This will currently reject boot2 WADs, but
+            # this tool cannot handle them correctly right now anyway.
+            wad_data.seek(0x0)
+            wad_magic_bin = wad_data.read(8)
+            wad_magic_hex = binascii.hexlify(wad_magic_bin)
+            wad_magic = str(wad_magic_hex.decode())
+            if wad_magic != "0000002049730000":
+                raise TypeError("This does not appear to be a valid WAD file, or is a boot2 WAD, which is not currently"
+                                "supported by this library.")
             # ====================================================================================
             # Get the sizes of each data region contained within the WAD.
             # ====================================================================================
