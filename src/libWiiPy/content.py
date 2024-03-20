@@ -42,8 +42,8 @@ class ContentRegion:
                     start_offset += 64 - (content.content_size % 64)
                 self.content_start_offsets.append(start_offset)
 
-    def get_enc_content(self, index: int) -> bytes:
-        """Gets an individual content from the content region based on the provided content record, in encrypted form.
+    def get_enc_content_by_index(self, index: int) -> bytes:
+        """Gets an individual content from the content region based on the provided index, in encrypted form.
 
         Parameters
         ----------
@@ -66,8 +66,22 @@ class ContentRegion:
             content_enc = content_region_data.read(bytes_to_read)
             return content_enc
 
-    def get_content(self, index: int, title_key: bytes) -> bytes:
-        """Gets an individual content from the content region based on the provided content record, in decrypted form.
+    def get_enc_contents(self) -> List[bytes]:
+        """Gets a list of all encrypted contents from the content region.
+
+        Returns
+        -------
+        List[bytes]
+            A list containing all encrypted contents.
+        """
+        enc_contents: List[bytes] = []
+        # Iterate over every content and add it to a list, then return it.
+        for content in range(self.num_contents):
+            enc_contents.append(self.get_enc_content_by_index(content))
+        return enc_contents
+
+    def get_content_by_index(self, index: int, title_key: bytes) -> bytes:
+        """Gets an individual content from the content region based on the provided index, in decrypted form.
 
         Parameters
         ----------
@@ -82,7 +96,7 @@ class ContentRegion:
             The decrypted content listed in the content record.
         """
         # Load the encrypted content at the specified index and then decrypt it with the Title Key.
-        content_enc = self.get_enc_content(index)
+        content_enc = self.get_enc_content_by_index(index)
         content_dec = decrypt_content(content_enc, title_key, self.content_records[index].index,
                                       self.content_records[index].content_size)
         # Hash the decrypted content and ensure that the hash matches the one in its Content Record.
@@ -97,3 +111,22 @@ class ContentRegion:
             #                 "Actual hash is: {}".format(content_dec_hash.hexdigest()))
             print("mismatch idiot")
         return content_dec
+
+    def get_contents(self, title_key: bytes) -> List[bytes]:
+        """Gets a list of all contents from the content region, in decrypted form.
+
+        Parameters
+        ----------
+        title_key : bytes
+            The Title Key for the title the content is from.
+
+        Returns
+        -------
+        List[bytes]
+            A list containing all decrypted contents.
+        """
+        dec_contents: List[bytes] = []
+        # Iterate over every content, get the decrypted version of it, then add it to a list and return it.
+        for content in range(self.num_contents):
+            dec_contents.append(self.get_content_by_index(content, title_key))
+        return dec_contents
