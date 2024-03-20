@@ -47,7 +47,7 @@ class WAD:
             wad_magic = str(wad_magic_hex.decode())
             if wad_magic != "0000002049730000":
                 raise TypeError("This does not appear to be a valid WAD file, or is a boot2 WAD, which is not currently"
-                                "supported by this library.")
+                                " supported by this library.")
             # ====================================================================================
             # Get the sizes of each data region contained within the WAD.
             # ====================================================================================

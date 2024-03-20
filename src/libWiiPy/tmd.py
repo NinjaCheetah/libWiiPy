@@ -235,3 +235,15 @@ class TMD:
         else:
             raise IndexError("Invalid content record! TMD lists '" + str(self.num_contents - 1) +
                              "' contents but index was '" + str(record) + "'!")
+
+    def set_title_id(self, title_id):
+        """Sets the Title ID of the title in the ticket.
+
+        Parameters
+        ----------
+        title_id : str
+            The new Title ID of the title.
+        """
+        if len(title_id) != 16:
+            raise ValueError("Invalid Title ID! Title IDs must be 8 bytes long.")
+        self.title_id = title_id

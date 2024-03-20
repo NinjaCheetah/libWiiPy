@@ -4,6 +4,7 @@
 # See https://wiibrew.org/wiki/Ticket for details about the ticket format
 
 import io
+import binascii
 from .crypto import decrypt_title_key
 from dataclasses import dataclass
 from typing import List
@@ -66,6 +67,7 @@ class Ticket:
         self.ticket_id: bytes  # Used as the IV when decrypting the title key for console-specific title installs.
         self.console_id: int  # ID of the console that the ticket was issued for.
         self.title_id: bytes  # TID/IV used for AES-CBC encryption.
+        self.title_id_str: str  # TID in string form for comparing against the TMD.
         self.title_version: int  # Version of the ticket's associated title.
         self.permitted_titles: bytes  # Permitted titles mask
         self.permit_mask: bytes  # "Permit mask. The current disc title is ANDed with the inverse of this mask to see if the result matches the Permitted Titles Mask."
@@ -106,6 +108,9 @@ class Ticket:
             # Title ID
             ticket_data.seek(0x1DC)
             self.title_id = ticket_data.read(8)
+            # Title ID (as a string)
+            title_id_hex = binascii.hexlify(self.title_id)
+            self.title_id_str = str(title_id_hex.decode())
             # Title version
             ticket_data.seek(0x1E6)
             title_version_high = int.from_bytes(ticket_data.read(1)) * 256
@@ -175,3 +180,16 @@ class Ticket:
         """
         title_key = decrypt_title_key(self.title_key_enc, self.common_key_index, self.title_id)
         return title_key
+
+    def set_title_id(self, title_id):
+        """Sets the Title ID of the title in the Ticket.
+
+        Parameters
+        ----------
+        title_id : str
+            The new Title ID of the title.
+        """
+        if len(title_id) != 16:
+            raise ValueError("Invalid Title ID! Title IDs must be 8 bytes long.")
+        self.title_id_str = title_id
+        self.title_id = binascii.unhexlify(title_id)
