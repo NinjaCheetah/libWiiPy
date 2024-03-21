@@ -5,7 +5,7 @@
 
 import io
 import binascii
-from .shared import align_value
+from .shared import align_value, pad_bytes_stream
 
 
 class WAD:
@@ -19,25 +19,34 @@ class WAD:
     """
     def __init__(self, wad):
         self.wad = wad
-        self.wad_hdr_size: int
-        self.wad_type: str
-        self.wad_version: int
+        self.wad_hdr_size: int = 64
+        self.wad_type: str = ""
+        self.wad_version: bytes = b''
         # === Sizes ===
-        self.wad_cert_size: int
-        self.wad_crl_size: int
-        self.wad_tik_size: int
-        self.wad_tmd_size: int
+        self.wad_cert_size: int = 0
+        self.wad_crl_size: int = 0
+        self.wad_tik_size: int = 0
+        self.wad_tmd_size: int = 0
         # This is the size of the content region, which contains all app files combined.
-        self.wad_content_size: int
-        self.wad_meta_size: int
+        self.wad_content_size: int = 0
+        self.wad_meta_size: int = 0
         # === Offsets ===
-        self.wad_cert_offset: int
-        self.wad_crl_offset: int
-        self.wad_tik_offset: int
-        self.wad_tmd_offset: int
-        self.wad_content_offset: int
-        self.wad_meta_offset: int
-        # Load header data from WAD stream
+        self.wad_cert_offset: int = 0
+        self.wad_crl_offset: int = 0
+        self.wad_tik_offset: int = 0
+        self.wad_tmd_offset: int = 0
+        self.wad_content_offset: int = 0
+        self.wad_meta_offset: int = 0
+        # Call load() to set all of the attributes from the raw WAD data provided.
+        self.load()
+
+    def load(self):
+        """Loads the raw WAD data and sets all attributes of the WAD object.
+
+        Returns
+        -------
+        none
+        """
         with io.BytesIO(self.wad) as wad_data:
             # Read the first 8 bytes of the file to ensure that it's a WAD. This will currently reject boot2 WADs, but
             # this tool cannot handle them correctly right now anyway.
@@ -88,6 +97,61 @@ class WAD:
             # meta isn't guaranteed to be used, but some older SDK titles use it, and not reading it breaks things.
             self.wad_meta_offset = align_value(self.wad_tmd_offset + self.wad_tmd_size)
             self.wad_content_offset = align_value(self.wad_meta_offset + self.wad_meta_size)
+
+    def dump(self) -> bytes:
+        """Dumps the WAD object back into bytes. This also sets the raw WAD attribute of WAD object to the dumped data,
+        and triggers load() again to ensure that the raw data and object match.
+
+        Returns
+        -------
+        bytes
+            The full WAD file as bytes.
+        """
+        # Open the stream and begin writing data to it.
+        with io.BytesIO() as wad_data:
+            # Lead-in data.
+            wad_data.write(b'\x00\x00\x00\x20')
+            # WAD type.
+            wad_data.write(str.encode(self.wad_type))
+            # WAD version.
+            wad_data.write(self.wad_version)
+            # WAD cert size.
+            wad_data.write(int.to_bytes(self.wad_cert_size, 4))
+            # WAD crl size.
+            wad_data.write(int.to_bytes(self.wad_crl_size, 4))
+            # WAD ticket size.
+            wad_data.write(int.to_bytes(self.wad_tik_size, 4))
+            # WAD TMD size.
+            wad_data.write(int.to_bytes(self.wad_tmd_size, 4))
+            # WAD content size.
+            wad_data.write(int.to_bytes(self.wad_content_size, 4))
+            # WAD meta size.
+            wad_data.write(int.to_bytes(self.wad_meta_size, 4))
+            wad_data = pad_bytes_stream(wad_data)
+            # Retrieve the cert data and write it out.
+            wad_data.write(self.get_cert_data())
+            wad_data = pad_bytes_stream(wad_data)
+            # Retrieve the crl data and write it out.
+            wad_data.write(self.get_crl_data())
+            wad_data = pad_bytes_stream(wad_data)
+            # Retrieve the ticket data and write it out.
+            wad_data.write(self.get_ticket_data())
+            wad_data = pad_bytes_stream(wad_data)
+            # Retrieve the TMD data and write it out.
+            wad_data.write(self.get_tmd_data())
+            wad_data = pad_bytes_stream(wad_data)
+            # Retrieve the meta/footer data and write it out.
+            wad_data.write(self.get_meta_data())
+            wad_data = pad_bytes_stream(wad_data)
+            # Retrieve the content data and write it out.
+            wad_data.write(self.get_content_data())
+            wad_data = pad_bytes_stream(wad_data)
+            # Seek to the beginning and save this as the WAD data for the object.
+            wad_data.seek(0x0)
+            self.wad = wad_data.read()
+        # Reload object's attributes to ensure the raw data and object match.
+        self.load()
+        return self.wad
 
     def get_cert_region(self):
         """Gets the offset and size of the certificate data.

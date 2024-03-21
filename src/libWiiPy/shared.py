@@ -20,3 +20,23 @@ def align_value(value, alignment=64):
         aligned_value = value + (alignment - (value % alignment))
         return aligned_value
     return value
+
+
+def pad_bytes_stream(data, alignment=64):
+    """Pads the provided bytes stream to the provided alignment (defaults to 64).
+
+    Parameters
+    ----------
+    data : BytesIO
+        The data to align.
+    alignment : int
+        The number to align to. Defaults to 64.
+
+    Returns
+    -------
+    BytesIO
+        The aligned data.
+    """
+    while (data.getbuffer().nbytes % alignment) != 0:
+        data.write(b'\x00')
+    return data
