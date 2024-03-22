@@ -179,12 +179,12 @@ class TMD:
             tmd_data.write(int.to_bytes(self.region, 2))
             # Ratings.
             tmd_data.write(self.ratings)
-            # Reserved (All \x00).
-            tmd_data.write(b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+            # Reserved (all \x00).
+            tmd_data.write(b'\x00' * 12)
             # IPC mask.
             tmd_data.write(self.ipc_mask)
-            # Reserved (ALl \x00).
-            tmd_data.write(b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+            # Reserved (all \x00).
+            tmd_data.write(b'\x00' * 18)
             # Access rights.
             tmd_data.write(self.access_rights)
             # Title version.
@@ -211,7 +211,7 @@ class TMD:
                 content_data.seek(0x0)
                 tmd_data.write(content_data.read())
                 content_data.close()
-
+            # Set the TMD attribute of the object to the new raw TMD.
             tmd_data.seek(0x0)
             self.tmd = tmd_data.read()
         # Reload object's attributes to ensure the raw data and object match.

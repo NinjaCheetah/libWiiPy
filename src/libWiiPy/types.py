@@ -27,3 +27,22 @@ class ContentRecord:
     content_type: int  # Type of content, possible values of: 0x0001: Normal, 0x4001: DLC, 0x8001: Shared.
     content_size: int  # Size of the content when decrypted.
     content_hash: bytes  # SHA-1 hash of the content when decrypted.
+
+
+@dataclass
+class TitleLimit:
+    """Creates a TitleLimit object that contains the type of restriction and the limit.
+
+    Attributes
+    ----------
+    limit_type : int
+        The type of play limit applied.
+    maximum_usage : int
+        The maximum value for the type of play limit applied.
+    """
+    # The type of play limit applied. The following types exist:
+    # 0 = None, 1 = Time Limit, 3 = None, 4 = Launch Count
+    limit_type: int
+    # The maximum value of the limit applied.
+    # This is either the number of minutes for a time limit, or the number of launches for a launch limit.
+    maximum_usage: int
