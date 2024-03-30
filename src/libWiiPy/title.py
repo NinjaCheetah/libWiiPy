@@ -45,7 +45,7 @@ class Title:
                              "invalid.")
 
     def dump(self) -> bytes:
-        """Dumps all title components (TMD, ticket, and content) back into the WAD object, and then dumps the WAD back
+        """Dumps all title components (TMD, Ticket, and contents) back into the WAD object, and then dumps the WAD back
         into raw data and returns it.
 
         Returns
@@ -53,7 +53,15 @@ class Title:
         wad_data : bytes
             The raw data of the WAD.
         """
-        # Dump the TMD.
+        # Dump the TMD and set it in the WAD.
+        self.wad.set_tmd_data(self.tmd.dump())
+        # Dump the Ticket and set it in the WAD.
+        self.wad.set_ticket_data(self.ticket.dump())
+        # Dump the ContentRegion and set it in the WAD.
+        self.wad.set_content_data(self.content.dump())
+        # Dump the WAD with the new regions back into raw data and return it.
+        wad_data = self.wad.dump()
+        return wad_data
 
     def set_title_id(self, title_id: str) -> None:
         """Sets the Title ID of the title in both the TMD and Ticket.
@@ -67,6 +75,44 @@ class Title:
             raise ValueError("Invalid Title ID! Title IDs must be 8 bytes long.")
         self.tmd.set_title_id(title_id)
         self.ticket.set_title_id(title_id)
+
+    def get_content_by_index(self, index: id) -> bytes:
+        """Gets an individual content from the content region based on the provided index, in decrypted form.
+
+        Parameters
+        ----------
+        index : int
+            The index of the content you want to get.
+
+        Returns
+        -------
+        bytes
+            The decrypted content listed in the content record.
+        """
+        # Load the Title Key from the Ticket.
+        title_key = self.ticket.get_title_key()
+        # Get the decrypted content and return it.
+        dec_content = self.content.get_content_by_index(index, title_key)
+        return dec_content
+
+    def get_content_by_cid(self, cid: int) -> bytes:
+        """Gets an individual content from the content region based on the provided Content ID, in decrypted form.
+
+        Parameters
+        ----------
+        cid : int
+            The Content ID of the content you want to get. Expected to be in decimal form.
+
+        Returns
+        -------
+        bytes
+            The decrypted content listed in the content record.
+        """
+        # Load the Title Key from the Ticket.
+        title_key = self.ticket.get_title_key()
+        # Get the decrypted content and return it.
+        dec_content = self.content.get_content_by_cid(cid, title_key)
+        return dec_content
 
     def set_enc_content(self, enc_content: bytes, cid: int, index: int, content_type: int, content_size: int,
                         content_hash: bytes) -> None:

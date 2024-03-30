@@ -30,13 +30,13 @@ class WAD:
         # This is the size of the content region, which contains all app files combined.
         self.wad_content_size: int = 0
         self.wad_meta_size: int = 0
-        # === Offsets ===
-        self.wad_cert_offset: int = 0
-        self.wad_crl_offset: int = 0
-        self.wad_tik_offset: int = 0
-        self.wad_tmd_offset: int = 0
-        self.wad_content_offset: int = 0
-        self.wad_meta_offset: int = 0
+        # === Data ===
+        self.wad_cert_data: bytes = b''
+        self.wad_crl_data: bytes = b''
+        self.wad_tik_data: bytes = b''
+        self.wad_tmd_data: bytes = b''
+        self.wad_content_data: bytes = b''
+        self.wad_meta_data: bytes = b''
         # Call load() to set all of the attributes from the raw WAD data provided.
         self.load()
 
@@ -89,14 +89,35 @@ class WAD:
             # ====================================================================================
             # Calculate file offsets from sizes. Every section of the WAD is padded out to a multiple of 0x40.
             # ====================================================================================
-            self.wad_cert_offset = self.wad_hdr_size
+            wad_cert_offset = self.wad_hdr_size
             # crl isn't ever used, however an entry for its size exists in the header, so its calculated just in case.
-            self.wad_crl_offset = align_value(self.wad_cert_offset + self.wad_cert_size)
-            self.wad_tik_offset = align_value(self.wad_crl_offset + self.wad_crl_size)
-            self.wad_tmd_offset = align_value(self.wad_tik_offset + self.wad_tik_size)
+            wad_crl_offset = align_value(wad_cert_offset + self.wad_cert_size)
+            wad_tik_offset = align_value(wad_crl_offset + self.wad_crl_size)
+            wad_tmd_offset = align_value(wad_tik_offset + self.wad_tik_size)
             # meta isn't guaranteed to be used, but some older SDK titles use it, and not reading it breaks things.
-            self.wad_meta_offset = align_value(self.wad_tmd_offset + self.wad_tmd_size)
-            self.wad_content_offset = align_value(self.wad_meta_offset + self.wad_meta_size)
+            wad_meta_offset = align_value(wad_tmd_offset + self.wad_tmd_size)
+            wad_content_offset = align_value(wad_meta_offset + self.wad_meta_size)
+            # ====================================================================================
+            # Load data for each WAD section based on the previously calculated offsets.
+            # ====================================================================================
+            # Cert data.
+            wad_data.seek(wad_cert_offset)
+            self.wad_cert_data = wad_data.read(self.wad_cert_size)
+            # Crl data.
+            wad_data.seek(wad_crl_offset)
+            self.wad_crl_data = wad_data.read(self.wad_crl_size)
+            # Ticket data.
+            wad_data.seek(wad_tik_offset)
+            self.wad_tik_data = wad_data.read(self.wad_tik_size)
+            # TMD data.
+            wad_data.seek(wad_tmd_offset)
+            self.wad_tmd_data = wad_data.read(self.wad_tmd_size)
+            # Content data.
+            wad_data.seek(wad_content_offset)
+            self.wad_content_data = wad_data.read(self.wad_content_size)
+            # Meta data.
+            wad_data.seek(wad_meta_offset)
+            self.wad_meta_data = wad_data.read(self.wad_meta_size)
 
     def dump(self) -> bytes:
         """Dumps the WAD object back into bytes. This also sets the raw WAD attribute of WAD object to the dumped data,
@@ -153,78 +174,6 @@ class WAD:
         self.load()
         return self.wad
 
-    def get_cert_region(self):
-        """Gets the offset and size of the certificate data.
-
-        Returns
-        -------
-        int
-            The offset of the certificate data in the WAD.
-        int
-            The size of the certificate data in the WAD.
-        """
-        return self.wad_cert_offset, self.wad_cert_size
-
-    def get_crl_region(self):
-        """Gets the offset and size of the crl data.
-
-        Returns
-        -------
-        int
-            The offset of the crl data in the WAD.
-        int
-            The size of the crl data in the WAD.
-        """
-        return self.wad_crl_offset, self.wad_crl_size
-
-    def get_ticket_region(self):
-        """Gets the offset and size of the ticket data.
-
-        Returns
-        -------
-        int
-            The offset of the ticket data in the WAD.
-        int
-            The size of the ticket data in the WAD.
-        """
-        return self.wad_tik_offset, self.wad_tik_size
-
-    def get_tmd_region(self):
-        """Gets the offset and size of the TMD data.
-
-        Returns
-        -------
-        int
-            The offset of the TMD data in the WAD.
-        int
-            The size of the TMD data in the WAD.
-        """
-        return self.wad_tmd_offset, self.wad_tmd_size
-
-    def get_content_region(self):
-        """Gets the offset and size of the content of the WAD.
-
-        Returns
-        -------
-        int
-            The offset of the content data in the WAD.
-        int
-            The size of the content data in the WAD.
-        """
-        return self.wad_content_offset, self.wad_content_size
-
-    def get_meta_region(self):
-        """Gets the offset and size of the meta region of the WAD, which is typically unused.
-
-        Returns
-        -------
-        int
-            The offset of the meta region in the WAD.
-        int
-            The size of the meta region in the WAD.
-        """
-        return self.wad_meta_offset, self.wad_meta_size
-
     def get_wad_type(self):
         """Gets the type of the WAD.
 
@@ -235,7 +184,7 @@ class WAD:
         """
         return self.wad_type
 
-    def get_cert_data(self):
+    def get_cert_data(self) -> bytes:
         """Gets the certificate data from the WAD.
 
         Returns
@@ -243,12 +192,9 @@ class WAD:
         bytes
             The certificate data.
         """
-        wad_data = io.BytesIO(self.wad)
-        wad_data.seek(self.wad_cert_offset)
-        cert_data = wad_data.read(self.wad_cert_size)
-        return cert_data
+        return self.wad_cert_data
 
-    def get_crl_data(self):
+    def get_crl_data(self) -> bytes:
         """Gets the crl data from the WAD, if it exists.
 
         Returns
@@ -256,12 +202,9 @@ class WAD:
         bytes
             The crl data.
         """
-        wad_data = io.BytesIO(self.wad)
-        wad_data.seek(self.wad_crl_offset)
-        crl_data = wad_data.read(self.wad_crl_size)
-        return crl_data
+        return self.wad_crl_data
 
-    def get_ticket_data(self):
+    def get_ticket_data(self) -> bytes:
         """Gets the ticket data from the WAD.
 
         Returns
@@ -269,12 +212,9 @@ class WAD:
         bytes
             The ticket data.
         """
-        wad_data = io.BytesIO(self.wad)
-        wad_data.seek(self.wad_tik_offset)
-        ticket_data = wad_data.read(self.wad_tik_size)
-        return ticket_data
+        return self.wad_tik_data
 
-    def get_tmd_data(self):
+    def get_tmd_data(self) -> bytes:
         """Returns the TMD data from the WAD.
 
         Returns
@@ -282,12 +222,9 @@ class WAD:
         bytes
             The TMD data.
         """
-        wad_data = io.BytesIO(self.wad)
-        wad_data.seek(self.wad_tmd_offset)
-        tmd_data = wad_data.read(self.wad_tmd_size)
-        return tmd_data
+        return self.wad_tmd_data
 
-    def get_content_data(self):
+    def get_content_data(self) -> bytes:
         """Gets the content of the WAD.
 
         Returns
@@ -295,12 +232,9 @@ class WAD:
         bytes
             The content data.
         """
-        wad_data = io.BytesIO(self.wad)
-        wad_data.seek(self.wad_content_offset)
-        content_data = wad_data.read(self.wad_content_size)
-        return content_data
+        return self.wad_content_data
 
-    def get_meta_data(self):
+    def get_meta_data(self) -> bytes:
         """Gets the meta region of the WAD, which is typically unused.
 
         Returns
@@ -308,7 +242,76 @@ class WAD:
         bytes
             The meta region.
         """
-        wad_data = io.BytesIO(self.wad)
-        wad_data.seek(self.wad_meta_offset)
-        meta_data = wad_data.read(self.wad_meta_size)
-        return meta_data
+        return self.wad_meta_data
+
+    def set_cert_data(self, cert_data) -> None:
+        """Sets the certificate data of the WAD. Also calculates the new size.
+
+        Parameters
+        ----------
+        cert_data : bytes
+            The new certificate data.
+        """
+        self.wad_cert_data = cert_data
+        # Calculate the size of the new cert data.
+        self.wad_cert_size = len(cert_data)
+
+    def set_crl_data(self, crl_data) -> None:
+        """Sets the crl data of the WAD. Also calculates the new size.
+
+        Parameters
+        ----------
+        crl_data : bytes
+            The new crl data.
+        """
+        self.wad_crl_data = crl_data
+        # Calculate the size of the new crl data.
+        self.wad_crl_size = len(crl_data)
+
+    def set_tmd_data(self, tmd_data) -> None:
+        """Sets the TMD data of the WAD. Also calculates the new size.
+
+        Parameters
+        ----------
+        tmd_data : bytes
+            The new TMD data.
+        """
+        self.wad_tmd_data = tmd_data
+        # Calculate the size of the new TMD data.
+        self.wad_tmd_size = len(tmd_data)
+
+    def set_ticket_data(self, tik_data) -> None:
+        """Sets the Ticket data of the WAD. Also calculates the new size.
+
+        Parameters
+        ----------
+        tik_data : bytes
+            The new TMD data.
+        """
+        self.wad_tik_data = tik_data
+        # Calculate the size of the new Ticket data.
+        self.wad_tik_size = len(tik_data)
+
+    def set_content_data(self, content_data) -> None:
+        """Sets the content data of the WAD. Also calculates the new size.
+
+        Parameters
+        ----------
+        content_data : bytes
+            The new content data.
+        """
+        self.wad_content_data = content_data
+        # Calculate the size of the new content data.
+        self.wad_content_size = len(content_data)
+
+    def set_meta_data(self, meta_data) -> None:
+        """Sets the meta data of the WAD. Also calculates the new size.
+
+        Parameters
+        ----------
+        meta_data : bytes
+            The new meta data.
+        """
+        self.wad_meta_data = meta_data
+        # Calculate the size of the new meta data.
+        self.wad_meta_size = len(meta_data)
