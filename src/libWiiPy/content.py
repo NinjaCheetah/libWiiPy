@@ -66,6 +66,32 @@ class ContentRegion:
             content_enc = content_region_data.read(bytes_to_read)
             return content_enc
 
+    def get_enc_content_by_cid(self, cid: int) -> bytes:
+        """Gets an individual content from the content region based on the provided Content ID, in encrypted form.
+
+        Parameters
+        ----------
+        cid : int
+            The Content ID of the content you want to get. Expected to be in decimal form.
+
+        Returns
+        -------
+        bytes
+            The encrypted content listed in the content record.
+        """
+        # Find the index of the requested Content ID.
+        content_index = None
+        for content in self.content_records:
+            if content.content_id == cid:
+                content_index = content.index
+        # If finding a matching ID was unsuccessful, that means that no content with that ID is in the TMD, so
+        # return a Value Error.
+        if content_index is None:
+            raise ValueError("The Content ID requested does not exist in the TMD's content records.")
+        # Call get_enc_content_by_index() using the index we just found.
+        content_enc = self.get_enc_content_by_index(content_index)
+        return content_enc
+
     def get_enc_contents(self) -> List[bytes]:
         """Gets a list of all encrypted contents from the content region.
 
@@ -105,11 +131,38 @@ class ContentRegion:
         content_record_hash = str(self.content_records[index].content_hash.decode())
         # Compare the hash and throw a ValueError if the hash doesn't match.
         if content_dec_hash.hexdigest() != content_record_hash:
-            #raise ValueError("Content hash did not match the expected hash in its record! The incorrect Title Key may "
-            #                 "have been used!.\n"
-            #                 "Expected hash is: {}\n".format(content_record_hash) +
-            #                 "Actual hash is: {}".format(content_dec_hash.hexdigest()))
-            print("mismatch idiot")
+            raise ValueError("Content hash did not match the expected hash in its record! The incorrect Title Key may "
+                             "have been used!.\n"
+                             "Expected hash is: {}\n".format(content_record_hash) +
+                             "Actual hash is: {}".format(content_dec_hash.hexdigest()))
+        return content_dec
+
+    def get_content_by_cid(self, cid: int, title_key: bytes) -> bytes:
+        """Gets an individual content from the content region based on the provided Content ID, in decrypted form.
+
+        Parameters
+        ----------
+        cid : int
+            The Content ID of the content you want to get. Expected to be in decimal form.
+        title_key : bytes
+            The Title Key for the title the content is from.
+
+        Returns
+        -------
+        bytes
+            The decrypted content listed in the content record.
+        """
+        # Find the index of the requested Content ID.
+        content_index = None
+        for content in self.content_records:
+            if content.content_id == cid:
+                content_index = content.index
+        # If finding a matching ID was unsuccessful, that means that no content with that ID is in the TMD, so
+        # return a Value Error.
+        if content_index is None:
+            raise ValueError("The Content ID requested does not exist in the TMD's content records.")
+        # Call get_content_by_index() using the index we just found.
+        content_dec = self.get_content_by_index(content_index, title_key)
         return content_dec
 
     def get_contents(self, title_key: bytes) -> List[bytes]:
