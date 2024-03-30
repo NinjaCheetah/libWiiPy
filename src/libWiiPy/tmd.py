@@ -134,6 +134,7 @@ class TMD:
             tmd_data.seek(0x1E0)
             self.boot_index = int.from_bytes(tmd_data.read(2))
             # Get content records for the number of contents in num_contents.
+            self.content_records = []
             for content in range(0, self.num_contents):
                 tmd_data.seek(0x1E4 + (36 * content))
                 content_record_hdr = struct.unpack(">LHH4x4s20s", tmd_data.read(36))
@@ -214,6 +215,8 @@ class TMD:
             # Set the TMD attribute of the object to the new raw TMD.
             tmd_data.seek(0x0)
             self.tmd = tmd_data.read()
+        # Clear existing lists.
+        self.content_records = []
         # Reload object's attributes to ensure the raw data and object match.
         self.load()
         return self.tmd

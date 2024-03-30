@@ -8,7 +8,7 @@ import sys
 import hashlib
 from typing import List
 from .types import ContentRecord
-from .crypto import decrypt_content
+from .crypto import decrypt_content, encrypt_content
 
 
 class ContentRegion:
@@ -25,11 +25,21 @@ class ContentRegion:
     def __init__(self, content_region, content_records: List[ContentRecord]):
         self.content_region = content_region
         self.content_records = content_records
-        self.content_region_size: int  # Size of the content region.
-        self.num_contents: int  # Number of contents in the content region.
+        self.content_region_size: int = 0  # Size of the content region.
+        self.num_contents: int = 0  # Number of contents in the content region.
         self.content_start_offsets: List[int] = [0]  # The start offsets of each content in the content region.
+        self.content_list: List[bytes] = []
+        # Call load() to set all of the attributes from the raw content region provided.
+        self.load()
 
-        with io.BytesIO(content_region) as content_region_data:
+    def load(self):
+        """Loads the raw content region and builds a list of all the contents.
+
+        Returns
+        -------
+        none
+        """
+        with io.BytesIO(self.content_region) as content_region_data:
             # Get the total size of the content region.
             self.content_region_size = sys.getsizeof(content_region_data)
             self.num_contents = len(self.content_records)
@@ -41,6 +51,48 @@ class ContentRegion:
                 if (content.content_size % 64) != 0:
                     start_offset += 64 - (content.content_size % 64)
                 self.content_start_offsets.append(start_offset)
+            # Build a list of all the encrypted content data.
+            for content in range(len(self.content_start_offsets)):
+                # Seek to the start of the content based on the list of offsets.
+                content_region_data.seek(self.content_start_offsets[content])
+                # Calculate the number of bytes we need to read by adding bytes up the nearest multiple of 16 if needed.
+                bytes_to_read = self.content_records[content].content_size
+                if (bytes_to_read % 16) != 0:
+                    bytes_to_read += 16 - (bytes_to_read % 16)
+                # Read the file based on the size of the content in the associated record, then append that data to
+                # the list of content.
+                content_enc = content_region_data.read(bytes_to_read)
+                self.content_list.append(content_enc)
+
+    def dump(self) -> bytes:
+        """Takes the list of contents and assembles them back into one content region. Returns this content region as a
+        bytes object and sets the raw content region variable to this result, then calls load() again to make sure the
+        content list matches the raw data.
+
+        Returns
+        -------
+        bytes
+            The full WAD file as bytes.
+        """
+        # Open the stream and begin writing data to it.
+        with io.BytesIO() as content_region_data:
+            for content in self.content_list:
+                # Calculate padding after this content before the next one.
+                padding_bytes = 0
+                if (len(content) % 64) != 0:
+                    padding_bytes = 64 - (len(content) % 64)
+                # Write content data, then the padding afterward if necessary.
+                content_region_data.write(content)
+                if padding_bytes > 0:
+                    content_region_data.write(b'\x00' * padding_bytes)
+            content_region_data.seek(0x0)
+            self.content_region = content_region_data.read()
+        # Clear existing lists.
+        self.content_start_offsets = [0]
+        self.content_list = []
+        # Reload object's attributes to ensure the raw data and object match.
+        self.load()
+        return self.content_region
 
     def get_enc_content_by_index(self, index: int) -> bytes:
         """Gets an individual content from the content region based on the provided index, in encrypted form.
@@ -55,16 +107,8 @@ class ContentRegion:
         bytes
             The encrypted content listed in the content record.
         """
-        with io.BytesIO(self.content_region) as content_region_data:
-            # Seek to the start of the requested content based on the list of offsets.
-            content_region_data.seek(self.content_start_offsets[index])
-            # Calculate the number of bytes we need to read by adding bytes up the nearest multiple of 16 if needed.
-            bytes_to_read = self.content_records[index].content_size
-            if (bytes_to_read % 16) != 0:
-                bytes_to_read += 16 - (bytes_to_read % 16)
-            # Read the file based on the size of the content in the associated record.
-            content_enc = content_region_data.read(bytes_to_read)
-            return content_enc
+        content_enc = self.content_list[index]
+        return content_enc
 
     def get_enc_content_by_cid(self, cid: int) -> bytes:
         """Gets an individual content from the content region based on the provided Content ID, in encrypted form.
@@ -100,11 +144,7 @@ class ContentRegion:
         List[bytes]
             A list containing all encrypted contents.
         """
-        enc_contents: List[bytes] = []
-        # Iterate over every content and add it to a list, then return it.
-        for content in range(self.num_contents):
-            enc_contents.append(self.get_enc_content_by_index(content))
-        return enc_contents
+        return self.content_list
 
     def get_content_by_index(self, index: int, title_key: bytes) -> bytes:
         """Gets an individual content from the content region based on the provided index, in decrypted form.
@@ -183,3 +223,71 @@ class ContentRegion:
         for content in range(self.num_contents):
             dec_contents.append(self.get_content_by_index(content, title_key))
         return dec_contents
+
+    def set_enc_content(self, enc_content: bytes, cid: int, index: int, content_type: int, content_size: int,
+                        content_hash: bytes) -> None:
+        """Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
+        set in the content record, with a new record being added if necessary.
+
+        Parameters
+        ----------
+        enc_content : bytes
+            The new encrypted content to set.
+        cid : int
+            The Content ID to assign the new content in the content record.
+        index : int
+            The index to place the new content at.
+        content_type : int
+            The type of the new content.
+        content_size : int
+            The size of the new encrypted content when decrypted.
+        content_hash : bytes
+            The hash of the new encrypted content when decrypted.
+        """
+        # Save the number of contents currently in the content region and records.
+        num_contents = len(self.content_records)
+        # Check if a record already exists for this index. If it doesn't, create it.
+        if (index + 1) > num_contents:
+            # Ensure that you aren't attempting to create a gap before appending.
+            if (index + 1) > num_contents + 1:
+                raise ValueError("You are trying to set the content at position " + str(index) + ", but no content "
+                                 "exists at position " + str(index - 1) + "!")
+            self.content_records.append(ContentRecord(cid, index, content_type, content_size, content_hash))
+        # If it does, reassign the values in it.
+        else:
+            self.content_records[index].content_id = cid
+            self.content_records[index].content_type = content_type
+            self.content_records[index].content_size = content_size
+            self.content_records[index].content_hash = content_hash
+        # Check if a content already occupies the provided index. If it does, reassign it to the new content, if it
+        # doesn't, then append a new entry.
+        if (index + 1) > num_contents:
+            self.content_list.append(enc_content)
+        else:
+            self.content_list[index] = enc_content
+
+    def set_content(self, dec_content: bytes, cid: int, index: int, content_type: int, title_key: bytes) -> None:
+        """Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
+                set in the content record, with a new record being added if necessary.
+
+        Parameters
+        ----------
+        dec_content : bytes
+            The new decrypted content to set.
+        cid : int
+            The Content ID to assign the new content in the content record.
+        index : int
+            The index to place the new content at.
+        content_type : int
+            The type of the new content.
+        title_key : bytes
+            The Title Key that matches the new decrypted content.
+        """
+        # Store the size of the new content.
+        dec_content_size = len(dec_content)
+        # Calculate the hash of the new content.
+        dec_content_hash = str.encode(hashlib.sha1(dec_content).hexdigest())
+        # Encrypt the content using the provided Title Key and index.
+        enc_content = encrypt_content(dec_content, title_key, index)
+        # Pass values to set_enc_content()
+        self.set_enc_content(enc_content, cid, index, content_type, dec_content_size, dec_content_hash)
