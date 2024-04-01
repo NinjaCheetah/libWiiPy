@@ -12,12 +12,7 @@ from .types import ContentRecord
 
 class TMD:
     """
-    Creates a TMD object to parse a TMD file to retrieve information about a title.
-
-    Parameters
-    ----------
-    tmd : bytes
-        A bytes object containing the contents of a TMD file.
+    Creates a TMD object that allows for either loading and editing an existing TMD or creating one manually if desired.
 
     Attributes
     ----------
@@ -34,8 +29,7 @@ class TMD:
     num_contents : int
         The number of contents listed in the TMD.
     """
-    def __init__(self, tmd):
-        self.tmd = tmd
+    def __init__(self):
         self.blob_header: bytes = b''
         self.sig_type: int = 0
         self.sig: bytes = b''
@@ -57,17 +51,17 @@ class TMD:
         self.num_contents: int = 0  # The number of contents contained in the associated title.
         self.boot_index: int = 0
         self.content_records: List[ContentRecord] = []
-        # Call load() to set all of the attributes from the raw TMD data provided.
-        self.load()
 
-    def load(self):
-        """Loads the raw TMD data and sets all attributes of the TMD object.
+    def load(self, tmd: bytes) -> None:
+        """Loads raw TMD data and sets all attributes of the WAD object. This allows for manipulating an already
+        existing TMD.
 
-        Returns
-        -------
-        none
+        Parameters
+        ----------
+        tmd : bytes
+            The data for the TMD you wish to load.
         """
-        with io.BytesIO(self.tmd) as tmd_data:
+        with io.BytesIO(tmd) as tmd_data:
             # ====================================================================================
             # Parses each of the keys contained in the TMD.
             # ====================================================================================
@@ -214,12 +208,9 @@ class TMD:
                 content_data.close()
             # Set the TMD attribute of the object to the new raw TMD.
             tmd_data.seek(0x0)
-            self.tmd = tmd_data.read()
-        # Clear existing lists.
-        self.content_records = []
-        # Reload object's attributes to ensure the raw data and object match.
-        self.load()
-        return self.tmd
+            tmd_data_raw = tmd_data.read()
+        # Return the raw TMD for the data contained in the object.
+        return tmd_data_raw
 
     def get_title_region(self):
         """Gets the region of the TMD's associated title.

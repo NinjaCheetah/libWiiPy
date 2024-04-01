@@ -12,11 +12,6 @@ from .wad import WAD
 class Title:
     """Creates a Title object that contains all components of a title, and allows altering them.
 
-    Parameters
-    ----------
-    wad : WAD
-        A WAD object to load data from.
-
     Attributes
     ----------
     tmd : TMD
@@ -26,18 +21,33 @@ class Title:
     content: ContentRegion
         A ContentRegion object containing the title's contents.
     """
-    def __init__(self, wad: WAD):
-        self.wad = wad
-        self.tmd: TMD
-        self.ticket: Ticket
-        self.content: ContentRegion
-        # Load data from the WAD object, and generate all other objects from the data in it.
+    def __init__(self):
+        self.wad: WAD = WAD()
+        self.tmd: TMD = TMD()
+        self.ticket: Ticket = Ticket()
+        self.content: ContentRegion = ContentRegion()
+
+    def set_wad(self, wad: bytes) -> None:
+        """Load existing WAD data into the title and create WAD, TMD, Ticket, and ContentRegion objects based off of it
+        to allow you to modify that data. Note that this will overwrite any existing data for this title.
+
+        Parameters
+        ----------
+        wad : bytes
+            The data for the WAD you wish to load.
+        """
+        # Create a new WAD object based on the WAD data provided.
+        self.wad = WAD()
+        self.wad.load(wad)
         # Load the TMD.
-        self.tmd = TMD(self.wad.get_tmd_data())
+        self.tmd = TMD()
+        self.tmd.load(self.wad.get_tmd_data())
         # Load the ticket.
-        self.ticket = Ticket(self.wad.get_ticket_data())
+        self.ticket = Ticket()
+        self.ticket.load(self.wad.get_ticket_data())
         # Load the content.
-        self.content = ContentRegion(self.wad.get_content_data(), self.tmd.content_records)
+        self.content = ContentRegion()
+        self.content.load(self.wad.get_content_data(), self.tmd.content_records)
         # Ensure that the Title IDs of the TMD and Ticket match before doing anything else. If they don't, throw an
         # error because clearly something strange has gone on with the WAD and editing it probably won't work.
         if self.tmd.title_id != self.ticket.title_id_str:

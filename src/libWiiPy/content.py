@@ -13,33 +13,27 @@ from .crypto import decrypt_content, encrypt_content
 
 class ContentRegion:
     """Creates a ContentRegion object to parse the continuous content region of a WAD.
-
-    Parameters
-    ----------
-    content_region : bytes
-        A bytes object containing the content region of a WAD file.
-    content_records : list[ContentRecord]
-        A list of ContentRecord objects detailing all contents contained in the region.
     """
 
-    def __init__(self, content_region, content_records: List[ContentRecord]):
-        self.content_region = content_region
-        self.content_records = content_records
+    def __init__(self):
+        self.content_records: List[ContentRecord] = []
         self.content_region_size: int = 0  # Size of the content region.
         self.num_contents: int = 0  # Number of contents in the content region.
         self.content_start_offsets: List[int] = [0]  # The start offsets of each content in the content region.
         self.content_list: List[bytes] = []
-        # Call load() to set all of the attributes from the raw content region provided.
-        self.load()
 
-    def load(self):
+    def load(self, content_region: bytes, content_records: List[ContentRecord]) -> None:
         """Loads the raw content region and builds a list of all the contents.
 
-        Returns
-        -------
-        none
+        Parameters
+        ----------
+        content_region : bytes
+            The raw data for the content region being loaded.
+        content_records : list[ContentRecord]
+            A list of ContentRecord objects detailing all contents contained in the region.
         """
-        with io.BytesIO(self.content_region) as content_region_data:
+        self.content_records = content_records
+        with io.BytesIO(content_region) as content_region_data:
             # Get the total size of the content region.
             self.content_region_size = sys.getsizeof(content_region_data)
             self.num_contents = len(self.content_records)
@@ -86,13 +80,9 @@ class ContentRegion:
                 if padding_bytes > 0:
                     content_region_data.write(b'\x00' * padding_bytes)
             content_region_data.seek(0x0)
-            self.content_region = content_region_data.read()
-        # Clear existing lists.
-        self.content_start_offsets = [0]
-        self.content_list = []
-        # Reload object's attributes to ensure the raw data and object match.
-        self.load()
-        return self.content_region
+            content_region_raw = content_region_data.read()
+        # Return the raw ContentRegion for the data contained in the object.
+        return content_region_raw
 
     def get_enc_content_by_index(self, index: int) -> bytes:
         """Gets an individual content from the content region based on the provided index, in encrypted form.
@@ -291,3 +281,11 @@ class ContentRegion:
         enc_content = encrypt_content(dec_content, title_key, index)
         # Pass values to set_enc_content()
         self.set_enc_content(enc_content, cid, index, content_type, dec_content_size, dec_content_hash)
+
+    def load_enc_content(self, enc_content: bytes, index: int) -> bytes:
+        """Loads the provided encrypted content into the content region at the specified index, with the assumption that
+        it matches the record at that index.
+
+        :param index:
+        :return:
+        """

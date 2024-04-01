@@ -10,15 +10,9 @@ from .shared import align_value, pad_bytes_stream
 
 class WAD:
     """
-    Creates a WAD object to parse the header of a WAD file and retrieve the data contained in it.
-
-    Parameters
-    ----------
-    wad : bytes
-        A bytes object containing the contents of a WAD file.
+    Creates a WAD object that allows for either loading and editing an existing WAD or creating a new WAD from raw data.
     """
-    def __init__(self, wad):
-        self.wad = wad
+    def __init__(self):
         self.wad_hdr_size: int = 64
         self.wad_type: str = ""
         self.wad_version: bytes = b''
@@ -37,17 +31,17 @@ class WAD:
         self.wad_tmd_data: bytes = b''
         self.wad_content_data: bytes = b''
         self.wad_meta_data: bytes = b''
-        # Call load() to set all of the attributes from the raw WAD data provided.
-        self.load()
 
-    def load(self):
-        """Loads the raw WAD data and sets all attributes of the WAD object.
+    def load(self, wad_data) -> None:
+        """Loads raw WAD data and sets all attributes of the WAD object. This allows for manipulating an already
+        existing WAD file.
 
-        Returns
-        -------
-        none
+        Parameters
+        ----------
+        wad_data : bytes
+            The data for the WAD you wish to load.
         """
-        with io.BytesIO(self.wad) as wad_data:
+        with io.BytesIO(wad_data) as wad_data:
             # Read the first 8 bytes of the file to ensure that it's a WAD. This will currently reject boot2 WADs, but
             # this tool cannot handle them correctly right now anyway.
             wad_data.seek(0x0)
@@ -120,8 +114,8 @@ class WAD:
             self.wad_meta_data = wad_data.read(self.wad_meta_size)
 
     def dump(self) -> bytes:
-        """Dumps the WAD object back into bytes. This also sets the raw WAD attribute of WAD object to the dumped data,
-        and triggers load() again to ensure that the raw data and object match.
+        """Dumps the WAD object into the raw WAD file. This allows for creating a WAD file from the data contained in
+        the WAD object.
 
         Returns
         -------
@@ -169,10 +163,9 @@ class WAD:
             wad_data = pad_bytes_stream(wad_data)
             # Seek to the beginning and save this as the WAD data for the object.
             wad_data.seek(0x0)
-            self.wad = wad_data.read()
-        # Reload object's attributes to ensure the raw data and object match.
-        self.load()
-        return self.wad
+            wad_data_raw = wad_data.read()
+        # Return the raw WAD file for the data contained in the object.
+        return wad_data_raw
 
     def get_wad_type(self):
         """Gets the type of the WAD.

@@ -11,12 +11,9 @@ from typing import List
 
 
 class Ticket:
-    """Creates a Ticket object to parse a Ticket file to retrieve the Title Key needed to decrypt it.
-
-    Parameters
-    ----------
-    ticket : bytes
-        A bytes object containing the contents of a ticket file.
+    """
+    Creates a Ticket object that allows for either loading and editing an existing Ticket or creating one manually if
+    desired.
 
     Attributes
     ----------
@@ -35,8 +32,7 @@ class Ticket:
     common_key_index : int
         The index of the common key required to decrypt this ticket's Title Key.
     """
-    def __init__(self, ticket):
-        self.ticket = ticket
+    def __init__(self):
         # Signature blob header
         self.signature_type: bytes = b''  # Type of signature, always 0x10001 for RSA-2048
         self.signature: bytes = b''  # Actual signature data
@@ -60,17 +56,17 @@ class Ticket:
         self.title_limits_list: List[TitleLimit] = []  # List of play limits applied to the title.
         # v1 ticket data
         # TODO: Write in v1 ticket attributes here. This code can currently only handle v0 tickets, and will reject v1.
-        # Call load() to set all of the attributes from the raw Ticket data provided.
-        self.load()
 
-    def load(self):
-        """Loads the raw Ticket data and sets all attributes of the Ticket object.
+    def load(self, ticket: bytes) -> None:
+        """Loads raw Ticket data and sets all attributes of the WAD object. This allows for manipulating an already
+        existing Ticket.
 
-        Returns
-        -------
-        none
+        Parameters
+        ----------
+        ticket : bytes
+            The data for the Ticket you wish to load.
         """
-        with io.BytesIO(self.ticket) as ticket_data:
+        with io.BytesIO(ticket) as ticket_data:
             # ====================================================================================
             # Parses each of the keys contained in the Ticket.
             # ====================================================================================
@@ -209,10 +205,9 @@ class Ticket:
                 title_limit_data.close()
             # Set the Ticket attribute of the object to the new raw Ticket.
             ticket_data.seek(0x0)
-            self.ticket = ticket_data.read()
-        # Reload object's attributes to ensure the raw data and object match.
-        self.load()
-        return self.ticket
+            ticket_data_raw = ticket_data.read()
+        # Return the raw TMD for the data contained in the object.
+        return ticket_data_raw
 
     def get_title_id(self):
         """Gets the Title ID of the ticket's associated title.
