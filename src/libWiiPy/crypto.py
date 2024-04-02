@@ -62,9 +62,9 @@ def decrypt_content(content_enc, title_key, content_index, content_length) -> by
     content_index_bin = struct.pack('>H', content_index)
     while len(content_index_bin) < 16:
         content_index_bin += b'\x00'
-    # Align content to 64 bytes to ensure that all the data is being decrypted, and so it works with AES encryption.
-    if (len(content_enc) % 64) != 0:
-        content_enc = content_enc + (b'\x00' * (64 - (len(content_enc) % 64)))
+    # Align content to 16 bytes to ensure that it works with AES encryption.
+    if (len(content_enc) % 16) != 0:
+        content_enc = content_enc + (b'\x00' * (16 - (len(content_enc) % 16)))
     # Create a new AES object with the values provided, with the content's unique ID as the IV.
     aes = AES.new(title_key, AES.MODE_CBC, content_index_bin)
     # Decrypt the content using the AES object.
@@ -101,9 +101,9 @@ def encrypt_content(content_dec, title_key, content_index) -> bytes:
         content_index_bin += b'\x00'
     # Calculate the intended size of the encrypted content.
     enc_size = len(content_dec) + (16 - (len(content_dec) % 16))
-    # Align content to 64 bytes to ensure that all the data is being encrypted, and so it works with AES encryption.
-    if (len(content_dec) % 64) != 0:
-        content_dec = content_dec + (b'\x00' * (64 - (len(content_dec) % 64)))
+    # Align content to 16 bytes to ensure that it works with AES encryption.
+    if (len(content_dec) % 16) != 0:
+        content_dec = content_dec + (b'\x00' * (16 - (len(content_dec) % 16)))
     # Create a new AES object with the values provided, with the content's unique ID as the IV.
     aes = AES.new(title_key, AES.MODE_CBC, content_index_bin)
     # Encrypt the content using the AES object.
