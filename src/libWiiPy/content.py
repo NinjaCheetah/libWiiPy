@@ -157,14 +157,14 @@ class ContentRegion:
                                       self.content_records[index].content_size)
         # Hash the decrypted content and ensure that the hash matches the one in its Content Record.
         # If it does not, then something has gone wrong in the decryption, and an error will be thrown.
-        content_dec_hash = hashlib.sha1(content_dec)
+        content_dec_hash = hashlib.sha1(content_dec).hexdigest()
         content_record_hash = str(self.content_records[index].content_hash.decode())
         # Compare the hash and throw a ValueError if the hash doesn't match.
-        if content_dec_hash.hexdigest() != content_record_hash:
+        if content_dec_hash != content_record_hash:
             raise ValueError("Content hash did not match the expected hash in its record! The incorrect Title Key may "
                              "have been used!.\n"
                              "Expected hash is: {}\n".format(content_record_hash) +
-                             "Actual hash is: {}".format(content_dec_hash.hexdigest()))
+                             "Actual hash is: {}".format(content_dec_hash))
         return content_dec
 
     def get_content_by_cid(self, cid: int, title_key: bytes) -> bytes:
@@ -282,10 +282,52 @@ class ContentRegion:
         # Pass values to set_enc_content()
         self.set_enc_content(enc_content, cid, index, content_type, dec_content_size, dec_content_hash)
 
-    def load_enc_content(self, enc_content: bytes, index: int) -> bytes:
+    def load_enc_content(self, enc_content: bytes, index: int) -> None:
         """Loads the provided encrypted content into the content region at the specified index, with the assumption that
-        it matches the record at that index.
+        it matches the record at that index. Not recommended for most use cases, use decrypted content and
+        load_content() instead.
 
-        :param index:
-        :return:
+        Parameters
+        ----------
+        enc_content : bytes
+            The encrypted content to load.
+        index : int
+            The content index to load the content at.
         """
+        if (index + 1) > len(self.content_records) or len(self.content_records) == 0:
+            raise IndexError("No content records have been loaded, or that index is higher than the highest entry in "
+                             "the content records.")
+        if (index + 1) > len(self.content_list):
+            self.content_list.append(enc_content)
+        else:
+            self.content_list[index] = enc_content
+
+    def load_content(self, dec_content: bytes, index: int, title_key: bytes) -> None:
+        """Loads the provided decrypted content into the content region at the specified index, but first checks to make
+        sure it matches the record at that index before loading. This content will be encrypted when loaded.
+
+        Parameters
+        ----------
+        dec_content : bytes
+            The decrypted content to load.
+        index : int
+            The content index to load the content at.
+        title_key: bytes
+            The Title Key that matches the decrypted content.
+        """
+        # Make sure that content records exist and that the provided index exists in them.
+        if (index + 1) > len(self.content_records) or len(self.content_records) == 0:
+            raise IndexError("No content records have been loaded, or that index is higher than the highest entry in "
+                             "the content records.")
+        # Check the hash of the content against the hash stored in the record to ensure it matches.
+        content_hash = hashlib.sha1(dec_content).hexdigest()
+        if content_hash != self.content_records[index].content_hash.decode():
+            raise ValueError("The decrypted content provided does not match the record at the provided index. \n"
+                             "Expected hash is: {}\n".format(self.content_records[index].content_hash.decode()) +
+                             "Actual hash is: {}".format(content_hash))
+        # If the hash matches, encrypt the content and set it where it belongs.
+        enc_content = encrypt_content(dec_content, title_key, index)
+        if (index + 1) > len(self.content_list):
+            self.content_list.append(enc_content)
+        else:
+            self.content_list[index] = enc_content

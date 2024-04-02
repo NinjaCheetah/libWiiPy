@@ -14,8 +14,8 @@ class WAD:
     """
     def __init__(self):
         self.wad_hdr_size: int = 64
-        self.wad_type: str = ""
-        self.wad_version: bytes = b''
+        self.wad_type: str = "Is"
+        self.wad_version: bytes = b'\x00\x00'
         # === Sizes ===
         self.wad_cert_size: int = 0
         self.wad_crl_size: int = 0

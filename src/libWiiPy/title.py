@@ -27,7 +27,7 @@ class Title:
         self.ticket: Ticket = Ticket()
         self.content: ContentRegion = ContentRegion()
 
-    def set_wad(self, wad: bytes) -> None:
+    def load_wad(self, wad: bytes) -> None:
         """Load existing WAD data into the title and create WAD, TMD, Ticket, and ContentRegion objects based off of it
         to allow you to modify that data. Note that this will overwrite any existing data for this title.
 
@@ -54,7 +54,7 @@ class Title:
             raise ValueError("The Title IDs of the TMD and Ticket in this WAD do not match. This WAD appears to be "
                              "invalid.")
 
-    def dump(self) -> bytes:
+    def dump_wad(self) -> bytes:
         """Dumps all title components (TMD, Ticket, and contents) back into the WAD object, and then dumps the WAD back
         into raw data and returns it.
 
@@ -72,6 +72,38 @@ class Title:
         # Dump the WAD with the new regions back into raw data and return it.
         wad_data = self.wad.dump()
         return wad_data
+
+    def load_tmd(self, tmd: bytes) -> None:
+        """Load existing TMD data into the title. Note that this will overwrite any existing TMD data for this title.
+
+        Parameters
+        ----------
+        tmd : bytes
+            The data for the WAD you wish to load.
+        """
+        # Load TMD.
+        self.tmd.load(tmd)
+
+    def load_ticket(self, ticket: bytes) -> None:
+        """Load existing Ticket data into the title. Note that this will overwrite any existing Ticket data for this
+        title.
+
+        Parameters
+        ----------
+        ticket : bytes
+            The data for the WAD you wish to load.
+        """
+        # Load Ticket.
+        self.ticket.load(ticket)
+
+    def load_content_records(self) -> None:
+        """Load content records from the TMD into the ContentRegion to allow loading content files based on the records.
+        This requires that a TMD has already been loaded and will throw an exception if it isn't.
+        """
+        if not self.tmd.content_records:
+            ValueError("No TMD appears to have been loaded, so content records cannot be read from it.")
+        # Load the content records into the ContentRegion object.
+        self.content.content_records = self.tmd.content_records
 
     def set_title_id(self, title_id: str) -> None:
         """Sets the Title ID of the title in both the TMD and Ticket.
@@ -170,3 +202,17 @@ class Title:
         self.content.set_content(dec_content, cid, index, content_type, self.ticket.get_title_key())
         # Update the TMD to match.
         self.tmd.content_records = self.content.content_records
+
+    def load_content(self, dec_content: bytes, index: int) -> None:
+        """Loads the provided decrypted content into the content region at the specified index, but first checks to make
+        sure it matches the record at that index before loading. This content will be encrypted when loaded.
+
+        Parameters
+        ----------
+        dec_content : bytes
+            The decrypted content to load.
+        index : int
+            The content index to load the content at.
+        """
+        # Load the decrypted content.
+        self.content.load_content(dec_content, index, self.ticket.get_title_key())
