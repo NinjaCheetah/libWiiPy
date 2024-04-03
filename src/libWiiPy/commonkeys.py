@@ -8,8 +8,9 @@ korean_key = '63b82bb4f4614e2e13f2fefbba4c9b7e'
 vwii_key = '30bfc76e7c19afbb23163330ced7c28d'
 
 
-def get_common_key(common_key_index):
-    """Gets the specified Wii Common Key based on the index provided.
+def get_common_key(common_key_index) -> bytes:
+    """
+    Gets the specified Wii Common Key based on the index provided.
 
     Possible values for common_key_index: 0: Common Key, 1: Korean Key, 2: vWii Key
 
