@@ -10,10 +10,15 @@ from .wad import WAD
 
 
 class Title:
-    """Creates a Title object that contains all components of a title, and allows altering them.
+    """
+    A Title object that contains all components of a title, and allows altering them. Provides higher-level access
+    than manually creating WAD, TMD, Ticket, and ContentRegion objects and ensures that any data that needs to match
+    between files matches.
 
     Attributes
     ----------
+    wad : WAD
+        A WAD object of a WAD containing the title's data.
     tmd : TMD
         A TMD object of the title's TMD.
     ticket : Ticket
@@ -28,7 +33,8 @@ class Title:
         self.content: ContentRegion = ContentRegion()
 
     def load_wad(self, wad: bytes) -> None:
-        """Load existing WAD data into the title and create WAD, TMD, Ticket, and ContentRegion objects based off of it
+        """
+        Load existing WAD data into the title and create WAD, TMD, Ticket, and ContentRegion objects based off of it
         to allow you to modify that data. Note that this will overwrite any existing data for this title.
 
         Parameters
@@ -55,7 +61,8 @@ class Title:
                              "invalid.")
 
     def dump_wad(self) -> bytes:
-        """Dumps all title components (TMD, Ticket, and contents) back into the WAD object, and then dumps the WAD back
+        """
+        Dumps all title components (TMD, Ticket, and contents) back into the WAD object, and then dumps the WAD back
         into raw data and returns it.
 
         Returns
@@ -74,7 +81,8 @@ class Title:
         return wad_data
 
     def load_tmd(self, tmd: bytes) -> None:
-        """Load existing TMD data into the title. Note that this will overwrite any existing TMD data for this title.
+        """
+        Load existing TMD data into the title. Note that this will overwrite any existing TMD data for this title.
 
         Parameters
         ----------
@@ -85,7 +93,8 @@ class Title:
         self.tmd.load(tmd)
 
     def load_ticket(self, ticket: bytes) -> None:
-        """Load existing Ticket data into the title. Note that this will overwrite any existing Ticket data for this
+        """
+        Load existing Ticket data into the title. Note that this will overwrite any existing Ticket data for this
         title.
 
         Parameters
@@ -97,7 +106,8 @@ class Title:
         self.ticket.load(ticket)
 
     def load_content_records(self) -> None:
-        """Load content records from the TMD into the ContentRegion to allow loading content files based on the records.
+        """
+        Load content records from the TMD into the ContentRegion to allow loading content files based on the records.
         This requires that a TMD has already been loaded and will throw an exception if it isn't.
         """
         if not self.tmd.content_records:
@@ -106,7 +116,8 @@ class Title:
         self.content.content_records = self.tmd.content_records
 
     def set_title_id(self, title_id: str) -> None:
-        """Sets the Title ID of the title in both the TMD and Ticket.
+        """
+        Sets the Title ID of the title in both the TMD and Ticket.
 
         Parameters
         ----------
@@ -119,7 +130,8 @@ class Title:
         self.ticket.set_title_id(title_id)
 
     def get_content_by_index(self, index: id) -> bytes:
-        """Gets an individual content from the content region based on the provided index, in decrypted form.
+        """
+        Gets an individual content from the content region based on the provided index, in decrypted form.
 
         Parameters
         ----------
@@ -138,7 +150,8 @@ class Title:
         return dec_content
 
     def get_content_by_cid(self, cid: int) -> bytes:
-        """Gets an individual content from the content region based on the provided Content ID, in decrypted form.
+        """
+        Gets an individual content from the content region based on the provided Content ID, in decrypted form.
 
         Parameters
         ----------
@@ -158,7 +171,8 @@ class Title:
 
     def set_enc_content(self, enc_content: bytes, cid: int, index: int, content_type: int, content_size: int,
                         content_hash: bytes) -> None:
-        """Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
+        """
+        Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
         set in the content record, with a new record being added if necessary. The TMD is also updated to match the new
         records.
 
@@ -183,7 +197,8 @@ class Title:
         self.tmd.content_records = self.content.content_records
 
     def set_content(self, dec_content: bytes, cid: int, index: int, content_type: int) -> None:
-        """Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
+        """
+        Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
         set in the content record, with a new record being added if necessary. The Title Key is sourced from this
         title's loaded ticket. The TMD is also updated to match the new records.
 
@@ -204,7 +219,8 @@ class Title:
         self.tmd.content_records = self.content.content_records
 
     def load_content(self, dec_content: bytes, index: int) -> None:
-        """Loads the provided decrypted content into the content region at the specified index, but first checks to make
+        """
+        Loads the provided decrypted content into the content region at the specified index, but first checks to make
         sure it matches the record at that index before loading. This content will be encrypted when loaded.
 
         Parameters

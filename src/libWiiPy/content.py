@@ -12,7 +12,16 @@ from .crypto import decrypt_content, encrypt_content
 
 
 class ContentRegion:
-    """Creates a ContentRegion object to parse the continuous content region of a WAD.
+    """
+    A ContentRegion object to parse the continuous content region of a WAD. Allows for retrieving content from the
+    region in both encrypted or decrypted form, and setting new content.
+
+    Attributes
+    ----------
+    content_records : List[ContentRecord]
+        The content records for the content stored in the region.
+    num_contents : int
+        The total number of contents stored in the region.
     """
 
     def __init__(self):
@@ -23,7 +32,8 @@ class ContentRegion:
         self.content_list: List[bytes] = []
 
     def load(self, content_region: bytes, content_records: List[ContentRecord]) -> None:
-        """Loads the raw content region and builds a list of all the contents.
+        """
+        Loads the raw content region and builds a list of all the contents.
 
         Parameters
         ----------
@@ -59,7 +69,8 @@ class ContentRegion:
                 self.content_list.append(content_enc)
 
     def dump(self) -> bytes:
-        """Takes the list of contents and assembles them back into one content region. Returns this content region as a
+        """
+        Takes the list of contents and assembles them back into one content region. Returns this content region as a
         bytes object and sets the raw content region variable to this result, then calls load() again to make sure the
         content list matches the raw data.
 
@@ -85,7 +96,8 @@ class ContentRegion:
         return content_region_raw
 
     def get_enc_content_by_index(self, index: int) -> bytes:
-        """Gets an individual content from the content region based on the provided index, in encrypted form.
+        """
+        Gets an individual content from the content region based on the provided index, in encrypted form.
 
         Parameters
         ----------
@@ -101,7 +113,8 @@ class ContentRegion:
         return content_enc
 
     def get_enc_content_by_cid(self, cid: int) -> bytes:
-        """Gets an individual content from the content region based on the provided Content ID, in encrypted form.
+        """
+        Gets an individual content from the content region based on the provided Content ID, in encrypted form.
 
         Parameters
         ----------
@@ -127,7 +140,8 @@ class ContentRegion:
         return content_enc
 
     def get_enc_contents(self) -> List[bytes]:
-        """Gets a list of all encrypted contents from the content region.
+        """
+        Gets a list of all encrypted contents from the content region.
 
         Returns
         -------
@@ -137,7 +151,8 @@ class ContentRegion:
         return self.content_list
 
     def get_content_by_index(self, index: int, title_key: bytes) -> bytes:
-        """Gets an individual content from the content region based on the provided index, in decrypted form.
+        """
+        Gets an individual content from the content region based on the provided index, in decrypted form.
 
         Parameters
         ----------
@@ -168,7 +183,8 @@ class ContentRegion:
         return content_dec
 
     def get_content_by_cid(self, cid: int, title_key: bytes) -> bytes:
-        """Gets an individual content from the content region based on the provided Content ID, in decrypted form.
+        """
+        Gets an individual content from the content region based on the provided Content ID, in decrypted form.
 
         Parameters
         ----------
@@ -196,7 +212,8 @@ class ContentRegion:
         return content_dec
 
     def get_contents(self, title_key: bytes) -> List[bytes]:
-        """Gets a list of all contents from the content region, in decrypted form.
+        """
+        Gets a list of all contents from the content region, in decrypted form.
 
         Parameters
         ----------
@@ -216,7 +233,8 @@ class ContentRegion:
 
     def set_enc_content(self, enc_content: bytes, cid: int, index: int, content_type: int, content_size: int,
                         content_hash: bytes) -> None:
-        """Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
+        """
+        Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
         set in the content record, with a new record being added if necessary.
 
         Parameters
@@ -257,8 +275,9 @@ class ContentRegion:
             self.content_list[index] = enc_content
 
     def set_content(self, dec_content: bytes, cid: int, index: int, content_type: int, title_key: bytes) -> None:
-        """Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
-                set in the content record, with a new record being added if necessary.
+        """
+        Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
+        set in the content record, with a new record being added if necessary.
 
         Parameters
         ----------
@@ -283,7 +302,8 @@ class ContentRegion:
         self.set_enc_content(enc_content, cid, index, content_type, dec_content_size, dec_content_hash)
 
     def load_enc_content(self, enc_content: bytes, index: int) -> None:
-        """Loads the provided encrypted content into the content region at the specified index, with the assumption that
+        """
+        Loads the provided encrypted content into the content region at the specified index, with the assumption that
         it matches the record at that index. Not recommended for most use cases, use decrypted content and
         load_content() instead.
 
@@ -303,7 +323,8 @@ class ContentRegion:
             self.content_list[index] = enc_content
 
     def load_content(self, dec_content: bytes, index: int, title_key: bytes) -> None:
-        """Loads the provided decrypted content into the content region at the specified index, but first checks to make
+        """
+        Loads the provided decrypted content into the content region at the specified index, but first checks to make
         sure it matches the record at that index before loading. This content will be encrypted when loaded.
 
         Parameters

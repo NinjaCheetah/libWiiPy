@@ -12,8 +12,7 @@ from typing import List
 
 class Ticket:
     """
-    Creates a Ticket object that allows for either loading and editing an existing Ticket or creating one manually if
-    desired.
+    A Ticket object that allows for either loading and editing an existing Ticket or creating one manually if desired.
 
     Attributes
     ----------
@@ -58,7 +57,8 @@ class Ticket:
         # TODO: Write in v1 ticket attributes here. This code can currently only handle v0 tickets, and will reject v1.
 
     def load(self, ticket: bytes) -> None:
-        """Loads raw Ticket data and sets all attributes of the WAD object. This allows for manipulating an already
+        """
+        Loads raw Ticket data and sets all attributes of the WAD object. This allows for manipulating an already
         existing Ticket.
 
         Parameters
@@ -138,7 +138,8 @@ class Ticket:
                 self.title_limits_list.append(TitleLimit(limit_type, limit_value))
 
     def dump(self) -> bytes:
-        """Dumps the Ticket object back into bytes. This also sets the raw Ticket attribute of Ticket object to the
+        """
+        Dumps the Ticket object back into bytes. This also sets the raw Ticket attribute of Ticket object to the
         dumped data, and triggers load() again to ensure that the raw data and object match.
 
         Returns
@@ -209,8 +210,9 @@ class Ticket:
         # Return the raw TMD for the data contained in the object.
         return ticket_data_raw
 
-    def get_title_id(self):
-        """Gets the Title ID of the ticket's associated title.
+    def get_title_id(self) -> str:
+        """
+        Gets the Title ID of the ticket's associated title.
 
         Returns
         -------
@@ -220,8 +222,9 @@ class Ticket:
         title_id_str = str(self.title_id.decode())
         return title_id_str
 
-    def get_common_key_type(self):
-        """Gets the name of the common key used to encrypt the Title Key contained in the ticket.
+    def get_common_key_type(self) -> str:
+        """
+        Gets the name of the common key used to encrypt the Title Key contained in the ticket.
 
         Returns
         -------
@@ -240,8 +243,9 @@ class Ticket:
             case 2:
                 return "vWii"
 
-    def get_title_key(self):
-        """Gets the decrypted title key contained in the ticket.
+    def get_title_key(self) -> bytes:
+        """
+        Gets the decrypted title key contained in the ticket.
 
         Returns
         -------
@@ -251,8 +255,9 @@ class Ticket:
         title_key = decrypt_title_key(self.title_key_enc, self.common_key_index, self.title_id)
         return title_key
 
-    def set_title_id(self, title_id):
-        """Sets the Title ID of the title in the Ticket.
+    def set_title_id(self, title_id) -> None:
+        """
+        Sets the Title ID of the title in the Ticket.
 
         Parameters
         ----------

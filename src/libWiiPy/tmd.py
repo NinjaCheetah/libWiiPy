@@ -12,7 +12,7 @@ from .types import ContentRecord
 
 class TMD:
     """
-    Creates a TMD object that allows for either loading and editing an existing TMD or creating one manually if desired.
+    A TMD object that allows for either loading and editing an existing TMD or creating one manually if desired.
 
     Attributes
     ----------
@@ -53,7 +53,8 @@ class TMD:
         self.content_records: List[ContentRecord] = []
 
     def load(self, tmd: bytes) -> None:
-        """Loads raw TMD data and sets all attributes of the WAD object. This allows for manipulating an already
+        """
+        Loads raw TMD data and sets all attributes of the WAD object. This allows for manipulating an already
         existing TMD.
 
         Parameters
@@ -138,7 +139,8 @@ class TMD:
                                   binascii.hexlify(content_record_hdr[4])))
 
     def dump(self) -> bytes:
-        """Dumps the TMD object back into bytes. This also sets the raw TMD attribute of TMD object to the dumped data,
+        """
+        Dumps the TMD object back into bytes. This also sets the raw TMD attribute of TMD object to the dumped data,
         and triggers load() again to ensure that the raw data and object match.
 
         Returns
@@ -212,8 +214,9 @@ class TMD:
         # Return the raw TMD for the data contained in the object.
         return tmd_data_raw
 
-    def get_title_region(self):
-        """Gets the region of the TMD's associated title.
+    def get_title_region(self) -> str:
+        """
+        Gets the region of the TMD's associated title.
 
         Can be one of several possible values:
         'JAP', 'USA', 'EUR', 'NONE', or 'KOR'.
@@ -235,8 +238,9 @@ class TMD:
             case 4:
                 return "KOR"
 
-    def get_is_vwii_title(self):
-        """Gets whether the TMD is designed for the vWii or not.
+    def get_is_vwii_title(self) -> bool:
+        """
+        Gets whether the TMD is designed for the vWii or not.
 
         Returns
         -------
@@ -248,8 +252,9 @@ class TMD:
         else:
             return False
 
-    def get_title_type(self):
-        """Gets the type of the TMD's associated title.
+    def get_title_type(self) -> str:
+        """
+        Gets the type of the TMD's associated title.
 
         Can be one of several possible values:
         'System', 'Game', 'Channel', 'SystemChannel', 'GameWithChannel', or 'HiddenChannel'
@@ -279,7 +284,8 @@ class TMD:
                 return "Unknown"
 
     def get_content_type(self):
-        """Gets the type of content contained in the TMD's associated title.
+        """
+        Gets the type of content contained in the TMD's associated title.
 
         Can be one of several possible values:
         'Normal', 'Development/Unknown', 'Hash Tree', 'DLC', or 'Shared'
@@ -303,8 +309,9 @@ class TMD:
             case _:
                 return "Unknown"
 
-    def get_content_record(self, record):
-        """Gets the content record at the specified index.
+    def get_content_record(self, record) -> ContentRecord:
+        """
+        Gets the content record at the specified index.
 
         Parameters
         ----------
@@ -322,8 +329,9 @@ class TMD:
             raise IndexError("Invalid content record! TMD lists '" + str(self.num_contents - 1) +
                              "' contents but index was '" + str(record) + "'!")
 
-    def set_title_id(self, title_id):
-        """Sets the Title ID of the title in the ticket.
+    def set_title_id(self, title_id) -> None:
+        """
+        Sets the Title ID of the title in the ticket.
 
         Parameters
         ----------

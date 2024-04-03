@@ -10,7 +10,24 @@ from .shared import align_value, pad_bytes_stream
 
 class WAD:
     """
-    Creates a WAD object that allows for either loading and editing an existing WAD or creating a new WAD from raw data.
+    A WAD object that allows for either loading and editing an existing WAD or creating a new WAD from raw data.
+
+    Attributes
+    ----------
+    wad_type : str
+        The type of WAD, either ib for boot2 or Is for normal installable WADs. libWiiPy only supports Is currently.
+    wad_cert_size : int
+        The size of the WAD's certificate.
+    wad_crl_size : int
+        The size of the WAD's crl.
+    wad_tik_size : int
+        The size of the WAD's Ticket.
+    wad_tmd_size : int
+        The size of the WAD's TMD.
+    wad_content_size : int
+        The size of WAD's total content region.
+    wad_meta_size : int
+        The size of the WAD's meta/footer.
     """
     def __init__(self):
         self.wad_hdr_size: int = 64
@@ -33,7 +50,8 @@ class WAD:
         self.wad_meta_data: bytes = b''
 
     def load(self, wad_data) -> None:
-        """Loads raw WAD data and sets all attributes of the WAD object. This allows for manipulating an already
+        """
+        Loads raw WAD data and sets all attributes of the WAD object. This allows for manipulating an already
         existing WAD file.
 
         Parameters
@@ -114,7 +132,8 @@ class WAD:
             self.wad_meta_data = wad_data.read(self.wad_meta_size)
 
     def dump(self) -> bytes:
-        """Dumps the WAD object into the raw WAD file. This allows for creating a WAD file from the data contained in
+        """
+        Dumps the WAD object into the raw WAD file. This allows for creating a WAD file from the data contained in
         the WAD object.
 
         Returns
@@ -167,8 +186,9 @@ class WAD:
         # Return the raw WAD file for the data contained in the object.
         return wad_data_raw
 
-    def get_wad_type(self):
-        """Gets the type of the WAD.
+    def get_wad_type(self) -> str:
+        """
+        Gets the type of the WAD.
 
         Returns
         -------
@@ -178,7 +198,8 @@ class WAD:
         return self.wad_type
 
     def get_cert_data(self) -> bytes:
-        """Gets the certificate data from the WAD.
+        """
+        Gets the certificate data from the WAD.
 
         Returns
         -------
@@ -188,7 +209,8 @@ class WAD:
         return self.wad_cert_data
 
     def get_crl_data(self) -> bytes:
-        """Gets the crl data from the WAD, if it exists.
+        """
+        Gets the crl data from the WAD, if it exists.
 
         Returns
         -------
@@ -198,7 +220,8 @@ class WAD:
         return self.wad_crl_data
 
     def get_ticket_data(self) -> bytes:
-        """Gets the ticket data from the WAD.
+        """
+        Gets the ticket data from the WAD.
 
         Returns
         -------
@@ -208,7 +231,8 @@ class WAD:
         return self.wad_tik_data
 
     def get_tmd_data(self) -> bytes:
-        """Returns the TMD data from the WAD.
+        """
+        Returns the TMD data from the WAD.
 
         Returns
         -------
@@ -218,7 +242,8 @@ class WAD:
         return self.wad_tmd_data
 
     def get_content_data(self) -> bytes:
-        """Gets the content of the WAD.
+        """
+        Gets the content of the WAD.
 
         Returns
         -------
@@ -228,7 +253,8 @@ class WAD:
         return self.wad_content_data
 
     def get_meta_data(self) -> bytes:
-        """Gets the meta region of the WAD, which is typically unused.
+        """
+        Gets the meta region of the WAD, which is typically unused.
 
         Returns
         -------
@@ -238,7 +264,8 @@ class WAD:
         return self.wad_meta_data
 
     def set_cert_data(self, cert_data) -> None:
-        """Sets the certificate data of the WAD. Also calculates the new size.
+        """
+        Sets the certificate data of the WAD. Also calculates the new size.
 
         Parameters
         ----------
@@ -250,7 +277,8 @@ class WAD:
         self.wad_cert_size = len(cert_data)
 
     def set_crl_data(self, crl_data) -> None:
-        """Sets the crl data of the WAD. Also calculates the new size.
+        """
+        Sets the crl data of the WAD. Also calculates the new size.
 
         Parameters
         ----------
@@ -262,7 +290,8 @@ class WAD:
         self.wad_crl_size = len(crl_data)
 
     def set_tmd_data(self, tmd_data) -> None:
-        """Sets the TMD data of the WAD. Also calculates the new size.
+        """
+        Sets the TMD data of the WAD. Also calculates the new size.
 
         Parameters
         ----------
@@ -274,7 +303,8 @@ class WAD:
         self.wad_tmd_size = len(tmd_data)
 
     def set_ticket_data(self, tik_data) -> None:
-        """Sets the Ticket data of the WAD. Also calculates the new size.
+        """
+        Sets the Ticket data of the WAD. Also calculates the new size.
 
         Parameters
         ----------
@@ -286,7 +316,8 @@ class WAD:
         self.wad_tik_size = len(tik_data)
 
     def set_content_data(self, content_data) -> None:
-        """Sets the content data of the WAD. Also calculates the new size.
+        """
+        Sets the content data of the WAD. Also calculates the new size.
 
         Parameters
         ----------
@@ -298,7 +329,8 @@ class WAD:
         self.wad_content_size = len(content_data)
 
     def set_meta_data(self, meta_data) -> None:
-        """Sets the meta data of the WAD. Also calculates the new size.
+        """
+        Sets the meta data of the WAD. Also calculates the new size.
 
         Parameters
         ----------

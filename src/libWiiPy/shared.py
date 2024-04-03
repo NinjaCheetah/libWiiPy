@@ -1,8 +1,12 @@
 # "shared.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
+#
+# This file defines general functions that may be useful in other modules of libWiiPy. Putting them here cuts down on
+# clutter in other files.
 
-def align_value(value, alignment=64):
-    """Aligns the provided value to the set alignment (defaults to 64).
+def align_value(value, alignment=64) -> int:
+    """
+    Aligns the provided value to the set alignment (defaults to 64).
 
     Parameters
     ----------
@@ -22,8 +26,9 @@ def align_value(value, alignment=64):
     return value
 
 
-def pad_bytes_stream(data, alignment=64):
-    """Pads the provided bytes stream to the provided alignment (defaults to 64).
+def pad_bytes_stream(data, alignment=64) -> bytes:
+    """
+    Pads the provided bytes stream to the provided alignment (defaults to 64).
 
     Parameters
     ----------

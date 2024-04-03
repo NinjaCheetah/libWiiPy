@@ -7,7 +7,8 @@ from Crypto.Cipher import AES
 
 
 def decrypt_title_key(title_key_enc, common_key_index, title_id) -> bytes:
-    """Gets the decrypted version of the encrypted Title Key provided.
+    """
+    Gets the decrypted version of the encrypted Title Key provided.
 
     Requires the index of the common key to use, and the Title ID of the title that the Title Key is for.
 
@@ -37,7 +38,8 @@ def decrypt_title_key(title_key_enc, common_key_index, title_id) -> bytes:
 
 
 def decrypt_content(content_enc, title_key, content_index, content_length) -> bytes:
-    """Gets the decrypted version of the encrypted content.
+    """
+    Gets the decrypted version of the encrypted content.
 
     This requires the index of the content to decrypt as it is used as the IV, as well as the content length to adjust
     padding as necessary.
@@ -76,7 +78,8 @@ def decrypt_content(content_enc, title_key, content_index, content_length) -> by
 
 
 def encrypt_content(content_dec, title_key, content_index) -> bytes:
-    """Gets the encrypted version of the decrypted content.
+    """
+    Gets the encrypted version of the decrypted content.
 
     This requires the index of the content to encrypt as it is used as the IV, as well as the content length to adjust
     padding as necessary.

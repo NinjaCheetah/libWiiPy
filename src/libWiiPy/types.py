@@ -7,7 +7,9 @@ from dataclasses import dataclass
 @dataclass
 class ContentRecord:
     """
-    Creates a content record object that contains the details of a content contained in a title.
+    A content record object that contains the details of a content contained in a title. This information must match
+    the content stored at the index in the record, or else the content will not decrypt properly, as the hash of the
+    decrypted data will not match the hash in the content record.
 
     Attributes
     ----------
@@ -31,7 +33,10 @@ class ContentRecord:
 
 @dataclass
 class TitleLimit:
-    """Creates a TitleLimit object that contains the type of restriction and the limit.
+    """
+    A TitleLimit object that contains the type of restriction and the limit. The limit type can be one of the following:
+    0 = None, 1 = Time Limit, 3 = None, or 4 = Launch Count. The maximum usage is then either the time in minutes the
+    title can be played or the maximum number of launches allowed for that title, based on the type of limit applied.
 
     Attributes
     ----------
@@ -40,9 +45,8 @@ class TitleLimit:
     maximum_usage : int
         The maximum value for the type of play limit applied.
     """
-    # The type of play limit applied. The following types exist:
+    # The type of play limit applied.
     # 0 = None, 1 = Time Limit, 3 = None, 4 = Launch Count
     limit_type: int
     # The maximum value of the limit applied.
-    # This is either the number of minutes for a time limit, or the number of launches for a launch limit.
     maximum_usage: int
