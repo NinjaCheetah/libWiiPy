@@ -9,8 +9,7 @@ libWiiPy is inspired by [libWiiSharp](https://github.com/TheShadowEevee/libWiiSh
 # Features
 This list will expand as libWiiPy is developed, but these features are currently available:
 - TMD, ticket, and WAD parsing
-- Title Key and content decryption and extraction
-- Content encryption and WAD packing
+- WAD content extraction, decryption, re-encryption, and packing
 
 # Usage
 A wiki, and in the future a potential documenation site, is being worked on, and can be accessed [here](https://github.com/NinjaCheetah/libWiiPy/wiki). It is currently fairly barebones, but it will be improved in the future.
