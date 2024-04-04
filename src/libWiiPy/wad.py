@@ -66,9 +66,8 @@ class WAD:
             wad_magic_bin = wad_data.read(8)
             wad_magic_hex = binascii.hexlify(wad_magic_bin)
             wad_magic = str(wad_magic_hex.decode())
-            if wad_magic != "0000002049730000":
-                raise TypeError("This does not appear to be a valid WAD file, or is a boot2 WAD, which is not currently"
-                                " supported by this library.")
+            if wad_magic != "0000002049730000" and wad_magic != "0000002069620000":
+                raise TypeError("This does not appear to be a valid WAD file.")
             # ====================================================================================
             # Get the sizes of each data region contained within the WAD.
             # ====================================================================================
