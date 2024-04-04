@@ -9,3 +9,4 @@ from .ticket import *
 from .title import *
 from .tmd import *
 from .wad import *
+from .nus import *
