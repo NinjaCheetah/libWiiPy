@@ -70,6 +70,9 @@ class Title:
         wad_data : bytes
             The raw data of the WAD.
         """
+        # Set WAD type to ib if the title being packed is boot2.
+        if self.tmd.title_id == "0000000100000001":
+            self.wad.wad_type = "ib"
         # Dump the TMD and set it in the WAD.
         self.wad.set_tmd_data(self.tmd.dump())
         # Dump the Ticket and set it in the WAD.

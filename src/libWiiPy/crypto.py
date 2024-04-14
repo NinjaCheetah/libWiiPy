@@ -72,8 +72,7 @@ def decrypt_content(content_enc, title_key, content_index, content_length) -> by
     # Decrypt the content using the AES object.
     content_dec = aes.decrypt(content_enc)
     # Trim additional bytes that may have been added so the content is the correct size.
-    while len(content_dec) > content_length:
-        content_dec = content_dec[:-1]
+    content_dec = content_dec[:content_length]
     return content_dec
 
 
