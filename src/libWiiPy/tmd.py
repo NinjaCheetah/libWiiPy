@@ -257,7 +257,7 @@ class TMD:
         Gets the type of the TMD's associated title.
 
         Can be one of several possible values:
-        'System', 'Game', 'Channel', 'SystemChannel', 'GameWithChannel', or 'HiddenChannel'
+        'System', 'Game', 'Channel', 'SystemChannel', 'GameChannel', or 'HiddenChannel'
 
         Returns
         -------
@@ -275,7 +275,7 @@ class TMD:
             case '00010002':
                 return "SystemChannel"
             case '00010004':
-                return "GameWithChannel"
+                return "GameChannel"
             case '00010005':
                 return "DLC"
             case '00010008':
