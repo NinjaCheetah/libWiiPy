@@ -4,7 +4,7 @@
 # See https://wiibrew.org/wiki/NUS for details about the NUS
 
 import io
-import urllib3
+import requests
 import hashlib
 from typing import List
 from .title import Title
@@ -62,18 +62,18 @@ def download_tmd(title_id: str, title_version: int = None) -> bytes:
     """
     # Build the download URL. The structure is download/<TID>/tmd for latest and download/<TID>/tmd.<version> for
     # when a specific version is requested.
-    tmd_url = "http://ccs.shop.wii.com/ccs/download/" + title_id + "/tmd"
+    tmd_url = "http://nus.cdn.shop.wii.com/ccs/download/" + title_id + "/tmd"
     # Add the version to the URL if one was specified.
     if title_version is not None:
         tmd_url += "." + str(title_version)
     # Make the request.
-    tmd_response = urllib3.request(method='GET', url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'})
+    tmd_request = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
     # Handle a 404 if the TID/version doesn't exist.
-    if tmd_response.status != 200:
+    if tmd_request.status_code != 200:
         raise ValueError("The requested Title ID or TMD version does not exist. Please check the Title ID and Title"
                          " version and then try again.")
     # Save the raw TMD.
-    raw_tmd = tmd_response.data
+    raw_tmd = tmd_request.content
     # Use a TMD object to load the data and then return only the actual TMD.
     tmd_temp = TMD()
     tmd_temp.load(raw_tmd)
@@ -98,14 +98,14 @@ def download_ticket(title_id: str) -> bytes:
     """
     # Build the download URL. The structure is download/<TID>/cetk, and cetk will only exist if this is a free
     # title.
-    ticket_url = "http://ccs.shop.wii.com/ccs/download/" + title_id + "/cetk"
+    ticket_url = "http://nus.cdn.shop.wii.com/ccs/download/" + title_id + "/cetk"
     # Make the request.
-    ticket_response = urllib3.request(method='GET', url=ticket_url, headers={'User-Agent': 'wii libnup/1.0'})
-    if ticket_response.status != 200:
+    ticket_request = requests.get(url=ticket_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+    if ticket_request.status_code != 200:
         raise ValueError("The requested Title ID does not exist, or refers to a non-free title. Tickets can only"
                          " be downloaded for titles that are free on the NUS.")
     # Save the raw cetk file.
-    cetk = ticket_response.data
+    cetk = ticket_request.content
     # Use a Ticket object to load only the Ticket data from cetk and return it.
     ticket_temp = Ticket()
     ticket_temp.load(cetk)
@@ -123,10 +123,10 @@ def download_cert() -> bytes:
         The cert file.
     """
     # Download the TMD and cetk for the System Menu 4.3U.
-    tmd = urllib3.request(method='GET', url='http://ccs.shop.wii.com/ccs/download/0000000100000002/tmd.513',
-                          headers={'User-Agent': 'wii libnup/1.0'}).data
-    cetk = urllib3.request(method='GET', url='http://ccs.shop.wii.com/ccs/download/0000000100000002/cetk',
-                           headers={'User-Agent': 'wii libnup/1.0'}).data
+    tmd = requests.get(url='http://nus.cdn.shop.wii.com/ccs/download/0000000100000002/tmd.513',
+                       headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
+    cetk = requests.get(url='http://nus.cdn.shop.wii.com/ccs/download/0000000100000002/cetk',
+                        headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
     # Assemble the certificate.
     with io.BytesIO() as cert_data:
         # Certificate Authority data.
@@ -163,14 +163,15 @@ def download_content(title_id: str, content_id: int) -> bytes:
     content_id_hex = hex(content_id)[2:]
     if len(content_id_hex) < 2:
         content_id_hex = "0" + content_id_hex
-    content_url = "http://ccs.shop.wii.com/ccs/download/" + title_id + "/000000" + content_id_hex
+    content_url = "http://nus.cdn.shop.wii.com/ccs/download/" + title_id + "/000000" + content_id_hex
     # Make the request.
-    content_response = urllib3.request(method='GET', url=content_url, headers={'User-Agent': 'wii libnup/1.0'})
-    if content_response.status != 200:
+    content_request = requests.get(url=content_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+    if content_request.status_code != 200:
         raise ValueError("The requested Title ID does not exist, or an invalid Content ID is present in the"
                          " content records provided.\n Failed while downloading Content ID: 000000" +
                          content_id_hex)
-    return content_response.data
+    content_data = content_request.content
+    return content_data
 
 
 def download_contents(title_id: str, tmd: TMD) -> List[bytes]:
