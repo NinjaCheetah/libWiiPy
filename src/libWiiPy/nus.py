@@ -14,7 +14,7 @@ from .ticket import Ticket
 nus_endpoint = ["http://nus.cdn.shop.wii.com/ccs/download/", "http://ccs.cdn.wup.shop.nintendo.net/ccs/download/"]
 
 
-def download_title(title_id: str, title_version: int = None, fallback_endpoint: bool = False) -> Title:
+def download_title(title_id: str, title_version: int = None, wiiu_endpoint: bool = False) -> Title:
     """
     Download an entire title and all of its contents, then load the downloaded components into a Title object for
     further use. This method is NOT recommended for general use, as it has absolutely no verbosity. It is instead
@@ -26,8 +26,8 @@ def download_title(title_id: str, title_version: int = None, fallback_endpoint: 
         The Title ID of the title to download.
     title_version : int, option
         The version of the title to download. Defaults to latest if not set.
-    fallback_endpoint : bool, option
-        Whether the fallback Wii U endpoint for the NUS should be used or not. Defaults to False.
+    wiiu_endpoint : bool, option
+        Whether the Wii U endpoint for the NUS should be used or not. This increases download speeds. Defaults to False.
 
     Returns
     -------
@@ -37,17 +37,17 @@ def download_title(title_id: str, title_version: int = None, fallback_endpoint: 
     # First, create the new title.
     title = Title()
     # Download and load the TMD, Ticket, and certs.
-    title.load_tmd(download_tmd(title_id, title_version, fallback_endpoint))
-    title.load_ticket(download_ticket(title_id, fallback_endpoint))
-    title.wad.set_cert_data(download_cert(fallback_endpoint))
+    title.load_tmd(download_tmd(title_id, title_version, wiiu_endpoint))
+    title.load_ticket(download_ticket(title_id, wiiu_endpoint))
+    title.wad.set_cert_data(download_cert(wiiu_endpoint))
     # Download all contents
     title.load_content_records()
-    title.content.content_list = download_contents(title_id, title.tmd, fallback_endpoint)
+    title.content.content_list = download_contents(title_id, title.tmd, wiiu_endpoint)
     # Return the completed title.
     return title
 
 
-def download_tmd(title_id: str, title_version: int = None, fallback_endpoint: bool = False) -> bytes:
+def download_tmd(title_id: str, title_version: int = None, wiiu_endpoint: bool = False) -> bytes:
     """
     Downloads the TMD of the Title specified in the object. Will download the latest version by default, or another
     version if it was manually specified in the object.
@@ -58,8 +58,8 @@ def download_tmd(title_id: str, title_version: int = None, fallback_endpoint: bo
         The Title ID of the title to download the TMD for.
     title_version : int, option
         The version of the TMD to download. Defaults to latest if not set.
-    fallback_endpoint : bool, option
-        Whether the fallback Wii U endpoint for the NUS should be used or not. Defaults to False.
+    wiiu_endpoint : bool, option
+        Whether the Wii U endpoint for the NUS should be used or not. This increases download speeds. Defaults to False.
 
     Returns
     -------
@@ -68,7 +68,7 @@ def download_tmd(title_id: str, title_version: int = None, fallback_endpoint: bo
     """
     # Build the download URL. The structure is download/<TID>/tmd for latest and download/<TID>/tmd.<version> for
     # when a specific version is requested.
-    if fallback_endpoint is False:
+    if wiiu_endpoint is False:
         tmd_url = nus_endpoint[0] + title_id + "/tmd"
     else:
         tmd_url = nus_endpoint[1] + title_id + "/tmd"
@@ -90,7 +90,7 @@ def download_tmd(title_id: str, title_version: int = None, fallback_endpoint: bo
     return tmd
 
 
-def download_ticket(title_id: str, fallback_endpoint: bool = False) -> bytes:
+def download_ticket(title_id: str, wiiu_endpoint: bool = False) -> bytes:
     """
     Downloads the Ticket of the Title specified in the object. This will only work if the Title ID specified is for
     a free title.
@@ -99,8 +99,8 @@ def download_ticket(title_id: str, fallback_endpoint: bool = False) -> bytes:
     ----------
     title_id : str
         The Title ID of the title to download the Ticket for.
-    fallback_endpoint : bool, option
-        Whether the fallback Wii U endpoint for the NUS should be used or not. Defaults to False.
+    wiiu_endpoint : bool, option
+        Whether the Wii U endpoint for the NUS should be used or not. This increases download speeds. Defaults to False.
 
     Returns
     -------
@@ -109,7 +109,7 @@ def download_ticket(title_id: str, fallback_endpoint: bool = False) -> bytes:
     """
     # Build the download URL. The structure is download/<TID>/cetk, and cetk will only exist if this is a free
     # title.
-    if fallback_endpoint is False:
+    if wiiu_endpoint is False:
         ticket_url = nus_endpoint[0] + title_id + "/cetk"
     else:
         ticket_url = nus_endpoint[1] + title_id + "/cetk"
@@ -127,14 +127,14 @@ def download_ticket(title_id: str, fallback_endpoint: bool = False) -> bytes:
     return ticket
 
 
-def download_cert(fallback_endpoint: bool = False) -> bytes:
+def download_cert(wiiu_endpoint: bool = False) -> bytes:
     """
     Downloads the signing certificate used by all WADs. This uses System Menu 4.3U as the source.
 
     Parameters
     ----------
-    fallback_endpoint : bool, option
-        Whether the fallback Wii U endpoint for the NUS should be used or not. Defaults to False.
+    wiiu_endpoint : bool, option
+        Whether the Wii U endpoint for the NUS should be used or not. This increases download speeds. Defaults to False.
 
     Returns
     -------
@@ -142,7 +142,7 @@ def download_cert(fallback_endpoint: bool = False) -> bytes:
         The cert file.
     """
     # Download the TMD and cetk for the System Menu 4.3U.
-    if fallback_endpoint is False:
+    if wiiu_endpoint is False:
         tmd_url = nus_endpoint[0] + "0000000100000002/tmd.513"
         cetk_url = nus_endpoint[0] + "0000000100000002/cetk"
     else:
@@ -166,7 +166,7 @@ def download_cert(fallback_endpoint: bool = False) -> bytes:
     return cert
 
 
-def download_content(title_id: str, content_id: int, fallback_endpoint: bool = False) -> bytes:
+def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False) -> bytes:
     """
     Downloads a specified content for the title specified in the object.
 
@@ -176,8 +176,8 @@ def download_content(title_id: str, content_id: int, fallback_endpoint: bool = F
         The Title ID of the title to download content from.
     content_id : int
         The Content ID of the content you wish to download.
-    fallback_endpoint : bool, option
-        Whether the fallback Wii U endpoint for the NUS should be used or not. Defaults to False.
+    wiiu_endpoint : bool, option
+        Whether the Wii U endpoint for the NUS should be used or not. This increases download speeds. Defaults to False.
 
     Returns
     -------
@@ -188,7 +188,7 @@ def download_content(title_id: str, content_id: int, fallback_endpoint: bool = F
     content_id_hex = hex(content_id)[2:]
     if len(content_id_hex) < 2:
         content_id_hex = "0" + content_id_hex
-    if fallback_endpoint is False:
+    if wiiu_endpoint is False:
         content_url = nus_endpoint[0] + title_id + "/000000" + content_id_hex
     else:
         content_url = nus_endpoint[1] + title_id + "/000000" + content_id_hex
@@ -202,7 +202,7 @@ def download_content(title_id: str, content_id: int, fallback_endpoint: bool = F
     return content_data
 
 
-def download_contents(title_id: str, tmd: TMD, fallback_endpoint: bool = False) -> List[bytes]:
+def download_contents(title_id: str, tmd: TMD, wiiu_endpoint: bool = False) -> List[bytes]:
     """
     Downloads all the contents for the title specified in the object. This requires a TMD to already be available
     so that the content records can be accessed.
@@ -213,8 +213,8 @@ def download_contents(title_id: str, tmd: TMD, fallback_endpoint: bool = False) 
         The Title ID of the title to download content from.
     tmd : TMD
         The TMD that matches the title that the contents being downloaded are from.
-    fallback_endpoint : bool, option
-        Whether the fallback Wii U endpoint for the NUS should be used or not. Defaults to False.
+    wiiu_endpoint : bool, option
+        Whether the Wii U endpoint for the NUS should be used or not. This increases download speeds. Defaults to False.
 
     Returns
     -------
@@ -231,6 +231,6 @@ def download_contents(title_id: str, tmd: TMD, fallback_endpoint: bool = False) 
     content_list = []
     for content_id in content_ids:
         # Call self.download_content() for each Content ID.
-        content = download_content(title_id, content_id, fallback_endpoint)
+        content = download_content(title_id, content_id, wiiu_endpoint)
         content_list.append(content)
     return content_list
