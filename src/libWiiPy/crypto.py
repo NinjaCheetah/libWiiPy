@@ -8,7 +8,7 @@ from .commonkeys import get_common_key
 from Crypto.Cipher import AES
 
 
-def decrypt_title_key(title_key_enc, common_key_index, title_id) -> bytes:
+def decrypt_title_key(title_key_enc: bytes, common_key_index: int, title_id: bytes | str) -> bytes:
     """
     Gets the decrypted version of the encrypted Title Key provided.
 
@@ -20,8 +20,8 @@ def decrypt_title_key(title_key_enc, common_key_index, title_id) -> bytes:
         The encrypted Title Key.
     common_key_index : int
         The index of the common key used to encrypt the Title Key.
-    title_id : bytes
-        The title ID of the title that the key is for.
+    title_id : bytes, str
+        The Title ID of the title that the key is for.
 
     Returns
     -------
@@ -30,8 +30,20 @@ def decrypt_title_key(title_key_enc, common_key_index, title_id) -> bytes:
     """
     # Load the correct common key for the title.
     common_key = get_common_key(common_key_index)
-    # Calculate the IV by adding 8 bytes to the end of the Title ID.
-    title_key_iv = binascii.unhexlify(title_id)
+    # Convert the IV into the correct format based on the type provided.
+    title_key_iv = b''
+    if type(title_id) is bytes:
+        if len(title_id) == 16:
+            title_key_iv = binascii.unhexlify(title_id)
+        elif len(title_id) == 8:
+            pass
+        else:
+            raise ValueError("Title ID is not valid!")
+    elif type(title_id) is str:
+        title_key_iv = binascii.unhexlify(title_id)
+    else:
+        raise TypeError("Title ID is not valid! It must be either type str or bytes.")
+    # The IV will always be in the same format by this point, so add the last 8 bytes.
     title_key_iv = title_key_iv + (b'\x00' * 8)
     # Create a new AES object with the values provided.
     aes = AES.new(common_key, AES.MODE_CBC, title_key_iv)
@@ -40,7 +52,7 @@ def decrypt_title_key(title_key_enc, common_key_index, title_id) -> bytes:
     return title_key
 
 
-def encrypt_title_key(title_key_dec, common_key_index, title_id) -> bytes:
+def encrypt_title_key(title_key_dec: bytes, common_key_index: int, title_id: bytes | str) -> bytes:
     """
     Encrypts the provided Title Key with the selected common key.
 
@@ -52,8 +64,8 @@ def encrypt_title_key(title_key_dec, common_key_index, title_id) -> bytes:
         The decrypted Title Key.
     common_key_index : int
         The index of the common key used to encrypt the Title Key.
-    title_id : bytes
-        The title ID of the title that the key is for.
+    title_id : bytes, str
+        The Title ID of the title that the key is for.
 
     Returns
     -------
@@ -62,8 +74,20 @@ def encrypt_title_key(title_key_dec, common_key_index, title_id) -> bytes:
     """
     # Load the correct common key for the title.
     common_key = get_common_key(common_key_index)
-    # Calculate the IV by adding 8 bytes to the end of the Title ID.
-    title_key_iv = binascii.unhexlify(title_id)
+    # Convert the IV into the correct format based on the type provided.
+    title_key_iv = b''
+    if type(title_id) is bytes:
+        if len(title_id) == 16:
+            title_key_iv = binascii.unhexlify(title_id)
+        elif len(title_id) == 8:
+            pass
+        else:
+            raise ValueError("Title ID is not valid!")
+    elif type(title_id) is str:
+        title_key_iv = binascii.unhexlify(title_id)
+    else:
+        raise TypeError("Title ID is not valid! It must be either type str or bytes.")
+    # The IV will always be in the same format by this point, so add the last 8 bytes.
     title_key_iv = title_key_iv + (b'\x00' * 8)
     # Create a new AES object with the values provided.
     aes = AES.new(common_key, AES.MODE_CBC, title_key_iv)
