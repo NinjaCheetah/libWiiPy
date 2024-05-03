@@ -1,8 +1,10 @@
 # "crypto.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
+import binascii
 
 import struct
 from .commonkeys import get_common_key
+
 from Crypto.Cipher import AES
 
 
@@ -17,7 +19,7 @@ def decrypt_title_key(title_key_enc, common_key_index, title_id) -> bytes:
     title_key_enc : bytes
         The encrypted Title Key.
     common_key_index : int
-        The index of the common key to be returned.
+        The index of the common key used to encrypt the Title Key.
     title_id : bytes
         The title ID of the title that the key is for.
 
@@ -29,11 +31,44 @@ def decrypt_title_key(title_key_enc, common_key_index, title_id) -> bytes:
     # Load the correct common key for the title.
     common_key = get_common_key(common_key_index)
     # Calculate the IV by adding 8 bytes to the end of the Title ID.
-    title_key_iv = title_id + (b'\x00' * 8)
+    title_key_iv = binascii.unhexlify(title_id)
+    title_key_iv = title_key_iv + (b'\x00' * 8)
     # Create a new AES object with the values provided.
     aes = AES.new(common_key, AES.MODE_CBC, title_key_iv)
     # Decrypt the Title Key using the AES object.
     title_key = aes.decrypt(title_key_enc)
+    return title_key
+
+
+def encrypt_title_key(title_key_dec, common_key_index, title_id) -> bytes:
+    """
+    Encrypts the provided Title Key with the selected common key.
+
+    Requires the index of the common key to use, and the Title ID of the title that the Title Key is for.
+
+    Parameters
+    ----------
+    title_key_dec : bytes
+        The decrypted Title Key.
+    common_key_index : int
+        The index of the common key used to encrypt the Title Key.
+    title_id : bytes
+        The title ID of the title that the key is for.
+
+    Returns
+    -------
+    bytes
+        An encrypted Title Key.
+    """
+    # Load the correct common key for the title.
+    common_key = get_common_key(common_key_index)
+    # Calculate the IV by adding 8 bytes to the end of the Title ID.
+    title_key_iv = binascii.unhexlify(title_id)
+    title_key_iv = title_key_iv + (b'\x00' * 8)
+    # Create a new AES object with the values provided.
+    aes = AES.new(common_key, AES.MODE_CBC, title_key_iv)
+    # Encrypt Title Key using the AES object.
+    title_key = aes.encrypt(title_key_dec)
     return title_key
 
 

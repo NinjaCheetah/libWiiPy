@@ -99,10 +99,9 @@ class Ticket:
             self.console_id = int.from_bytes(ticket_data.read(4))
             # Title ID.
             ticket_data.seek(0x1DC)
-            self.title_id = ticket_data.read(8)
+            self.title_id = binascii.hexlify(ticket_data.read(8))
             # Title ID (as a string).
-            title_id_hex = binascii.hexlify(self.title_id)
-            self.title_id_str = str(title_id_hex.decode())
+            self.title_id_str = str(self.title_id.decode())
             # Unknown data 1.
             ticket_data.seek(0x1E4)
             self.unknown1 = ticket_data.read(2)
@@ -172,7 +171,7 @@ class Ticket:
             # Console ID.
             ticket_data.write(int.to_bytes(self.console_id, 4))
             # Title ID.
-            ticket_data.write(self.title_id)
+            ticket_data.write(binascii.unhexlify(self.title_id))
             # Unknown data 1.
             ticket_data.write(self.unknown1)
             # Title version.

@@ -6,6 +6,7 @@
 from .commonkeys import *
 from .content import *
 from .ticket import *
+from .crypto import *
 from .title import *
 from .tmd import *
 from .wad import *
