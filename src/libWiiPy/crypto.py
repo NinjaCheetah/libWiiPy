@@ -1,9 +1,8 @@
 # "crypto.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
-import binascii
-
 import struct
 from .commonkeys import get_common_key
+from .shared import convert_tid_to_iv
 
 from Crypto.Cipher import AES
 
@@ -31,18 +30,7 @@ def decrypt_title_key(title_key_enc: bytes, common_key_index: int, title_id: byt
     # Load the correct common key for the title.
     common_key = get_common_key(common_key_index)
     # Convert the IV into the correct format based on the type provided.
-    title_key_iv = b''
-    if type(title_id) is bytes:
-        if len(title_id) == 16:
-            title_key_iv = binascii.unhexlify(title_id)
-        elif len(title_id) == 8:
-            pass
-        else:
-            raise ValueError("Title ID is not valid!")
-    elif type(title_id) is str:
-        title_key_iv = binascii.unhexlify(title_id)
-    else:
-        raise TypeError("Title ID is not valid! It must be either type str or bytes.")
+    title_key_iv = convert_tid_to_iv(title_id)
     # The IV will always be in the same format by this point, so add the last 8 bytes.
     title_key_iv = title_key_iv + (b'\x00' * 8)
     # Create a new AES object with the values provided.
@@ -75,18 +63,7 @@ def encrypt_title_key(title_key_dec: bytes, common_key_index: int, title_id: byt
     # Load the correct common key for the title.
     common_key = get_common_key(common_key_index)
     # Convert the IV into the correct format based on the type provided.
-    title_key_iv = b''
-    if type(title_id) is bytes:
-        if len(title_id) == 16:
-            title_key_iv = binascii.unhexlify(title_id)
-        elif len(title_id) == 8:
-            pass
-        else:
-            raise ValueError("Title ID is not valid!")
-    elif type(title_id) is str:
-        title_key_iv = binascii.unhexlify(title_id)
-    else:
-        raise TypeError("Title ID is not valid! It must be either type str or bytes.")
+    title_key_iv = convert_tid_to_iv(title_id)
     # The IV will always be in the same format by this point, so add the last 8 bytes.
     title_key_iv = title_key_iv + (b'\x00' * 8)
     # Create a new AES object with the values provided.
