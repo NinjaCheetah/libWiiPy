@@ -3,7 +3,6 @@
 #
 # See https://wiibrew.org/wiki/NUS for details about the NUS
 
-import io
 import requests
 import hashlib
 from typing import List
@@ -151,15 +150,13 @@ def download_cert(wiiu_endpoint: bool = False) -> bytes:
     tmd = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
     cetk = requests.get(url=cetk_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
     # Assemble the certificate.
-    with io.BytesIO() as cert_data:
-        # Certificate Authority data.
-        cert_data.write(cetk[0x2A4 + 768:])
-        # Certificate Policy data.
-        cert_data.write(tmd[0x328:0x328 + 768])
-        # XS data.
-        cert_data.write(cetk[0x2A4:0x2A4 + 768])
-        cert_data.seek(0x0)
-        cert = cert_data.read()
+    cert = b''
+    # Certificate Authority data.
+    cert += cetk[0x2A4 + 768:]
+    # Certificate Policy data.
+    cert += tmd[0x328:0x328 + 768]
+    # XS data.
+    cert += cetk[0x2A4:0x2A4 + 768]
     # Since the cert is always the same, check the hash to make sure nothing went wildly wrong.
     if hashlib.sha1(cert).hexdigest() != "ace0f15d2a851c383fe4657afc3840d6ffe30ad0":
         raise Exception("An unknown error has occurred downloading and creating the certificate.")

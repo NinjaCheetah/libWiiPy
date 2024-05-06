@@ -79,21 +79,18 @@ class ContentRegion:
         bytes
             The full WAD file as bytes.
         """
-        # Open the stream and begin writing data to it.
-        with io.BytesIO() as content_region_data:
-            for content in self.content_list:
-                # Calculate padding after this content before the next one.
-                padding_bytes = 0
-                if (len(content) % 64) != 0:
-                    padding_bytes = 64 - (len(content) % 64)
-                # Write content data, then the padding afterward if necessary.
-                content_region_data.write(content)
-                if padding_bytes > 0:
-                    content_region_data.write(b'\x00' * padding_bytes)
-            content_region_data.seek(0x0)
-            content_region_raw = content_region_data.read()
+        content_region_data = b''
+        for content in self.content_list:
+            # Calculate padding after this content before the next one.
+            padding_bytes = 0
+            if (len(content) % 64) != 0:
+                padding_bytes = 64 - (len(content) % 64)
+            # Write content data, then the padding afterward if necessary.
+            content_region_data += content
+            if padding_bytes > 0:
+                content_region_data += b'\x00' * padding_bytes
         # Return the raw ContentRegion for the data contained in the object.
-        return content_region_raw
+        return content_region_data
 
     def get_enc_content_by_index(self, index: int) -> bytes:
         """

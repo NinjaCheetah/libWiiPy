@@ -146,68 +146,62 @@ class Ticket:
         bytes
             The full Ticket file as bytes.
         """
-        # Open the stream and begin writing to it.
-        with io.BytesIO() as ticket_data:
-            # Signature type.
-            ticket_data.write(self.signature_type)
-            # Signature data.
-            ticket_data.write(self.signature)
-            # Padding to 64 bytes.
-            ticket_data.write(b'\x00' * 60)
-            # Signature issuer.
-            ticket_data.write(str.encode(self.signature_issuer))
-            # ECDH data.
-            ticket_data.write(self.ecdh_data)
-            # Ticket version.
-            ticket_data.write(int.to_bytes(self.ticket_version, 1))
-            # Reserved (all \0x00).
-            ticket_data.write(b'\x00\x00')
-            # Title Key.
-            ticket_data.write(self.title_key_enc)
-            # Unknown (write \0x00).
-            ticket_data.write(b'\x00')
-            # Ticket ID.
-            ticket_data.write(self.ticket_id)
-            # Console ID.
-            ticket_data.write(int.to_bytes(self.console_id, 4))
-            # Title ID.
-            ticket_data.write(binascii.unhexlify(self.title_id))
-            # Unknown data 1.
-            ticket_data.write(self.unknown1)
-            # Title version.
-            title_version_high = round(self.title_version / 256)
-            ticket_data.write(int.to_bytes(title_version_high, 1))
-            title_version_low = self.title_version % 256
-            ticket_data.write(int.to_bytes(title_version_low, 1))
-            # Permitted titles mask.
-            ticket_data.write(self.permitted_titles)
-            # Permit mask.
-            ticket_data.write(self.permit_mask)
-            # Title Export allowed.
-            ticket_data.write(int.to_bytes(self.title_export_allowed, 1))
-            # Common Key index.
-            ticket_data.write(int.to_bytes(self.common_key_index, 1))
-            # Unknown data 2.
-            ticket_data.write(self.unknown2)
-            # Content access permissions.
-            ticket_data.write(self.content_access_permissions)
-            # Padding (always \x00).
-            ticket_data.write(b'\x00\x00')
-            # Iterate over Title Limit objects, write them back into raw data, then add them to the Ticket.
-            for title_limit in range(len(self.title_limits_list)):
-                title_limit_data = io.BytesIO()
-                # Write all fields from the title limit entry.
-                title_limit_data.write(int.to_bytes(self.title_limits_list[title_limit].limit_type, 4))
-                title_limit_data.write(int.to_bytes(self.title_limits_list[title_limit].maximum_usage, 4))
-                # Seek to the start and write the entry to the Ticket.
-                title_limit_data.seek(0x0)
-                ticket_data.write(title_limit_data.read())
-                title_limit_data.close()
-            # Set the Ticket attribute of the object to the new raw Ticket.
-            ticket_data.seek(0x0)
-            ticket_data_raw = ticket_data.read()
+        ticket_data = b''
+        # Signature type.
+        ticket_data += self.signature_type
+        # Signature data.
+        ticket_data += self.signature
+        # Padding to 64 bytes.
+        ticket_data += b'\x00' * 60
+        # Signature issuer.
+        ticket_data += str.encode(self.signature_issuer)
+        # ECDH data.
+        ticket_data += self.ecdh_data
+        # Ticket version.
+        ticket_data += int.to_bytes(self.ticket_version, 1)
+        # Reserved (all \0x00).
+        ticket_data += b'\x00\x00'
+        # Title Key.
+        ticket_data += self.title_key_enc
+        # Unknown (write \0x00).
+        ticket_data += b'\x00'
+        # Ticket ID.
+        ticket_data += self.ticket_id
+        # Console ID.
+        ticket_data += int.to_bytes(self.console_id, 4)
+        # Title ID.
+        ticket_data += binascii.unhexlify(self.title_id)
+        # Unknown data 1.
+        ticket_data += self.unknown1
+        # Title version.
+        title_version_high = round(self.title_version / 256)
+        ticket_data += int.to_bytes(title_version_high, 1)
+        title_version_low = self.title_version % 256
+        ticket_data += int.to_bytes(title_version_low, 1)
+        # Permitted titles mask.
+        ticket_data += self.permitted_titles
+        # Permit mask.
+        ticket_data += self.permit_mask
+        # Title Export allowed.
+        ticket_data += int.to_bytes(self.title_export_allowed, 1)
+        # Common Key index.
+        ticket_data += int.to_bytes(self.common_key_index, 1)
+        # Unknown data 2.
+        ticket_data += self.unknown2
+        # Content access permissions.
+        ticket_data += self.content_access_permissions
+        # Padding (always \x00).
+        ticket_data += b'\x00\x00'
+        # Iterate over Title Limit objects, write them back into raw data, then add them to the Ticket.
+        for title_limit in range(len(self.title_limits_list)):
+            title_limit_data = b''
+            # Write all fields from the title limit entry.
+            title_limit_data += int.to_bytes(self.title_limits_list[title_limit].limit_type, 4)
+            title_limit_data += int.to_bytes(self.title_limits_list[title_limit].maximum_usage, 4)
+            # Write the entry to the ticket.
+            ticket_data += title_limit_data
         # Return the raw TMD for the data contained in the object.
-        return ticket_data_raw
+        return ticket_data
 
     def get_title_id(self) -> str:
         """

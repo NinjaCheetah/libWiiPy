@@ -148,78 +148,72 @@ class TMD:
         bytes
             The full TMD file as bytes.
         """
-        # Open the stream and begin writing to it.
-        with io.BytesIO() as tmd_data:
-            # Signed blob header.
-            tmd_data.write(self.blob_header)
-            # Signing certificate issuer.
-            tmd_data.write(self.issuer)
-            # TMD version.
-            tmd_data.write(int.to_bytes(self.tmd_version, 1))
-            # Root certificate crl version.
-            tmd_data.write(int.to_bytes(self.ca_crl_version, 1))
-            # Signer crl version.
-            tmd_data.write(int.to_bytes(self.signer_crl_version, 1))
-            # If this is a vWii title or not.
-            tmd_data.write(int.to_bytes(self.vwii, 1))
-            # IOS Title ID.
-            tmd_data.write(binascii.unhexlify(self.ios_tid))
-            # Title's Title ID.
-            tmd_data.write(binascii.unhexlify(self.title_id))
-            # Content type.
-            tmd_data.write(binascii.unhexlify(self.content_type))
-            # Group ID.
-            tmd_data.write(int.to_bytes(self.group_id, 2))
-            # 2 bytes of zero for reasons.
-            tmd_data.write(b'\x00\x00')
-            # Region.
-            tmd_data.write(int.to_bytes(self.region, 2))
-            # Ratings.
-            tmd_data.write(self.ratings)
-            # Reserved (all \x00).
-            tmd_data.write(b'\x00' * 12)
-            # IPC mask.
-            tmd_data.write(self.ipc_mask)
-            # Reserved (all \x00).
-            tmd_data.write(b'\x00' * 18)
-            # Access rights.
-            tmd_data.write(self.access_rights)
-            # Title version.
-            title_version_high = round(self.title_version / 256)
-            tmd_data.write(int.to_bytes(title_version_high, 1))
-            title_version_low = self.title_version % 256
-            tmd_data.write(int.to_bytes(title_version_low, 1))
-            # Number of contents.
-            tmd_data.write(int.to_bytes(self.num_contents, 2))
-            # Boot index.
-            tmd_data.write(int.to_bytes(self.boot_index, 2))
-            # Minor version. Unused so write \x00.
-            tmd_data.write(b'\x00\x00')
-            # Iterate over content records, write them back into raw data, then add them to the TMD.
-            for content_record in range(self.num_contents):
-                content_data = io.BytesIO()
-                # Write all fields from the content record.
-                content_data.write(int.to_bytes(self.content_records[content_record].content_id, 4))
-                content_data.write(int.to_bytes(self.content_records[content_record].index, 2))
-                content_data.write(int.to_bytes(self.content_records[content_record].content_type, 2))
-                content_data.write(int.to_bytes(self.content_records[content_record].content_size, 8))
-                content_data.write(binascii.unhexlify(self.content_records[content_record].content_hash))
-                # Seek to the start and write the record to the TMD.
-                content_data.seek(0x0)
-                tmd_data.write(content_data.read())
-                content_data.close()
-            # Set the TMD attribute of the object to the new raw TMD.
-            tmd_data.seek(0x0)
-            tmd_data_raw = tmd_data.read()
+        tmd_data = b''
+        # Signed blob header.
+        tmd_data += self.blob_header
+        # Signing certificate issuer.
+        tmd_data += self.issuer
+        # TMD version.
+        tmd_data += int.to_bytes(self.tmd_version, 1)
+        # Root certificate crl version.
+        tmd_data += int.to_bytes(self.ca_crl_version, 1)
+        # Signer crl version.
+        tmd_data += int.to_bytes(self.signer_crl_version, 1)
+        # If this is a vWii title or not.
+        tmd_data += int.to_bytes(self.vwii, 1)
+        # IOS Title ID.
+        tmd_data += binascii.unhexlify(self.ios_tid)
+        # Title's Title ID.
+        tmd_data += binascii.unhexlify(self.title_id)
+        # Content type.
+        tmd_data += binascii.unhexlify(self.content_type)
+        # Group ID.
+        tmd_data += int.to_bytes(self.group_id, 2)
+        # 2 bytes of zero for reasons.
+        tmd_data += b'\x00\x00'
+        # Region.
+        tmd_data += int.to_bytes(self.region, 2)
+        # Ratings.
+        tmd_data += self.ratings
+        # Reserved (all \x00).
+        tmd_data += b'\x00' * 12
+        # IPC mask.
+        tmd_data += self.ipc_mask
+        # Reserved (all \x00).
+        tmd_data += b'\x00' * 18
+        # Access rights.
+        tmd_data += self.access_rights
+        # Title version.
+        title_version_high = round(self.title_version / 256)
+        tmd_data += int.to_bytes(title_version_high, 1)
+        title_version_low = self.title_version % 256
+        tmd_data += int.to_bytes(title_version_low, 1)
+        # Number of contents.
+        tmd_data += int.to_bytes(self.num_contents, 2)
+        # Boot index.
+        tmd_data += int.to_bytes(self.boot_index, 2)
+        # Minor version. Unused so write \x00.
+        tmd_data += b'\x00\x00'
+        # Iterate over content records, write them back into raw data, then add them to the TMD.
+        for content_record in range(self.num_contents):
+            content_data = b''
+            # Write all fields from the content record.
+            content_data += int.to_bytes(self.content_records[content_record].content_id, 4)
+            content_data += int.to_bytes(self.content_records[content_record].index, 2)
+            content_data += int.to_bytes(self.content_records[content_record].content_type, 2)
+            content_data += int.to_bytes(self.content_records[content_record].content_size, 8)
+            content_data += binascii.unhexlify(self.content_records[content_record].content_hash)
+            # Write the record to the TMD.
+            tmd_data += content_data
         # Return the raw TMD for the data contained in the object.
-        return tmd_data_raw
+        return tmd_data
 
     def get_title_region(self) -> str:
         """
         Gets the region of the TMD's associated title.
 
         Can be one of several possible values:
-        'JAP', 'USA', 'EUR', 'NONE', or 'KOR'.
+        'JAP', 'USA', 'EUR', 'WORLD', or 'KOR'.
 
         Returns
         -------
@@ -234,7 +228,7 @@ class TMD:
             case 2:
                 return "EUR"
             case 3:
-                return "NONE"
+                return "WORLD"
             case 4:
                 return "KOR"
 

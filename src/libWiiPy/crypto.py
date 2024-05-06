@@ -1,5 +1,6 @@
 # "crypto.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
+
 import struct
 from .commonkeys import get_common_key
 from .shared import convert_tid_to_iv

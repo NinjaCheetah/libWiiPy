@@ -5,7 +5,7 @@
 
 import io
 import binascii
-from .shared import align_value, pad_bytes_stream
+from .shared import align_value, pad_bytes
 
 
 class WAD:
@@ -15,7 +15,7 @@ class WAD:
     Attributes
     ----------
     wad_type : str
-        The type of WAD, either ib for boot2 or Is for normal installable WADs. libWiiPy only supports Is currently.
+        The type of WAD, either ib for boot2 or Is for normal installable WADs.
     wad_cert_size : int
         The size of the WAD's certificate.
     wad_crl_size : int
@@ -60,8 +60,8 @@ class WAD:
             The data for the WAD you wish to load.
         """
         with io.BytesIO(wad_data) as wad_data:
-            # Read the first 8 bytes of the file to ensure that it's a WAD. This will currently reject boot2 WADs, but
-            # this tool cannot handle them correctly right now anyway.
+            # Read the first 8 bytes of the file to ensure that it's a WAD. Has two possible valid values for the two
+            # different types of WADs that might be encountered.
             wad_data.seek(0x0)
             wad_magic_bin = wad_data.read(8)
             wad_magic_hex = binascii.hexlify(wad_magic_bin)
@@ -140,50 +140,46 @@ class WAD:
         bytes
             The full WAD file as bytes.
         """
-        # Open the stream and begin writing data to it.
-        with io.BytesIO() as wad_data:
-            # Lead-in data.
-            wad_data.write(b'\x00\x00\x00\x20')
-            # WAD type.
-            wad_data.write(str.encode(self.wad_type))
-            # WAD version.
-            wad_data.write(self.wad_version)
-            # WAD cert size.
-            wad_data.write(int.to_bytes(self.wad_cert_size, 4))
-            # WAD crl size.
-            wad_data.write(int.to_bytes(self.wad_crl_size, 4))
-            # WAD ticket size.
-            wad_data.write(int.to_bytes(self.wad_tik_size, 4))
-            # WAD TMD size.
-            wad_data.write(int.to_bytes(self.wad_tmd_size, 4))
-            # WAD content size.
-            wad_data.write(int.to_bytes(self.wad_content_size, 4))
-            # WAD meta size.
-            wad_data.write(int.to_bytes(self.wad_meta_size, 4))
-            wad_data = pad_bytes_stream(wad_data)
-            # Retrieve the cert data and write it out.
-            wad_data.write(self.get_cert_data())
-            wad_data = pad_bytes_stream(wad_data)
-            # Retrieve the crl data and write it out.
-            wad_data.write(self.get_crl_data())
-            wad_data = pad_bytes_stream(wad_data)
-            # Retrieve the ticket data and write it out.
-            wad_data.write(self.get_ticket_data())
-            wad_data = pad_bytes_stream(wad_data)
-            # Retrieve the TMD data and write it out.
-            wad_data.write(self.get_tmd_data())
-            wad_data = pad_bytes_stream(wad_data)
-            # Retrieve the meta/footer data and write it out.
-            wad_data.write(self.get_meta_data())
-            wad_data = pad_bytes_stream(wad_data)
-            # Retrieve the content data and write it out.
-            wad_data.write(self.get_content_data())
-            wad_data = pad_bytes_stream(wad_data)
-            # Seek to the beginning and save this as the WAD data for the object.
-            wad_data.seek(0x0)
-            wad_data_raw = wad_data.read()
+        wad_data = b''
+        # Lead-in data.
+        wad_data += b'\x00\x00\x00\x20'
+        # WAD type.
+        wad_data += str.encode(self.wad_type)
+        # WAD version.
+        wad_data += self.wad_version
+        # WAD cert size.
+        wad_data += int.to_bytes(self.wad_cert_size, 4)
+        # WAD crl size.
+        wad_data += int.to_bytes(self.wad_crl_size, 4)
+        # WAD ticket size.
+        wad_data += int.to_bytes(self.wad_tik_size, 4)
+        # WAD TMD size.
+        wad_data += int.to_bytes(self.wad_tmd_size, 4)
+        # WAD content size.
+        wad_data += int.to_bytes(self.wad_content_size, 4)
+        # WAD meta size.
+        wad_data += int.to_bytes(self.wad_meta_size, 4)
+        wad_data = pad_bytes(wad_data)
+        # Retrieve the cert data and write it out.
+        wad_data += self.get_cert_data()
+        wad_data = pad_bytes(wad_data)
+        # Retrieve the crl data and write it out.
+        wad_data += self.get_crl_data()
+        wad_data = pad_bytes(wad_data)
+        # Retrieve the ticket data and write it out.
+        wad_data += self.get_ticket_data()
+        wad_data = pad_bytes(wad_data)
+        # Retrieve the TMD data and write it out.
+        wad_data += self.get_tmd_data()
+        wad_data = pad_bytes(wad_data)
+        # Retrieve the meta/footer data and write it out.
+        wad_data += self.get_meta_data()
+        wad_data = pad_bytes(wad_data)
+        # Retrieve the content data and write it out.
+        wad_data += self.get_content_data()
+        wad_data = pad_bytes(wad_data)
         # Return the raw WAD file for the data contained in the object.
-        return wad_data_raw
+        return wad_data
 
     def get_wad_type(self) -> str:
         """

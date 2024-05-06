@@ -6,6 +6,7 @@
 
 import binascii
 
+
 def align_value(value, alignment=64) -> int:
     """
     Aligns the provided value to the set alignment (defaults to 64).
@@ -28,24 +29,24 @@ def align_value(value, alignment=64) -> int:
     return value
 
 
-def pad_bytes_stream(data, alignment=64) -> bytes:
+def pad_bytes(data, alignment=64) -> bytes:
     """
-    Pads the provided bytes stream to the provided alignment (defaults to 64).
+    Pads the provided bytes object to the provided alignment (defaults to 64).
 
     Parameters
     ----------
-    data : BytesIO
+    data : bytes
         The data to align.
     alignment : int
         The number to align to. Defaults to 64.
 
     Returns
     -------
-    BytesIO
+    bytes
         The aligned data.
     """
-    while (data.getbuffer().nbytes % alignment) != 0:
-        data.write(b'\x00')
+    while (len(data) % alignment) != 0:
+        data += b'\x00'
     return data
 
 
