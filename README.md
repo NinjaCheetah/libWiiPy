@@ -10,7 +10,7 @@ libWiiPy is inspired by [libWiiSharp](https://github.com/TheShadowEevee/libWiiSh
 This list will expand as libWiiPy is developed, but these features are currently available:
 - TMD, ticket, and WAD parsing
 - WAD content extraction, decryption, re-encryption, and packing
-- Downloading free titles from the NUS
+- Downloading titles from the NUS
 
 # Usage
 A wiki, and in the future a potential documenation site, is being worked on, and can be accessed [here](https://github.com/NinjaCheetah/libWiiPy/wiki). It is currently fairly barebones, but it will be improved in the future.
@@ -31,27 +31,27 @@ Please be aware that because libWiiPy is in a very early state right now, many f
 To build this package locally, the steps are quite simple, and should apply to all platforms. Make sure you've set up your `venv` first!
 
 First, install the dependencies from `requirements.txt`:
-```py
+```sh
 pip install -r requirements.txt
 ```
 
 Then, build the package using the Python `build` module:
-```py
+```sh
 python -m build
 ```
 
 And that's all! You'll find your compiled pip package in `dist/`.
 
 # Special Thanks
-This project wouldn't be possible without the amazing people behind its predecessors and all of the people who have contributed to the documentation of the Wii's inner workings over at [Wiibrew](https://wiibrew.org).
+This project wouldn't be possible without the amazing people behind its predecessors and all of the people who have contributed to the documentation of the Wii's inner workings over at [WiiBrew](https://wiibrew.org).
 
 ## Special Thanks for the Inspiration and Previous Projects
 - Xuzz, SquidMan, megazig, Matt_P, Omega and The Lemon Man for creating Wii.py
 - Leathl for creating libWiiSharp
 - TheShadowEevee for maintaining libWiiSharp
 
-## Special Thanks to Wiibrew Contributors
-Thank you to all of the contributors to the documentation on the Wiibrew pages that make this all understandable! Some of the key articles referenced are as follows:
+## Special Thanks to WiiBrew Contributors
+Thank you to all of the contributors to the documentation on the WiiBrew pages that make this all understandable! Some of the key articles referenced are as follows:
 - [Title metadata](https://wiibrew.org/wiki/Title_metadata), for the documentation on how a TMD is structured
 - [WAD files](https://wiibrew.org/wiki/WAD_files), for the documentation on how a WAD is structured
 - [IOS history](https://wiibrew.org/wiki/IOS_history), for the documentation on IOS TIDs and how IOS is versioned
