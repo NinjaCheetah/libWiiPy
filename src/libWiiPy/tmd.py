@@ -35,8 +35,8 @@ class TMD:
         self.sig: bytes = b''
         self.issuer: bytes = b''  # Follows the format "Root-CA%08x-CP%08x"
         self.tmd_version: int = 0  # This seems to always be 0 no matter what?
-        self.ca_crl_version: int = 0
-        self.signer_crl_version: int = 0
+        self.ca_crl_version: int = 0  # Certificate Authority Certificate Revocation List version
+        self.signer_crl_version: int = 0  # Certificate Policy Certificate Revocation List version
         self.vwii: int = 0  # Whether the title is for the vWii. 0 = No, 1 = Yes
         self.ios_tid: str = ""  # The Title ID of the IOS version the associated title runs on.
         self.ios_version: int = 0  # The IOS version the associated title runs on.
@@ -44,17 +44,17 @@ class TMD:
         self.content_type: str = ""  # The type of content contained within the associated title.
         self.group_id: int = 0  # The ID of the publisher of the associated title.
         self.region: int = 0  # The ID of the region of the associated title.
-        self.ratings: bytes = b''
+        self.ratings: bytes = b''  # The parental controls rating of the associated title.
         self.ipc_mask: bytes = b''
         self.access_rights: bytes = b''
         self.title_version: int = 0  # The version of the associated title.
         self.num_contents: int = 0  # The number of contents contained in the associated title.
-        self.boot_index: int = 0
+        self.boot_index: int = 0  # The content index that contains the bootable executable.
         self.content_records: List[ContentRecord] = []
 
     def load(self, tmd: bytes) -> None:
         """
-        Loads raw TMD data and sets all attributes of the WAD object. This allows for manipulating an already
+        Loads raw TMD data and sets all attributes of the TMD object. This allows for manipulating an already
         existing TMD.
 
         Parameters
@@ -74,10 +74,10 @@ class TMD:
             # TMD version, seems to usually be 0, but I've seen references to other numbers.
             tmd_data.seek(0x180)
             self.tmd_version = int.from_bytes(tmd_data.read(1))
-            # Root certificate crl version.
+            # Certificate Authority CRL version.
             tmd_data.seek(0x181)
             self.ca_crl_version = int.from_bytes(tmd_data.read(1))
-            # Signer crl version.
+            # Certificate Policy CRL version.
             tmd_data.seek(0x182)
             self.signer_crl_version = int.from_bytes(tmd_data.read(1))
             # If this is a vWii title or not.
@@ -103,11 +103,11 @@ class TMD:
             # Publisher of the title.
             tmd_data.seek(0x198)
             self.group_id = int.from_bytes(tmd_data.read(2))
-            # Region of the title, 0 = JAP, 1 = USA, 2 = EUR, 3 = NONE, 4 = KOR.
+            # Region of the title, 0 = JAP, 1 = USA, 2 = EUR, 3 = WORLD, 4 = KOR.
             tmd_data.seek(0x19C)
             region_hex = tmd_data.read(2)
             self.region = int.from_bytes(region_hex)
-            # Likely the localized content rating for the title. (ESRB, CERO, PEGI, etc.)
+            # Content rating of the title for parental controls. Likely based on ESRB, CERO, PEGI, etc. rating.
             tmd_data.seek(0x19E)
             self.ratings = tmd_data.read(16)
             # IPC mask.
@@ -125,7 +125,7 @@ class TMD:
             # The number of contents listed in the TMD.
             tmd_data.seek(0x1DE)
             self.num_contents = int.from_bytes(tmd_data.read(2))
-            # Content index in content list that contains the boot file.
+            # The content index that contains the bootable executable.
             tmd_data.seek(0x1E0)
             self.boot_index = int.from_bytes(tmd_data.read(2))
             # Get content records for the number of contents in num_contents.
@@ -155,9 +155,9 @@ class TMD:
         tmd_data += self.issuer
         # TMD version.
         tmd_data += int.to_bytes(self.tmd_version, 1)
-        # Root certificate crl version.
+        # Certificate Authority CRL version.
         tmd_data += int.to_bytes(self.ca_crl_version, 1)
-        # Signer crl version.
+        # Certificate Policy CRL version.
         tmd_data += int.to_bytes(self.signer_crl_version, 1)
         # If this is a vWii title or not.
         tmd_data += int.to_bytes(self.vwii, 1)
@@ -173,7 +173,7 @@ class TMD:
         tmd_data += b'\x00\x00'
         # Region.
         tmd_data += int.to_bytes(self.region, 2)
-        # Ratings.
+        # Parental Controls Ratings.
         tmd_data += self.ratings
         # Reserved (all \x00).
         tmd_data += b'\x00' * 12
