@@ -45,7 +45,9 @@ class TMD:
         self.group_id: int = 0  # The ID of the publisher of the associated title.
         self.region: int = 0  # The ID of the region of the associated title.
         self.ratings: bytes = b''  # The parental controls rating of the associated title.
+        self.reserved1: bytes = b''  # Unknown data labeled "Reserved" on WiiBrew.
         self.ipc_mask: bytes = b''
+        self.reserved2: bytes = b''  # Other "Reserved" data from WiiBrew.
         self.access_rights: bytes = b''
         self.title_version: int = 0  # The version of the associated title.
         self.num_contents: int = 0  # The number of contents contained in the associated title.
@@ -110,9 +112,15 @@ class TMD:
             # Content rating of the title for parental controls. Likely based on ESRB, CERO, PEGI, etc. rating.
             tmd_data.seek(0x19E)
             self.ratings = tmd_data.read(16)
+            # "Reserved" data 1.
+            tmd_data.seek(0x1AE)
+            self.reserved1 = tmd_data.read(12)
             # IPC mask.
             tmd_data.seek(0x1BA)
             self.ipc_mask = tmd_data.read(12)
+            # "Reserved" data 2.
+            tmd_data.seek(0x1C6)
+            self.reserved2 = tmd_data.read(18)
             # Access rights of the title; DVD-video access and AHBPROT.
             tmd_data.seek(0x1D8)
             self.access_rights = tmd_data.read(4)
@@ -175,12 +183,12 @@ class TMD:
         tmd_data += int.to_bytes(self.region, 2)
         # Parental Controls Ratings.
         tmd_data += self.ratings
-        # Reserved (all \x00).
-        tmd_data += b'\x00' * 12
+        # "Reserved" 1.
+        tmd_data += self.reserved1
         # IPC mask.
         tmd_data += self.ipc_mask
-        # Reserved (all \x00).
-        tmd_data += b'\x00' * 18
+        # "Reserved" 2.
+        tmd_data += self.reserved2
         # Access rights.
         tmd_data += self.access_rights
         # Title version.
