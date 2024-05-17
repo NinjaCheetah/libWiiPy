@@ -161,9 +161,10 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-# Allows me to keep TMD files in my repository folder for testing without accidentally publishing them
+# Relevant files that are used for testing libWiiPy's features.
 *.tmd
 *.wad
+*.arc
 out_prod/
 remakewad.pl
 

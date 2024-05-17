@@ -11,3 +11,4 @@ from .title import *
 from .tmd import *
 from .wad import *
 from .nus import *
+from .u8 import *

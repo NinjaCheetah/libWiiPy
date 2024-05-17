@@ -49,7 +49,7 @@ class WAD:
         self.wad_content_data: bytes = b''
         self.wad_meta_data: bytes = b''
 
-    def load(self, wad_data) -> None:
+    def load(self, wad_data: bytes) -> None:
         """
         Loads raw WAD data and sets all attributes of the WAD object. This allows for manipulating an already
         existing WAD file.
@@ -57,7 +57,7 @@ class WAD:
         Parameters
         ----------
         wad_data : bytes
-            The data for the WAD you wish to load.
+            The data for the WAD file to load.
         """
         with io.BytesIO(wad_data) as wad_data:
             # Read the first 8 bytes of the file to ensure that it's a WAD. Has two possible valid values for the two
@@ -67,7 +67,7 @@ class WAD:
             wad_magic_hex = binascii.hexlify(wad_magic_bin)
             wad_magic = str(wad_magic_hex.decode())
             if wad_magic != "0000002049730000" and wad_magic != "0000002069620000":
-                raise TypeError("This does not appear to be a valid WAD file.")
+                raise TypeError("This is not a valid WAD file!")
             # ====================================================================================
             # Get the sizes of each data region contained within the WAD.
             # ====================================================================================

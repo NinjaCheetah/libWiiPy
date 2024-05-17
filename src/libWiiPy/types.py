@@ -1,6 +1,6 @@
 # "types.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
-
+from builtins import type
 from dataclasses import dataclass
 
 
@@ -14,21 +14,21 @@ class ContentRecord:
     Attributes
     ----------
     content_id : int
-        ID of the content.
+        The unique ID of the content.
     index : int
-        Index of the content in the list of contents.
+        The index of this content in the content records.
     content_type : int
         The type of the content.
     content_size : int
-        The size of the content.
+        The size of the content when decrypted.
     content_hash
         The SHA-1 hash of the decrypted content.
     """
-    content_id: int  # The unique ID of the content.
-    index: int  # The index of this content in the content record.
+    content_id: int
+    index: int
     content_type: int  # Type of content, possible values of: 0x0001: Normal, 0x4001: DLC, 0x8001: Shared.
-    content_size: int  # Size of the content when decrypted.
-    content_hash: bytes  # SHA-1 hash of the content when decrypted.
+    content_size: int
+    content_hash: bytes
 
 
 @dataclass
@@ -50,3 +50,27 @@ class TitleLimit:
     limit_type: int
     # The maximum value of the limit applied.
     maximum_usage: int
+
+
+@dataclass
+class U8Node:
+    """
+    A U8Node object that contains the data of a single node in a U8 file header. Each node keeps track of whether this
+    node is for a file or directory, the offset of the name of the file/directory, the offset of the data for the file/
+    directory, and the size of the data.
+
+    Attributes
+    ----------
+    type : int
+        Whether this node refers to a file or a directory. Either 0x0000 for files, or 0x0100 for directories.
+    name_offset : int
+        The offset of the name of the file/directory this node refers to.
+    data_offset : int
+        The offset of the data for the file/directory this node refers to.
+    size : int
+        The size of the data for this node.
+    """
+    type: int
+    name_offset: int
+    data_offset: int
+    size: int
