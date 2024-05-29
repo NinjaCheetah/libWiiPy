@@ -1,6 +1,5 @@
 # "types.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
-from builtins import type
 from dataclasses import dataclass
 
 

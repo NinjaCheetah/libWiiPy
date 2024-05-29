@@ -5,6 +5,7 @@
 
 import io
 import binascii
+import os
 from typing import List
 from .types import U8Node
 
@@ -75,9 +76,34 @@ class U8Archive:
                     self.u8_file_data_list.append(u8_data.read(node.size))
                 else:
                     self.u8_file_data_list.append(b'')
-            # This does nothing for now.
-            next_dir = 0
-            for node in range(len(self.u8_node_list)):
-                if self.u8_node_list[node].type == 256 and node != 0:
-                    next_dir = self.u8_node_list[node].size
+
+    def extract_to_folder(self, output_folder) -> None:
+        if os.path.isdir(output_folder):
+            raise ValueError("Output folder already exists!")
+        if self.u8_node_list is []:
+            raise ValueError("No U8 file is loaded!")
+
+        os.mkdir(output_folder)
+
+        current_dir = ""
+        for node in range(len(self.u8_node_list)):
+            if self.u8_node_list[node].name_offset != 0:
+                if self.u8_node_list[node].type == 256:
+                    if self.u8_node_list[node].data_offset == 0:
+                        os.mkdir(os.path.join(output_folder, self.file_name_list[node]))
+                        current_dir = self.file_name_list[node]
+                    elif self.u8_node_list[node].data_offset < node:
+                        lower_path = os.path.join(output_folder, current_dir)
+                        os.mkdir(os.path.join(lower_path, self.file_name_list[node]))
+                        current_dir = os.path.join(current_dir, self.file_name_list[node])
+                elif self.u8_node_list[node].type == 0:
+                    lower_path = os.path.join(output_folder, current_dir)
+                    output_file = open(os.path.join(lower_path, self.file_name_list[node]), "wb")
+                    output_file.write(self.u8_file_data_list[node])
+                    output_file.close()
+
+    def pack_from_folder(self, input_folder) -> None:
+        if not os.path.isdir(input_folder):
+            raise ValueError("Input folder does not exist!")
+
 
