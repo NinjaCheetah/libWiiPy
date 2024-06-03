@@ -1,12 +1,12 @@
-# "title.py" from libWiiPy by NinjaCheetah & Contributors
+# "title/title.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
 # See https://wiibrew.org/wiki/Title for details about how titles are formatted
 
-from .content import ContentRegion
-from .ticket import Ticket
-from .tmd import TMD
-from .wad import WAD
+from src.libWiiPy.title.content import ContentRegion
+from src.libWiiPy.title.ticket import Ticket
+from src.libWiiPy.title.tmd import TMD
+from src.libWiiPy.title.wad import WAD
 
 
 class Title:

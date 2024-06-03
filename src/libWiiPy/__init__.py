@@ -1,14 +1,9 @@
 # "__init__.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
-# These are the essential modules from libWiiPy that you'd probably want imported by default.
+# These are the essential submodules from libWiiPy that you'd probably want imported by default.
 
-from .commonkeys import *
-from .content import *
-from .ticket import *
-from .crypto import *
-from .title import *
-from .tmd import *
-from .wad import *
-from .nus import *
-from .u8 import *
+__all__ = ["archive", "title"]
+
+from . import archive
+from . import title

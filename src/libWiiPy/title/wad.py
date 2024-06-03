@@ -1,11 +1,11 @@
-# "wad.py" from libWiiPy by NinjaCheetah & Contributors
+# "title/wad.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
 # See https://wiibrew.org/wiki/WAD_files for details about the WAD format
 
 import io
 import binascii
-from .shared import align_value, pad_bytes
+from src.libWiiPy.shared import align_value, pad_bytes
 
 
 class WAD:

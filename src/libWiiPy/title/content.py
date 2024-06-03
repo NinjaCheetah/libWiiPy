@@ -1,4 +1,4 @@
-# "content.py" from libWiiPy by NinjaCheetah & Contributors
+# "title/content.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
 # See https://wiibrew.org/wiki/Title for details about how titles are formatted
@@ -7,8 +7,8 @@ import io
 import sys
 import hashlib
 from typing import List
-from .types import ContentRecord
-from .crypto import decrypt_content, encrypt_content
+from src.libWiiPy.types import ContentRecord
+from src.libWiiPy.title.crypto import decrypt_content, encrypt_content
 
 
 class ContentRegion:

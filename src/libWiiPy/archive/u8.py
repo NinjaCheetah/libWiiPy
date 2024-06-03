@@ -1,4 +1,4 @@
-# "u8.py" from libWiiPy by NinjaCheetah & Contributors
+# "archive/u8.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
 # See https://wiibrew.org/wiki/U8_archive for details about the U8 archive format
@@ -6,14 +6,38 @@
 import io
 import binascii
 import os
+from dataclasses import dataclass
 from typing import List
-from .types import U8Node
+
+
+@dataclass
+class U8Node:
+    """
+    A U8Node object that contains the data of a single node in a U8 file header. Each node keeps track of whether this
+    node is for a file or directory, the offset of the name of the file/directory, the offset of the data for the file/
+    directory, and the size of the data.
+
+    Attributes
+    ----------
+    type : int
+        Whether this node refers to a file or a directory. Either 0x0000 for files, or 0x0100 for directories.
+    name_offset : int
+        The offset of the name of the file/directory this node refers to.
+    data_offset : int
+        The offset of the data for the file/directory this node refers to.
+    size : int
+        The size of the data for this node.
+    """
+    type: int
+    name_offset: int
+    data_offset: int
+    size: int
 
 
 class U8Archive:
     def __init__(self):
         """
-        A U8 object that allows for extracting and packing U8 archives.
+        A U8 object that allows for managing the contents of a U8 archive.
 
         Attributes
         ----------
@@ -77,33 +101,54 @@ class U8Archive:
                 else:
                     self.u8_file_data_list.append(b'')
 
-    def extract_to_folder(self, output_folder) -> None:
-        if os.path.isdir(output_folder):
-            raise ValueError("Output folder already exists!")
-        if self.u8_node_list is []:
-            raise ValueError("No U8 file is loaded!")
+    def dump(self) -> None:
+        """
+        Dumps the U8Archive object into a U8 file.
+        """
+        u8_data = b''
+        # Magic number.
+        u8_data += b'\x55\xAA\x38\x2D'
+        # Root node offset (this is always 0x20).
+        u8_data += int.to_bytes(0x20, 4)
 
-        os.mkdir(output_folder)
 
-        current_dir = ""
-        for node in range(len(self.u8_node_list)):
-            if self.u8_node_list[node].name_offset != 0:
-                if self.u8_node_list[node].type == 256:
-                    if self.u8_node_list[node].data_offset == 0:
-                        os.mkdir(os.path.join(output_folder, self.file_name_list[node]))
-                        current_dir = self.file_name_list[node]
-                    elif self.u8_node_list[node].data_offset < node:
-                        lower_path = os.path.join(output_folder, current_dir)
-                        os.mkdir(os.path.join(lower_path, self.file_name_list[node]))
-                        current_dir = os.path.join(current_dir, self.file_name_list[node])
-                elif self.u8_node_list[node].type == 0:
+def extract_u8(u8_data, output_folder) -> None:
+    if os.path.isdir(output_folder):
+        raise ValueError("Output folder already exists!")
+
+    os.mkdir(output_folder)
+
+    u8_archive = U8Archive()
+    u8_archive.load(u8_data)
+
+    current_dir = ""
+    for node in range(len(u8_archive.u8_node_list)):
+        if u8_archive.u8_node_list[node].name_offset != 0:
+            if u8_archive.u8_node_list[node].type == 256:
+                if u8_archive.u8_node_list[node].data_offset == 0:
+                    os.mkdir(os.path.join(output_folder, u8_archive.file_name_list[node]))
+                    current_dir = u8_archive.file_name_list[node]
+                elif u8_archive.u8_node_list[node].data_offset < node:
                     lower_path = os.path.join(output_folder, current_dir)
-                    output_file = open(os.path.join(lower_path, self.file_name_list[node]), "wb")
-                    output_file.write(self.u8_file_data_list[node])
-                    output_file.close()
+                    os.mkdir(os.path.join(lower_path, u8_archive.file_name_list[node]))
+                    current_dir = os.path.join(current_dir, u8_archive.file_name_list[node])
+            elif u8_archive.u8_node_list[node].type == 0:
+                lower_path = os.path.join(output_folder, current_dir)
+                output_file = open(os.path.join(lower_path, u8_archive.file_name_list[node]), "wb")
+                output_file.write(u8_archive.u8_file_data_list[node])
+                output_file.close()
 
-    def pack_from_folder(self, input_folder) -> None:
-        if not os.path.isdir(input_folder):
-            raise ValueError("Input folder does not exist!")
+
+def pack_u8(input_data) -> None:
+    if os.path.isdir(input_data):
+        raise ValueError("Only single-file packing is currently supported!")
+    elif os.path.isfile(input_data):
+        with open(input_data, "rb") as f:
+            u8_archive = U8Archive()
+
+            file_name = os.path.basename(input_data)
+
+            u8_archive.file_name_list.append(file_name)
+            u8_archive.u8_file_data_list.append(f.read())
 
 

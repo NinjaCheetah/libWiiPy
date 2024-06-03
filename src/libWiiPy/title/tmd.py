@@ -1,4 +1,4 @@
-# "tmd.py" from libWiiPy by NinjaCheetah & Contributors
+# "title/tmd.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
 # See https://wiibrew.org/wiki/Title_metadata for details about the TMD format
@@ -7,7 +7,7 @@ import io
 import binascii
 import struct
 from typing import List
-from .types import ContentRecord
+from src.libWiiPy.types import ContentRecord
 
 
 class TMD:

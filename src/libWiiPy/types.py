@@ -49,27 +49,3 @@ class TitleLimit:
     limit_type: int
     # The maximum value of the limit applied.
     maximum_usage: int
-
-
-@dataclass
-class U8Node:
-    """
-    A U8Node object that contains the data of a single node in a U8 file header. Each node keeps track of whether this
-    node is for a file or directory, the offset of the name of the file/directory, the offset of the data for the file/
-    directory, and the size of the data.
-
-    Attributes
-    ----------
-    type : int
-        Whether this node refers to a file or a directory. Either 0x0000 for files, or 0x0100 for directories.
-    name_offset : int
-        The offset of the name of the file/directory this node refers to.
-    data_offset : int
-        The offset of the data for the file/directory this node refers to.
-    size : int
-        The size of the data for this node.
-    """
-    type: int
-    name_offset: int
-    data_offset: int
-    size: int

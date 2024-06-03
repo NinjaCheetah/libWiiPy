@@ -1,12 +1,12 @@
-# "ticket.py" from libWiiPy by NinjaCheetah & Contributors
+# "title/ticket.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
 # See https://wiibrew.org/wiki/Ticket for details about the ticket format
 
 import io
 import binascii
-from .crypto import decrypt_title_key
-from .types import TitleLimit
+from src.libWiiPy.title.crypto import decrypt_title_key
+from src.libWiiPy.types import TitleLimit
 from typing import List
 
 
