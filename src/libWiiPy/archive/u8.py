@@ -5,6 +5,7 @@
 
 import io
 import os
+import pathlib
 from dataclasses import dataclass
 from typing import List
 from src.libWiiPy.shared import align_value
@@ -159,30 +160,68 @@ class U8Archive:
 
 
 def extract_u8(u8_data, output_folder) -> None:
-    if os.path.isdir(output_folder):
+    """
+    Extracts the provided U8 archive file data into the provided output folder path. Note that the folder must not
+    already exist to ensure that the output can correctly represent the file structure of the original U8 archive.
+
+    Parameters
+    ----------
+    u8_data : bytes
+        The data for the U8 file to extract.
+    output_folder : str
+        The path to a new folder to extract the archive to.
+    """
+    output_folder = pathlib.Path(output_folder)
+    if pathlib.Path.is_dir(output_folder):
         raise ValueError("Output folder already exists!")
     os.mkdir(output_folder)
     # Create a new U8Archive object and load the provided U8 file data into it.
     u8_archive = U8Archive()
     u8_archive.load(u8_data)
-    # TODO: Comment this
-    # Also TODO: You can go more than two layers! Really should've checked that more before assuming it was the case.
-    current_dir = ""
+    # This variable stores the path of the directory we're currently processing.
+    current_dir = output_folder
+    # This variable stores the final nodes for every directory we've entered, and is used to handle the recursion of
+    # those directories to ensure that everything gets where it belongs.
+    directory_recursion = [0]
+    # Iterate over every node and extract the files and folders.
     for node in range(len(u8_archive.u8_node_list)):
-        if u8_archive.u8_node_list[node].name_offset != 0:
-            if u8_archive.u8_node_list[node].type == 256:
-                if u8_archive.u8_node_list[node].data_offset == 0:
-                    os.mkdir(os.path.join(output_folder, u8_archive.file_name_list[node]))
-                    current_dir = u8_archive.file_name_list[node]
-                elif u8_archive.u8_node_list[node].data_offset < node:
-                    lower_path = os.path.join(output_folder, current_dir)
-                    os.mkdir(os.path.join(lower_path, u8_archive.file_name_list[node]))
-                    current_dir = os.path.join(current_dir, u8_archive.file_name_list[node])
-            elif u8_archive.u8_node_list[node].type == 0:
-                lower_path = os.path.join(output_folder, current_dir)
-                output_file = open(os.path.join(lower_path, u8_archive.file_name_list[node]), "wb")
-                output_file.write(u8_archive.file_data_list[node])
-                output_file.close()
+        # Code for a directory node. Second check just ensures we ignore the root node.
+        if u8_archive.u8_node_list[node].type == 256 and u8_archive.u8_node_list[node].name_offset != 0:
+            # The size value for a directory node is the position of the last node in this directory, with the root node
+            # counting as node 1.
+            # If the current node is below the end of the current directory, create this directory inside the previous
+            # current directory and make the current.
+            if node + 1 < max(directory_recursion):
+                current_dir = current_dir.joinpath(u8_archive.file_name_list[node])
+                os.mkdir(current_dir)
+            # If the current node is beyond the end of the current directory, we've followed that path all the way down,
+            # so reset back to the root directory and put our new directory there.
+            elif node + 1 > max(directory_recursion):
+                current_dir = output_folder.joinpath(u8_archive.file_name_list[node])
+                os.mkdir(current_dir)
+            # This check is here just in case a directory ever ends with an empty directory and not a file.
+            elif node + 1 == max(directory_recursion):
+                current_dir = current_dir.parent
+                directory_recursion.pop()
+            # If the last node for the directory we just processed is new (which is always should be), add it to the
+            # recursion array.
+            if u8_archive.u8_node_list[node].size not in directory_recursion:
+                directory_recursion.append(u8_archive.u8_node_list[node].size)
+        # Code for a file node.
+        elif u8_archive.u8_node_list[node].type == 0:
+            # Write out the file to the current directory.
+            output_file = open(current_dir.joinpath(u8_archive.file_name_list[node]), "wb")
+            output_file.write(u8_archive.file_data_list[node])
+            output_file.close()
+            # If this file is the final node for the current directory, pop() the recursion array and set the current
+            # directory to the parent of the previous current.
+            if node + 1 in directory_recursion:
+                current_dir = current_dir.parent
+                directory_recursion.pop()
+        # Code for a totally unrecognized node type, which should not happen.
+        elif u8_archive.u8_node_list[node].type != 0 and u8_archive.u8_node_list[node].type != 256:
+            raise ValueError("A node with an invalid type (" + str(u8_archive.u8_node_list[node].type) + ") was"
+                             "found!")
 
 
 def pack_u8(input_path) -> bytes:
