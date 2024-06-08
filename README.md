@@ -1,16 +1,16 @@
 ![libWiiPy](https://github.com/NinjaCheetah/libWiiPy/assets/58050615/80093c68-b86e-4b96-87b7-db3855382ca8)
 # libWiiPy
-libWiiPy is a modern Python 3 library for interacting with and editing files from the Wii. It aims to be simple to use, well maintained, and offer as many features as reasonably possible in one library, so that a newly-written Python program could reasonably do 100% of its Wii-related work with just one library. It also aims to be fully cross-platform, so that any tools written with it can also be cross-platform.
+libWiiPy is a modern Python 3 library for handling the various files and formats found on the Wii. It aims to be simple to use, well maintained, and offer as many features as reasonably possible in one library, so that a newly-written Python program could reasonably do 100% of its Wii-related work with just one library. It also aims to be fully cross-platform, so that any tools written with it can also be cross-platform.
 
-libWiiPy is inspired by [libWiiSharp](https://github.com/TheShadowEevee/libWiiSharp), originally created by `Leathl`, now maintained by [@TheShadowEevee](https://github.com/TheShadowEevee). libWiiSharp is absolutely the way to go if you need a C# library for Wii files.
+libWiiPy is inspired by [libWiiSharp](https://github.com/TheShadowEevee/libWiiSharp), which was originally created by `Leathl` and is now maintained by [@TheShadowEevee](https://github.com/TheShadowEevee). If you're looking for a Wii library that isn't in Python, then go check it out!
 
-**Note:** While libWiiPy is directly inspired by libWiiSharp and aims to have feature parity with it, no code from either libWiiSharp or Wii.py was used in the making of this library. All code is original and is written by [@NinjaCheetah](https://github.com/NinjaCheetah), [@rvtr](https://github.com/rvtr), and any other GitHub contributors.
 
 # Features
 This list will expand as libWiiPy is developed, but these features are currently available:
 - TMD, ticket, and WAD parsing
 - WAD content extraction, decryption, re-encryption, and packing
 - Downloading titles from the NUS
+- Packing and unpacking U8 archives (.app, .arc, .carc, .szs)
 
 # Usage
 A wiki, and in the future a potential documenation site, is being worked on, and can be accessed [here](https://github.com/NinjaCheetah/libWiiPy/wiki). It is currently fairly barebones, but it will be improved in the future.
@@ -45,7 +45,7 @@ And that's all! You'll find your compiled pip package in `dist/`.
 # Special Thanks
 This project wouldn't be possible without the amazing people behind its predecessors and all of the people who have contributed to the documentation of the Wii's inner workings over at [WiiBrew](https://wiibrew.org).
 
-## Special Thanks for the Inspiration and Previous Projects
+## Special Thanks to People Behind Related Projects
 - Xuzz, SquidMan, megazig, Matt_P, Omega and The Lemon Man for creating Wii.py
 - Leathl for creating libWiiSharp
 - TheShadowEevee for maintaining libWiiSharp
@@ -58,4 +58,6 @@ Thank you to all of the contributors to the documentation on the WiiBrew pages t
 
 ### One additional special thanks to [@DamiDoop](https://github.com/DamiDoop)!
 She made the very cool banner you can see at the top of this README, and has also helped greatly with my sanity throughout debugging this library.
+
+**Note:** While libWiiPy is directly inspired by libWiiSharp and aims to have feature parity with it, no code from either libWiiSharp or Wii.py was used in the making of this library. All code is original and is written by [@NinjaCheetah](https://github.com/NinjaCheetah), [@rvtr](https://github.com/rvtr), and any other GitHub contributors.
 

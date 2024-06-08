@@ -1,12 +1,12 @@
-# "title.py" from libWiiPy by NinjaCheetah & Contributors
+# "title/title.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
 # See https://wiibrew.org/wiki/Title for details about how titles are formatted
 
-from .content import ContentRegion
-from .ticket import Ticket
-from .tmd import TMD
-from .wad import WAD
+from src.libWiiPy.title.content import ContentRegion
+from src.libWiiPy.title.ticket import Ticket
+from src.libWiiPy.title.tmd import TMD
+from src.libWiiPy.title.wad import WAD
 
 
 class Title:
@@ -79,9 +79,7 @@ class Title:
         self.wad.set_ticket_data(self.ticket.dump())
         # Dump the ContentRegion and set it in the WAD.
         self.wad.set_content_data(self.content.dump())
-        # Dump the WAD with the new regions back into raw data and return it.
-        wad_data = self.wad.dump()
-        return wad_data
+        return self.wad.dump()
 
     def load_tmd(self, tmd: bytes) -> None:
         """

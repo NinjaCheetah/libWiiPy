@@ -1,12 +1,12 @@
-# "ticket.py" from libWiiPy by NinjaCheetah & Contributors
+# "title/ticket.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
 # See https://wiibrew.org/wiki/Ticket for details about the ticket format
 
 import io
 import binascii
-from .crypto import decrypt_title_key
-from .types import TitleLimit
+from src.libWiiPy.title.crypto import decrypt_title_key
+from src.libWiiPy.types import TitleLimit
 from typing import List
 
 
@@ -200,7 +200,6 @@ class Ticket:
             title_limit_data += int.to_bytes(self.title_limits_list[title_limit].maximum_usage, 4)
             # Write the entry to the ticket.
             ticket_data += title_limit_data
-        # Return the raw TMD for the data contained in the object.
         return ticket_data
 
     def get_title_id(self) -> str:

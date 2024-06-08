@@ -1,6 +1,6 @@
 [project]
 name = "libWiiPy"
-version = "0.2.3"
+version = "0.3.0"
 authors = [
     { name="NinjaCheetah", email="ninjacheetah@ncxprogramming.com" },
     { name="Lillian Skinner", email="lillian@randommeaninglesscharacters.com" }
@@ -20,7 +20,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/NinjaCheetah/libWiiPy"
-Issues = "https://github.com/NinjaCheetah/libWiipy/issues"
+Issues = "https://github.com/NinjaCheetah/libWiiPy/issues"
 
 [build-system]
 requires = ["setuptools>=61.0"]
