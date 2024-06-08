@@ -1,7 +1,7 @@
 # "archive/u8.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
-# See https://wiibrew.org/wiki/U8_archive for details about the U8 archive format
+# See https://wiibrew.org/wiki/U8_archive for details about the U8 archive format.
 
 import io
 import os
@@ -191,16 +191,16 @@ def extract_u8(u8_data, output_folder) -> None:
             # counting as node 1.
             # If the current node is below the end of the current directory, create this directory inside the previous
             # current directory and make the current.
-            if node + 1 < max(directory_recursion):
+            if node + 1 < directory_recursion[-1]:
                 current_dir = current_dir.joinpath(u8_archive.file_name_list[node])
                 os.mkdir(current_dir)
             # If the current node is beyond the end of the current directory, we've followed that path all the way down,
             # so reset back to the root directory and put our new directory there.
-            elif node + 1 > max(directory_recursion):
+            elif node + 1 > directory_recursion[-1]:
                 current_dir = output_folder.joinpath(u8_archive.file_name_list[node])
                 os.mkdir(current_dir)
             # This check is here just in case a directory ever ends with an empty directory and not a file.
-            elif node + 1 == max(directory_recursion):
+            elif node + 1 == directory_recursion[-1]:
                 current_dir = current_dir.parent
                 directory_recursion.pop()
             # If the last node for the directory we just processed is new (which is always should be), add it to the
@@ -224,23 +224,84 @@ def extract_u8(u8_data, output_folder) -> None:
                              "found!")
 
 
+def _pack_u8_dir(u8_archive: U8Archive, current_path, node_count, name_offset):
+    # First, get the list of everything in current path.
+    root_list = os.listdir(current_path)
+    file_list = []
+    dir_list = []
+    # Create separate lists of the files and directories in the current directory so that we can handle the files first.
+    for path in root_list:
+        if os.path.isfile(current_path.joinpath(path)):
+            file_list.append(path)
+        elif os.path.isdir(current_path.joinpath(path)):
+            dir_list.append(path)
+    # For files, read their data into the file data list, add their name into the file name list, then calculate the
+    # offset for their file name and create a new U8Node() for them.
+    for file in file_list:
+        node_count += 1
+        u8_archive.file_name_list.append(file)
+        u8_archive.file_data_list.append(open(current_path.joinpath(file), "rb").read())
+        u8_archive.u8_node_list.append(U8Node(0, name_offset, 0, len(u8_archive.file_data_list[-1])))
+        name_offset = name_offset + len(file) + 1  # Add 1 to accommodate the null byte at the end of the name.
+    # For directories, add their name to the file name list, add empty data to the file data list (since they obviously
+    # wouldn't have any), find the total number of files and directories inside the directory to calculate the final
+    # node included in it, then recursively call this function again on that directory to process it.
+    for directory in dir_list:
+        node_count += 1
+        u8_archive.file_name_list.append(directory)
+        u8_archive.file_data_list.append(b'')
+        max_node = node_count + sum(1 for _ in current_path.joinpath(directory).rglob('*'))
+        u8_archive.u8_node_list.append(U8Node(256, name_offset, 0, max_node))
+        name_offset = name_offset + len(directory) + 1  # Add 1 to accommodate the null byte at the end of the name.
+        u8_archive, node_count, name_offset = _pack_u8_dir(u8_archive, current_path.joinpath(directory), node_count,
+                                                           name_offset)
+    # Return the U8Archive object, the current node we're on, and the current name offset.
+    return u8_archive, node_count, name_offset
+
+
 def pack_u8(input_path) -> bytes:
+    """
+    Packs the provided file or folder into a new U8 archive, and returns the raw file data for it.
+
+    Parameters
+    ----------
+    input_path
+        The path to the input file or folder.
+
+    Returns
+    -------
+    u8_archive : bytes
+        The data for the packed U8 archive.
+    """
+    input_path = pathlib.Path(input_path)
     if os.path.isdir(input_path):
-        raise ValueError("Only single-file packing is currently supported!")
+        # Append empty entries at the start for the root node, and then create the root U8Node() object, using rglob()
+        # to read the total count of files and directories that will be packed so that we can add the total node count.
+        u8_archive = U8Archive()
+        u8_archive.file_name_list.append("")
+        u8_archive.file_data_list.append(b'')
+        u8_archive.u8_node_list.append(U8Node(256, 0, 0, sum(1 for _ in input_path.rglob('*')) + 1))
+        # Call the private function _pack_u8_dir() on the root note, which will recursively call itself to pack every
+        # subdirectory and file. Discard node_count and name_offset since we don't care about them here, as they're
+        # really only necessary for the directory recursion.
+        u8_archive, _, _ = _pack_u8_dir(u8_archive, input_path, node_count=1, name_offset=1)
+        # Dump and return the U8 file data.
+        return u8_archive.dump()
     elif os.path.isfile(input_path):
+        # Simple code to handle if a single file is provided as input. Not really sure *why* you'd do this, since the
+        # whole point of a U8 archive is to stitch files together, but it's here nonetheless.
         with open(input_path, "rb") as f:
             u8_archive = U8Archive()
-
-            file_name = os.path.basename(input_path)
+            file_name = input_path.name
             file_data = f.read()
-
+            # Append blank file name for the root node.
             u8_archive.file_name_list.append("")
             u8_archive.file_name_list.append(file_name)
-
+            # Append blank data for the root node.
             u8_archive.file_data_list.append(b'')
             u8_archive.file_data_list.append(file_data)
-
+            # Append generic U8Node for the root, followed by the actual file's node.
             u8_archive.u8_node_list.append(U8Node(256, 0, 0, 2))
             u8_archive.u8_node_list.append(U8Node(0, 1, 0, len(file_data)))
-
+            # Return the processed data.
             return u8_archive.dump()

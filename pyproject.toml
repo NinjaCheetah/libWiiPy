@@ -20,7 +20,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/NinjaCheetah/libWiiPy"
-Issues = "https://github.com/NinjaCheetah/libWiipy/issues"
+Issues = "https://github.com/NinjaCheetah/libWiiPy/issues"
 
 [build-system]
 requires = ["setuptools>=61.0"]
