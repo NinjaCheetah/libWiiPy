@@ -6,9 +6,9 @@
 import requests
 import hashlib
 from typing import List
-from src.libWiiPy.title.title import Title
-from src.libWiiPy.title.tmd import TMD
-from src.libWiiPy.title.ticket import Ticket
+from .title import Title
+from .tmd import TMD
+from .ticket import Ticket
 
 nus_endpoint = ["http://nus.cdn.shop.wii.com/ccs/download/", "http://ccs.cdn.wup.shop.nintendo.net/ccs/download/"]
 

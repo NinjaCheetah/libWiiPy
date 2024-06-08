@@ -7,8 +7,8 @@ import io
 import sys
 import hashlib
 from typing import List
-from src.libWiiPy.types import ContentRecord
-from src.libWiiPy.title.crypto import decrypt_content, encrypt_content
+from ..types import ContentRecord
+from .crypto import decrypt_content, encrypt_content
 
 
 class ContentRegion:

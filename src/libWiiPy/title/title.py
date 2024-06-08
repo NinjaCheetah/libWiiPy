@@ -3,10 +3,10 @@
 #
 # See https://wiibrew.org/wiki/Title for details about how titles are formatted
 
-from src.libWiiPy.title.content import ContentRegion
-from src.libWiiPy.title.ticket import Ticket
-from src.libWiiPy.title.tmd import TMD
-from src.libWiiPy.title.wad import WAD
+from .content import ContentRegion
+from .ticket import Ticket
+from .tmd import TMD
+from .wad import WAD
 
 
 class Title:

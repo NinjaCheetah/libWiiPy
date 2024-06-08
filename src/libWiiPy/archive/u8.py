@@ -8,7 +8,7 @@ import os
 import pathlib
 from dataclasses import dataclass
 from typing import List
-from src.libWiiPy.shared import align_value
+from ..shared import align_value
 
 
 @dataclass

@@ -5,7 +5,7 @@
 
 import io
 import binascii
-from src.libWiiPy.shared import align_value, pad_bytes
+from ..shared import align_value, pad_bytes
 
 
 class WAD:

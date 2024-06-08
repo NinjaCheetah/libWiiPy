@@ -7,7 +7,7 @@ import io
 import binascii
 import struct
 from typing import List
-from src.libWiiPy.types import ContentRecord
+from ..types import ContentRecord
 
 
 class TMD:

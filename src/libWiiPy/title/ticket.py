@@ -5,8 +5,8 @@
 
 import io
 import binascii
-from src.libWiiPy.title.crypto import decrypt_title_key
-from src.libWiiPy.types import TitleLimit
+from .crypto import decrypt_title_key
+from ..types import TitleLimit
 from typing import List
 
 

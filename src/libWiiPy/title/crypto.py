@@ -2,8 +2,8 @@
 # https://github.com/NinjaCheetah/libWiiPy
 
 import struct
-from src.libWiiPy.title.commonkeys import get_common_key
-from src.libWiiPy.shared import convert_tid_to_iv
+from .commonkeys import get_common_key
+from ..shared import convert_tid_to_iv
 
 from Crypto.Cipher import AES
 
