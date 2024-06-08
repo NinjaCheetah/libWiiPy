@@ -2,6 +2,7 @@
 # https://github.com/NinjaCheetah/libWiiPy
 
 from .content import *
+from .nus import *
 from .ticket import *
 from .title import *
 from .tmd import *
