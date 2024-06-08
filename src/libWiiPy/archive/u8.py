@@ -285,7 +285,6 @@ def pack_u8(input_path) -> bytes:
         # subdirectory and file. Discard node_count and name_offset since we don't care about them here, as they're
         # really only necessary for the directory recursion.
         u8_archive, _, _ = _pack_u8_dir(u8_archive, input_path, node_count=1, name_offset=1)
-        # Dump and return the U8 file data.
         return u8_archive.dump()
     elif os.path.isfile(input_path):
         # Simple code to handle if a single file is provided as input. Not really sure *why* you'd do this, since the
@@ -303,5 +302,4 @@ def pack_u8(input_path) -> bytes:
             # Append generic U8Node for the root, followed by the actual file's node.
             u8_archive.u8_node_list.append(U8Node(256, 0, 0, 2))
             u8_archive.u8_node_list.append(U8Node(0, 1, 0, len(file_data)))
-            # Return the processed data.
             return u8_archive.dump()

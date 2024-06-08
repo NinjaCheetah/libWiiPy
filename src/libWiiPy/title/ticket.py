@@ -200,7 +200,6 @@ class Ticket:
             title_limit_data += int.to_bytes(self.title_limits_list[title_limit].maximum_usage, 4)
             # Write the entry to the ticket.
             ticket_data += title_limit_data
-        # Return the raw TMD for the data contained in the object.
         return ticket_data
 
     def get_title_id(self) -> str:

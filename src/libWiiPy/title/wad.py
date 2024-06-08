@@ -178,7 +178,6 @@ class WAD:
         # Retrieve the content data and write it out.
         wad_data += self.get_content_data()
         wad_data = pad_bytes(wad_data)
-        # Return the raw WAD file for the data contained in the object.
         return wad_data
 
     def get_wad_type(self) -> str:

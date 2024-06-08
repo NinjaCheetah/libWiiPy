@@ -213,7 +213,6 @@ class TMD:
             content_data += binascii.unhexlify(self.content_records[content_record].content_hash)
             # Write the record to the TMD.
             tmd_data += content_data
-        # Return the raw TMD for the data contained in the object.
         return tmd_data
 
     def get_title_region(self) -> str:

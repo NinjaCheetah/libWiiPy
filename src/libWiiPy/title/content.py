@@ -89,7 +89,6 @@ class ContentRegion:
             content_region_data += content
             if padding_bytes > 0:
                 content_region_data += b'\x00' * padding_bytes
-        # Return the raw ContentRegion for the data contained in the object.
         return content_region_data
 
     def get_enc_content_by_index(self, index: int) -> bytes:
