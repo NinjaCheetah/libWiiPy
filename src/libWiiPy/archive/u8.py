@@ -303,3 +303,5 @@ def pack_u8(input_path) -> bytes:
             u8_archive.u8_node_list.append(U8Node(256, 0, 0, 2))
             u8_archive.u8_node_list.append(U8Node(0, 1, 0, len(file_data)))
             return u8_archive.dump()
+    else:
+        raise FileNotFoundError("Input file/directory: \"" + str(input_path) + "\" does not exist!")
