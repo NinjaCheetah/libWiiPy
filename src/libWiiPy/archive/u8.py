@@ -6,17 +6,17 @@
 import io
 import os
 import pathlib
-from dataclasses import dataclass
+from dataclasses import dataclass as _dataclass
 from typing import List
-from ..shared import align_value
+from ..shared import _align_value
 
 
-@dataclass
-class U8Node:
+@_dataclass
+class _U8Node:
     """
     A U8Node object that contains the data of a single node in a U8 file header. Each node keeps track of whether this
     node is for a file or directory, the offset of the name of the file/directory, the offset of the data for the file/
-    directory, and the size of the data.
+    directory, and the size of the data. Private class used by functions and methods in the U8 module.
 
     Attributes
     ----------
@@ -44,7 +44,7 @@ class U8Archive:
         ----------
         """
         self.u8_magic = b''
-        self.u8_node_list: List[U8Node] = []  # All the nodes in the header of a U8 file.
+        self.u8_node_list: List[_U8Node] = []  # All the nodes in the header of a U8 file.
         self.file_name_list: List[str] = []
         self.file_data_list: List[bytes] = []
         self.u8_file_structure = dict
@@ -86,7 +86,7 @@ class U8Archive:
                 node_name_offset = int.from_bytes(u8_data.read(2))
                 node_data_offset = int.from_bytes(u8_data.read(4))
                 node_size = int.from_bytes(u8_data.read(4))
-                self.u8_node_list.append(U8Node(node_type, node_name_offset, node_data_offset, node_size))
+                self.u8_node_list.append(_U8Node(node_type, node_name_offset, node_data_offset, node_size))
             # Iterate over all loaded nodes and create a list of file names and a list of file data.
             name_base_offset = u8_data.tell()
             for node in self.u8_node_list:
@@ -121,7 +121,7 @@ class U8Archive:
         for file_name in self.file_name_list:
             header_size += len(file_name) + 1
         # The initial data offset is equal to the file header (32 bytes) + node data aligned to 16 bytes.
-        data_offset = align_value(header_size + 32, 16)
+        data_offset = _align_value(header_size + 32, 16)
         # Adjust all nodes to place file data in the same order as the nodes. Why isn't it already like this?
         current_data_offset = data_offset
         for node in range(len(self.u8_node_list)):
@@ -241,7 +241,7 @@ def _pack_u8_dir(u8_archive: U8Archive, current_path, node_count, name_offset):
         node_count += 1
         u8_archive.file_name_list.append(file)
         u8_archive.file_data_list.append(open(current_path.joinpath(file), "rb").read())
-        u8_archive.u8_node_list.append(U8Node(0, name_offset, 0, len(u8_archive.file_data_list[-1])))
+        u8_archive.u8_node_list.append(_U8Node(0, name_offset, 0, len(u8_archive.file_data_list[-1])))
         name_offset = name_offset + len(file) + 1  # Add 1 to accommodate the null byte at the end of the name.
     # For directories, add their name to the file name list, add empty data to the file data list (since they obviously
     # wouldn't have any), find the total number of files and directories inside the directory to calculate the final
@@ -251,7 +251,7 @@ def _pack_u8_dir(u8_archive: U8Archive, current_path, node_count, name_offset):
         u8_archive.file_name_list.append(directory)
         u8_archive.file_data_list.append(b'')
         max_node = node_count + sum(1 for _ in current_path.joinpath(directory).rglob('*'))
-        u8_archive.u8_node_list.append(U8Node(256, name_offset, 0, max_node))
+        u8_archive.u8_node_list.append(_U8Node(256, name_offset, 0, max_node))
         name_offset = name_offset + len(directory) + 1  # Add 1 to accommodate the null byte at the end of the name.
         u8_archive, node_count, name_offset = _pack_u8_dir(u8_archive, current_path.joinpath(directory), node_count,
                                                            name_offset)
@@ -280,7 +280,7 @@ def pack_u8(input_path) -> bytes:
         u8_archive = U8Archive()
         u8_archive.file_name_list.append("")
         u8_archive.file_data_list.append(b'')
-        u8_archive.u8_node_list.append(U8Node(256, 0, 0, sum(1 for _ in input_path.rglob('*')) + 1))
+        u8_archive.u8_node_list.append(_U8Node(256, 0, 0, sum(1 for _ in input_path.rglob('*')) + 1))
         # Call the private function _pack_u8_dir() on the root note, which will recursively call itself to pack every
         # subdirectory and file. Discard node_count and name_offset since we don't care about them here, as they're
         # really only necessary for the directory recursion.
@@ -300,8 +300,8 @@ def pack_u8(input_path) -> bytes:
             u8_archive.file_data_list.append(b'')
             u8_archive.file_data_list.append(file_data)
             # Append generic U8Node for the root, followed by the actual file's node.
-            u8_archive.u8_node_list.append(U8Node(256, 0, 0, 2))
-            u8_archive.u8_node_list.append(U8Node(0, 1, 0, len(file_data)))
+            u8_archive.u8_node_list.append(_U8Node(256, 0, 0, 2))
+            u8_archive.u8_node_list.append(_U8Node(0, 1, 0, len(file_data)))
             return u8_archive.dump()
     else:
         raise FileNotFoundError("Input file/directory: \"" + str(input_path) + "\" does not exist!")

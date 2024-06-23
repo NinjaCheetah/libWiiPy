@@ -10,7 +10,7 @@ from .title import Title
 from .tmd import TMD
 from .ticket import Ticket
 
-nus_endpoint = ["http://nus.cdn.shop.wii.com/ccs/download/", "http://ccs.cdn.wup.shop.nintendo.net/ccs/download/"]
+_nus_endpoint = ["http://nus.cdn.shop.wii.com/ccs/download/", "http://ccs.cdn.wup.shop.nintendo.net/ccs/download/"]
 
 
 def download_title(title_id: str, title_version: int = None, wiiu_endpoint: bool = False) -> Title:
@@ -68,9 +68,9 @@ def download_tmd(title_id: str, title_version: int = None, wiiu_endpoint: bool =
     # Build the download URL. The structure is download/<TID>/tmd for latest and download/<TID>/tmd.<version> for
     # when a specific version is requested.
     if wiiu_endpoint is False:
-        tmd_url = nus_endpoint[0] + title_id + "/tmd"
+        tmd_url = _nus_endpoint[0] + title_id + "/tmd"
     else:
-        tmd_url = nus_endpoint[1] + title_id + "/tmd"
+        tmd_url = _nus_endpoint[1] + title_id + "/tmd"
     # Add the version to the URL if one was specified.
     if title_version is not None:
         tmd_url += "." + str(title_version)
@@ -109,9 +109,9 @@ def download_ticket(title_id: str, wiiu_endpoint: bool = False) -> bytes:
     # Build the download URL. The structure is download/<TID>/cetk, and cetk will only exist if this is a free
     # title.
     if wiiu_endpoint is False:
-        ticket_url = nus_endpoint[0] + title_id + "/cetk"
+        ticket_url = _nus_endpoint[0] + title_id + "/cetk"
     else:
-        ticket_url = nus_endpoint[1] + title_id + "/cetk"
+        ticket_url = _nus_endpoint[1] + title_id + "/cetk"
     # Make the request.
     ticket_request = requests.get(url=ticket_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
     if ticket_request.status_code != 200:
@@ -142,11 +142,11 @@ def download_cert(wiiu_endpoint: bool = False) -> bytes:
     """
     # Download the TMD and cetk for the System Menu 4.3U.
     if wiiu_endpoint is False:
-        tmd_url = nus_endpoint[0] + "0000000100000002/tmd.513"
-        cetk_url = nus_endpoint[0] + "0000000100000002/cetk"
+        tmd_url = _nus_endpoint[0] + "0000000100000002/tmd.513"
+        cetk_url = _nus_endpoint[0] + "0000000100000002/cetk"
     else:
-        tmd_url = nus_endpoint[1] + "0000000100000002/tmd.513"
-        cetk_url = nus_endpoint[1] + "0000000100000002/cetk"
+        tmd_url = _nus_endpoint[1] + "0000000100000002/tmd.513"
+        cetk_url = _nus_endpoint[1] + "0000000100000002/cetk"
     tmd = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
     cetk = requests.get(url=cetk_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
     # Assemble the certificate.
@@ -186,9 +186,9 @@ def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False
     if len(content_id_hex) < 2:
         content_id_hex = "0" + content_id_hex
     if wiiu_endpoint is False:
-        content_url = nus_endpoint[0] + title_id + "/000000" + content_id_hex
+        content_url = _nus_endpoint[0] + title_id + "/000000" + content_id_hex
     else:
-        content_url = nus_endpoint[1] + title_id + "/000000" + content_id_hex
+        content_url = _nus_endpoint[1] + title_id + "/000000" + content_id_hex
     # Make the request.
     content_request = requests.get(url=content_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
     if content_request.status_code != 200:

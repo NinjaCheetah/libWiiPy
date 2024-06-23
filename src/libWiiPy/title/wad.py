@@ -5,7 +5,7 @@
 
 import io
 import binascii
-from ..shared import align_value, pad_bytes
+from ..shared import _align_value, _pad_bytes
 
 
 class WAD:
@@ -102,12 +102,12 @@ class WAD:
             # ====================================================================================
             wad_cert_offset = self.wad_hdr_size
             # crl isn't ever used, however an entry for its size exists in the header, so its calculated just in case.
-            wad_crl_offset = align_value(wad_cert_offset + self.wad_cert_size)
-            wad_tik_offset = align_value(wad_crl_offset + self.wad_crl_size)
-            wad_tmd_offset = align_value(wad_tik_offset + self.wad_tik_size)
+            wad_crl_offset = _align_value(wad_cert_offset + self.wad_cert_size)
+            wad_tik_offset = _align_value(wad_crl_offset + self.wad_crl_size)
+            wad_tmd_offset = _align_value(wad_tik_offset + self.wad_tik_size)
             # meta isn't guaranteed to be used, but some older SDK titles use it, and not reading it breaks things.
-            wad_meta_offset = align_value(wad_tmd_offset + self.wad_tmd_size)
-            wad_content_offset = align_value(wad_meta_offset + self.wad_meta_size)
+            wad_meta_offset = _align_value(wad_tmd_offset + self.wad_tmd_size)
+            wad_content_offset = _align_value(wad_meta_offset + self.wad_meta_size)
             # ====================================================================================
             # Load data for each WAD section based on the previously calculated offsets.
             # ====================================================================================
@@ -159,25 +159,25 @@ class WAD:
         wad_data += int.to_bytes(self.wad_content_size, 4)
         # WAD meta size.
         wad_data += int.to_bytes(self.wad_meta_size, 4)
-        wad_data = pad_bytes(wad_data)
+        wad_data = _pad_bytes(wad_data)
         # Retrieve the cert data and write it out.
         wad_data += self.get_cert_data()
-        wad_data = pad_bytes(wad_data)
+        wad_data = _pad_bytes(wad_data)
         # Retrieve the crl data and write it out.
         wad_data += self.get_crl_data()
-        wad_data = pad_bytes(wad_data)
+        wad_data = _pad_bytes(wad_data)
         # Retrieve the ticket data and write it out.
         wad_data += self.get_ticket_data()
-        wad_data = pad_bytes(wad_data)
+        wad_data = _pad_bytes(wad_data)
         # Retrieve the TMD data and write it out.
         wad_data += self.get_tmd_data()
-        wad_data = pad_bytes(wad_data)
+        wad_data = _pad_bytes(wad_data)
         # Retrieve the meta/footer data and write it out.
         wad_data += self.get_meta_data()
-        wad_data = pad_bytes(wad_data)
+        wad_data = _pad_bytes(wad_data)
         # Retrieve the content data and write it out.
         wad_data += self.get_content_data()
-        wad_data = pad_bytes(wad_data)
+        wad_data = _pad_bytes(wad_data)
         return wad_data
 
     def get_wad_type(self) -> str:

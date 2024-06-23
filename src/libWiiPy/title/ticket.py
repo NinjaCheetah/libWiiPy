@@ -5,9 +5,31 @@
 
 import io
 import binascii
+from dataclasses import dataclass as _dataclass
 from .crypto import decrypt_title_key
-from ..types import TitleLimit
 from typing import List
+
+
+@_dataclass
+class _TitleLimit:
+    """
+    A TitleLimit object that contains the type of restriction and the limit. The limit type can be one of the following:
+    0 = None, 1 = Time Limit, 3 = None, or 4 = Launch Count. The maximum usage is then either the time in minutes the
+    title can be played or the maximum number of launches allowed for that title, based on the type of limit applied.
+    Private class used only by the Ticket class.
+
+    Attributes
+    ----------
+    limit_type : int
+        The type of play limit applied.
+    maximum_usage : int
+        The maximum value for the type of play limit applied.
+    """
+    # The type of play limit applied.
+    # 0 = None, 1 = Time Limit, 3 = None, 4 = Launch Count
+    limit_type: int
+    # The maximum value of the limit applied.
+    maximum_usage: int
 
 
 class Ticket:
@@ -47,12 +69,14 @@ class Ticket:
         self.unknown1: bytes = b''  # Some unknown data, not always the same so reading it just in case.
         self.title_version: int = 0  # Version of the ticket's associated title.
         self.permitted_titles: bytes = b''  # Permitted titles mask
-        self.permit_mask: bytes = b''  # "Permit mask. The current disc title is ANDed with the inverse of this mask to see if the result matches the Permitted Titles Mask."
+        # "Permit mask. The current disc title is ANDed with the inverse of this mask to see if the result matches the
+        # Permitted Titles Mask."
+        self.permit_mask: bytes = b''
         self.title_export_allowed: int = 0  # Whether title export is allowed with a PRNG key or not.
         self.common_key_index: int = 0  # Which common key should be used. 0 = Common Key, 1 = Korean Key, 2 = vWii Key
         self.unknown2: bytes = b''  # More unknown data. Varies for VC/non-VC titles so reading it to ensure it matches.
         self.content_access_permissions: bytes = b''  # "Content access permissions (one bit for each content)"
-        self.title_limits_list: List[TitleLimit] = []  # List of play limits applied to the title.
+        self.title_limits_list: List[_TitleLimit] = []  # List of play limits applied to the title.
         # v1 ticket data
         # TODO: Write in v1 ticket attributes here. This code can currently only handle v0 tickets, and will reject v1.
 
@@ -134,7 +158,7 @@ class Ticket:
             for limit in range(0, 8):
                 limit_type = int.from_bytes(ticket_data.read(4))
                 limit_value = int.from_bytes(ticket_data.read(4))
-                self.title_limits_list.append(TitleLimit(limit_type, limit_value))
+                self.title_limits_list.append(_TitleLimit(limit_type, limit_value))
 
     def dump(self) -> bytes:
         """
