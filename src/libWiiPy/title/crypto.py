@@ -2,10 +2,32 @@
 # https://github.com/NinjaCheetah/libWiiPy
 
 import struct
+import binascii
 from .commonkeys import get_common_key
-from ..shared import convert_tid_to_iv
+from Crypto.Cipher import AES as _AES
 
-from Crypto.Cipher import AES
+
+def _convert_tid_to_iv(title_id: str) -> bytes:
+    # Converts a Title ID in various formats into the format required to act as an IV. Private function used by other
+    # crypto functions.
+    title_key_iv = b''
+    if type(title_id) is bytes:
+        # This catches the format b'0000000100000002'
+        if len(title_id) == 16:
+            title_key_iv = binascii.unhexlify(title_id)
+        # This catches the format b'\x00\x00\x00\x01\x00\x00\x00\x02'
+        elif len(title_id) == 8:
+            pass
+        # If it isn't one of those lengths, it cannot possibly be valid, so reject it.
+        else:
+            raise ValueError("Title ID is not valid!")
+    # Allow for a string like "0000000100000002"
+    elif type(title_id) is str:
+        title_key_iv = binascii.unhexlify(title_id)
+    # If the Title ID isn't bytes or a string, it isn't valid and is rejected.
+    else:
+        raise TypeError("Title ID type is not valid! It must be either type str or bytes.")
+    return title_key_iv
 
 
 def decrypt_title_key(title_key_enc: bytes, common_key_index: int, title_id: bytes | str) -> bytes:
@@ -31,11 +53,11 @@ def decrypt_title_key(title_key_enc: bytes, common_key_index: int, title_id: byt
     # Load the correct common key for the title.
     common_key = get_common_key(common_key_index)
     # Convert the IV into the correct format based on the type provided.
-    title_key_iv = convert_tid_to_iv(title_id)
+    title_key_iv = _convert_tid_to_iv(title_id)
     # The IV will always be in the same format by this point, so add the last 8 bytes.
     title_key_iv = title_key_iv + (b'\x00' * 8)
     # Create a new AES object with the values provided.
-    aes = AES.new(common_key, AES.MODE_CBC, title_key_iv)
+    aes = _AES.new(common_key, _AES.MODE_CBC, title_key_iv)
     # Decrypt the Title Key using the AES object.
     title_key = aes.decrypt(title_key_enc)
     return title_key
@@ -64,11 +86,11 @@ def encrypt_title_key(title_key_dec: bytes, common_key_index: int, title_id: byt
     # Load the correct common key for the title.
     common_key = get_common_key(common_key_index)
     # Convert the IV into the correct format based on the type provided.
-    title_key_iv = convert_tid_to_iv(title_id)
+    title_key_iv = _convert_tid_to_iv(title_id)
     # The IV will always be in the same format by this point, so add the last 8 bytes.
     title_key_iv = title_key_iv + (b'\x00' * 8)
     # Create a new AES object with the values provided.
-    aes = AES.new(common_key, AES.MODE_CBC, title_key_iv)
+    aes = _AES.new(common_key, _AES.MODE_CBC, title_key_iv)
     # Encrypt Title Key using the AES object.
     title_key = aes.encrypt(title_key_dec)
     return title_key
@@ -105,7 +127,7 @@ def decrypt_content(content_enc, title_key, content_index, content_length) -> by
     if (len(content_enc) % 16) != 0:
         content_enc = content_enc + (b'\x00' * (16 - (len(content_enc) % 16)))
     # Create a new AES object with the values provided, with the content's unique ID as the IV.
-    aes = AES.new(title_key, AES.MODE_CBC, content_index_bin)
+    aes = _AES.new(title_key, _AES.MODE_CBC, content_index_bin)
     # Decrypt the content using the AES object.
     content_dec = aes.decrypt(content_enc)
     # Trim additional bytes that may have been added so the content is the correct size.
@@ -144,7 +166,7 @@ def encrypt_content(content_dec, title_key, content_index) -> bytes:
     if (len(content_dec) % 16) != 0:
         content_dec = content_dec + (b'\x00' * (16 - (len(content_dec) % 16)))
     # Create a new AES object with the values provided, with the content's unique ID as the IV.
-    aes = AES.new(title_key, AES.MODE_CBC, content_index_bin)
+    aes = _AES.new(title_key, _AES.MODE_CBC, content_index_bin)
     # Encrypt the content using the AES object.
     content_enc = aes.encrypt(content_dec)
     # Trim down the encrypted content.

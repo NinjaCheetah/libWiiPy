@@ -165,6 +165,7 @@ cython_debug/
 *.tmd
 *.wad
 *.arc
+*.ash
 out_prod/
 remakewad.pl
 

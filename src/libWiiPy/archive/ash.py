@@ -8,10 +8,10 @@
 # See <link pending> for details about the ASH archive format.
 
 import io
-from dataclasses import dataclass
+from dataclasses import dataclass as _dataclass
 
 
-@dataclass
+@_dataclass
 class _ASHBitReader:
     """
     An _ASHBitReader class used to parse individual words in an ASH file. Private class used by the ASH module.
