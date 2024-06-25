@@ -1,3 +1,6 @@
 build
 pycryptodome
 requests
+sphinx
+sphinx-book-theme
+myst-parser
