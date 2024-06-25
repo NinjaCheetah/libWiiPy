@@ -7,10 +7,12 @@ libWiiPy is inspired by [libWiiSharp](https://github.com/TheShadowEevee/libWiiSh
 
 # Features
 This list will expand as libWiiPy is developed, but these features are currently available:
-- TMD, ticket, and WAD parsing
-- WAD content extraction, decryption, re-encryption, and packing
+- TMD and Ticket parsing (`.tmd`, `.tik`)
+- Title content decryption, re-encryption
+- Packing and unpacking WAD files (`.wad`)
 - Downloading titles from the NUS
-- Packing and unpacking U8 archives (.app, .arc, .carc, .szs)
+- Packing and unpacking U8 archives (`.app`, `.arc`)
+- Decompressing ASH files (`.ash`, both the standard variants and the variants found in My Pokémon Ranch)
 
 # Usage
 A wiki, and in the future a potential documenation site, is being worked on, and can be accessed [here](https://github.com/NinjaCheetah/libWiiPy/wiki). It is currently fairly barebones, but it will be improved in the future.
