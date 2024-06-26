@@ -28,3 +28,7 @@ In libWiiPy, a Ticket is represented by a `Ticket()` object, which is part of th
 **Contents** are the files in a title that contain the actual data, whether that be the main executable or resources required by it. They're usually stored encrypted in a WAD file or on the Nintendo Update Servers, until they are decrypted during installation to a console. The Title Key stored in the Ticket is required to decrypt the contents of a title. Each content has a matching record with its index and Content ID, as well as the SHA-1 hash of its decrypted data. These records are stored in the TMD.
 
 In libWiiPy, contents are represented by a `ContentRegion()` object, which is part of the `content` module in the `title` subpackge, and is imported automatically. A content record is represented by its own `ContentRecord()` object, which is a private class designed to only be used by other modules.
+
+To effectively work with a whole title, you'll need to understand the basics of these three components and the libWiiPy classes that are used to represent them.
+
+Now, let's get into how you'd use them to extract a title from a WAD file.

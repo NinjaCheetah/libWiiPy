@@ -27,6 +27,9 @@ usage/getting-started.md
 :caption: Working with Titles
 
 titles/title-anatomy.md
+titles/extracting-titles.md
+titles/title-module.md
+titles/nus-downloading.md
 ```
 
 ```{toctree}
