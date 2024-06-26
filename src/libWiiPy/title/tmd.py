@@ -7,7 +7,7 @@ import io
 import binascii
 import struct
 from typing import List
-from ..types import ContentRecord
+from ..types import _ContentRecord
 
 
 class TMD:
@@ -52,7 +52,7 @@ class TMD:
         self.title_version: int = 0  # The version of the associated title.
         self.num_contents: int = 0  # The number of contents contained in the associated title.
         self.boot_index: int = 0  # The content index that contains the bootable executable.
-        self.content_records: List[ContentRecord] = []
+        self.content_records: List[_ContentRecord] = []
 
     def load(self, tmd: bytes) -> None:
         """
@@ -142,9 +142,9 @@ class TMD:
                 tmd_data.seek(0x1E4 + (36 * content))
                 content_record_hdr = struct.unpack(">LHH4x4s20s", tmd_data.read(36))
                 self.content_records.append(
-                    ContentRecord(int(content_record_hdr[0]), int(content_record_hdr[1]),
-                                  int(content_record_hdr[2]), int.from_bytes(content_record_hdr[3]),
-                                  binascii.hexlify(content_record_hdr[4])))
+                    _ContentRecord(int(content_record_hdr[0]), int(content_record_hdr[1]),
+                                   int(content_record_hdr[2]), int.from_bytes(content_record_hdr[3]),
+                                   binascii.hexlify(content_record_hdr[4])))
 
     def dump(self) -> bytes:
         """
@@ -310,7 +310,7 @@ class TMD:
             case _:
                 return "Unknown"
 
-    def get_content_record(self, record) -> ContentRecord:
+    def get_content_record(self, record) -> _ContentRecord:
         """
         Gets the content record at the specified index.
 
@@ -321,7 +321,7 @@ class TMD:
 
         Returns
         -------
-        ContentRecord
+        _ContentRecord
             A ContentRecord object containing the data in the content record.
         """
         if record < self.num_contents:

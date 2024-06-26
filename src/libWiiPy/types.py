@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class ContentRecord:
+class _ContentRecord:
     """
     A content record object that contains the details of a content contained in a title. This information must match
     the content stored at the index in the record, or else the content will not decrypt properly, as the hash of the

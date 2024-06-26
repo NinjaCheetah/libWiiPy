@@ -7,7 +7,7 @@ import io
 import sys
 import hashlib
 from typing import List
-from ..types import ContentRecord
+from ..types import _ContentRecord
 from .crypto import decrypt_content, encrypt_content
 
 
@@ -18,20 +18,20 @@ class ContentRegion:
 
     Attributes
     ----------
-    content_records : List[ContentRecord]
+    content_records : List[_ContentRecord]
         The content records for the content stored in the region.
     num_contents : int
         The total number of contents stored in the region.
     """
 
     def __init__(self):
-        self.content_records: List[ContentRecord] = []
+        self.content_records: List[_ContentRecord] = []
         self.content_region_size: int = 0  # Size of the content region.
         self.num_contents: int = 0  # Number of contents in the content region.
         self.content_start_offsets: List[int] = [0]  # The start offsets of each content in the content region.
         self.content_list: List[bytes] = []
 
-    def load(self, content_region: bytes, content_records: List[ContentRecord]) -> None:
+    def load(self, content_region: bytes, content_records: List[_ContentRecord]) -> None:
         """
         Loads the raw content region and builds a list of all the contents.
 
@@ -39,7 +39,7 @@ class ContentRegion:
         ----------
         content_region : bytes
             The raw data for the content region being loaded.
-        content_records : list[ContentRecord]
+        content_records : list[_ContentRecord]
             A list of ContentRecord objects detailing all contents contained in the region.
         """
         self.content_records = content_records
@@ -256,7 +256,7 @@ class ContentRegion:
             if (index + 1) > num_contents + 1:
                 raise ValueError("You are trying to set the content at position " + str(index) + ", but no content "
                                  "exists at position " + str(index - 1) + "!")
-            self.content_records.append(ContentRecord(cid, index, content_type, content_size, content_hash))
+            self.content_records.append(_ContentRecord(cid, index, content_type, content_size, content_hash))
         # If it does, reassign the values in it.
         else:
             self.content_records[index].content_id = cid
