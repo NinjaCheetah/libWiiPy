@@ -1,12 +1,40 @@
-# libWiiPy API Docs
+---
+sd_hide_title: true
+---
 
-```{toctree}
-:maxdepth: 2
-:caption: Contents:
-```
+# Overview
+
+# libWiiPy API Docs
 
 Welcome to the API documentation website for libWiiPy! libWiiPy is a modern Python 3 library for handling the various files and formats found on the Wii.
 
+```{toctree}
+:hidden:
+
+self
+```
+
+```{toctree}
+:hidden:
+:caption: The Basics
+
+usage/installation.md
+usage/getting-started.md
+```
+
+```{toctree}
+:hidden:
+:caption: Working with Titles
+
+titles/title-anatomy.md
+```
+
+```{toctree}
+:hidden:
+:caption: Other Useful Pages
+
+modules.md
+```
 
 ## Indices and tables
 

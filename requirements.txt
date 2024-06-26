@@ -4,3 +4,6 @@ requests
 sphinx
 sphinx-book-theme
 myst-parser
+sphinx-copybutton
+sphinx-tippy
+sphinx-design

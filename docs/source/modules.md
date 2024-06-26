@@ -1,4 +1,4 @@
-# libWiiPy
+# Modules Overview
 
 ```{toctree}
 :maxdepth: 4
