@@ -91,9 +91,11 @@ class WAD:
             # WAD TMD size.
             wad_data.seek(0x14)
             self.wad_tmd_size = int(binascii.hexlify(wad_data.read(4)), 16)
-            # WAD content size.
+            # WAD content size. This needs to be rounded now, because with some titles (primarily IOS?), there can be
+            # extra bytes past the listed end of the content that is needed for decryption.
             wad_data.seek(0x18)
             self.wad_content_size = int(binascii.hexlify(wad_data.read(4)), 16)
+            self.wad_content_size = _align_value(self.wad_content_size, 16)
             # Time/build stamp for the title contained in the WAD.
             wad_data.seek(0x1c)
             self.wad_meta_size = int(binascii.hexlify(wad_data.read(4)), 16)
@@ -309,7 +311,7 @@ class WAD:
         # Calculate the size of the new Ticket data.
         self.wad_tik_size = len(tik_data)
 
-    def set_content_data(self, content_data) -> None:
+    def set_content_data(self, content_data, size: int = None) -> None:
         """
         Sets the content data of the WAD. Also calculates the new size.
 
@@ -317,10 +319,15 @@ class WAD:
         ----------
         content_data : bytes
             The new content data.
+        size : int, option
+            The size of the new content data.
         """
         self.wad_content_data = content_data
-        # Calculate the size of the new content data.
-        self.wad_content_size = len(content_data)
+        # Calculate the size of the new content data, if one wasn't supplied.
+        if size is None:
+            self.wad_content_size = len(content_data)
+        else:
+            self.wad_content_size = size
 
     def set_meta_data(self, meta_data) -> None:
         """

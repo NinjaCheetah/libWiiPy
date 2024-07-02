@@ -4,10 +4,10 @@
 # See https://wiibrew.org/wiki/Title for details about how titles are formatted
 
 import io
-import sys
 import hashlib
 from typing import List
 from ..types import _ContentRecord
+from ..shared import _pad_bytes
 from .crypto import decrypt_content, encrypt_content
 
 
@@ -43,9 +43,9 @@ class ContentRegion:
             A list of ContentRecord objects detailing all contents contained in the region.
         """
         self.content_records = content_records
+        # Get the total size of the content region.
+        self.content_region_size = len(content_region)
         with io.BytesIO(content_region) as content_region_data:
-            # Get the total size of the content region.
-            self.content_region_size = sys.getsizeof(content_region_data)
             self.num_contents = len(self.content_records)
             # Calculate the offsets of each content in the content region.
             # Content is aligned to 16 bytes, however a new content won't start until the next multiple of 64 bytes.
@@ -56,7 +56,7 @@ class ContentRegion:
                     start_offset += 64 - (content.content_size % 64)
                 self.content_start_offsets.append(start_offset)
             # Build a list of all the encrypted content data.
-            for content in range(len(self.content_start_offsets)):
+            for content in range(self.num_contents):
                 # Seek to the start of the content based on the list of offsets.
                 content_region_data.seek(self.content_start_offsets[content])
                 # Calculate the number of bytes we need to read by adding bytes up the nearest multiple of 16 if needed.
@@ -68,7 +68,7 @@ class ContentRegion:
                 content_enc = content_region_data.read(bytes_to_read)
                 self.content_list.append(content_enc)
 
-    def dump(self) -> bytes:
+    def dump(self) -> tuple[bytes, int]:
         """
         Takes the list of contents and assembles them back into one content region. Returns this content region as a
         bytes object and sets the raw content region variable to this result, then calls load() again to make sure the
@@ -77,19 +77,28 @@ class ContentRegion:
         Returns
         -------
         bytes
-            The full WAD file as bytes.
+            The full ContentRegion as bytes, including padding between content.
+        int
+            The size of the ContentRegion, including padding.
         """
         content_region_data = b''
         for content in self.content_list:
+            # If this isn't the first content, pad the whole region to 64 bytes before the next one.
+            if content_region_data is not b'':
+                content_region_data = _pad_bytes(content_region_data, 64)
             # Calculate padding after this content before the next one.
             padding_bytes = 0
-            if (len(content) % 64) != 0:
-                padding_bytes = 64 - (len(content) % 64)
+            if (len(content) % 16) != 0:
+                padding_bytes = 16 - (len(content) % 16)
             # Write content data, then the padding afterward if necessary.
             content_region_data += content
             if padding_bytes > 0:
                 content_region_data += b'\x00' * padding_bytes
-        return content_region_data
+        # Calculate the size of the whole content region.
+        content_region_size = 0
+        for record in range(len(self.content_records)):
+            content_region_size += self.content_records[record].content_size
+        return content_region_data, content_region_size
 
     def get_enc_content_by_index(self, index: int) -> bytes:
         """
@@ -173,7 +182,7 @@ class ContentRegion:
         # Compare the hash and throw a ValueError if the hash doesn't match.
         if content_dec_hash != content_record_hash:
             raise ValueError("Content hash did not match the expected hash in its record! The incorrect Title Key may "
-                             "have been used!.\n"
+                             "have been used!\n"
                              "Expected hash is: {}\n".format(content_record_hash) +
                              "Actual hash is: {}".format(content_dec_hash))
         return content_dec

@@ -78,7 +78,8 @@ class Title:
         # Dump the Ticket and set it in the WAD.
         self.wad.set_ticket_data(self.ticket.dump())
         # Dump the ContentRegion and set it in the WAD.
-        self.wad.set_content_data(self.content.dump())
+        content_data, content_size = self.content.dump()
+        self.wad.set_content_data(content_data, content_size)
         return self.wad.dump()
 
     def load_tmd(self, tmd: bytes) -> None:

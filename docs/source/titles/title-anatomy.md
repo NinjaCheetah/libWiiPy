@@ -18,14 +18,14 @@ In libWiiPy, a TMD is represented by a `TMD()` object, which is part of the `tmd
 ## Ticket
 <project:#libWiiPy.title.ticket>
 
-A **Ticket** primarily contains the encrypted Title Key for a title, as well as the information required to decrypt that key. They come in two forms: common tickets, which are freely available from the Nintendo Update Servers, and personalized tickets, which are issued to your console specifically by the Wii Shop Channel (or at least they were before it closed, excluding the free titles still available).
+A **Ticket** primarily contains the encrypted Title Key for a title, as well as the information required to decrypt that key. They come in two forms: common tickets, which are freely available from the Nintendo Update Servers (NUS), and personalized tickets, which are issued to your console specifically by the Wii Shop Channel (or at least they were before it closed, excluding the free titles still available).
 
 In libWiiPy, a Ticket is represented by a `Ticket()` object, which is part of the `ticket` module in the `title` subpackage, and is imported automatically.
 
 ## Content
 <project:#libWiiPy.title.content>
 
-**Contents** are the files in a title that contain the actual data, whether that be the main executable or resources required by it. They're usually stored encrypted in a WAD file or on the Nintendo Update Servers, until they are decrypted during installation to a console. The Title Key stored in the Ticket is required to decrypt the contents of a title. Each content has a matching record with its index and Content ID, as well as the SHA-1 hash of its decrypted data. These records are stored in the TMD.
+**Contents** are the files in a title that contain the actual data, whether that be the main executable or resources required by it. They're usually stored encrypted in a WAD file or on the NUS, until they are decrypted during installation to a console. The Title Key stored in the Ticket is required to decrypt the contents of a title. Each content has a matching record with its index and Content ID, as well as the SHA-1 hash of its decrypted data. These records are stored in the TMD.
 
 In libWiiPy, contents are represented by a `ContentRegion()` object, which is part of the `content` module in the `title` subpackge, and is imported automatically. A content record is represented by its own `ContentRecord()` object, which is a private class designed to only be used by other modules.
 
