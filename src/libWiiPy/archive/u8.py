@@ -172,9 +172,14 @@ def extract_u8(u8_data, output_folder) -> None:
         The path to a new folder to extract the archive to.
     """
     output_folder = pathlib.Path(output_folder)
-    if pathlib.Path.is_dir(output_folder):
-        raise ValueError("Output folder already exists!")
-    os.mkdir(output_folder)
+    # Check if the path already exists, and if it does, ensure that it is both a directory and empty.
+    if output_folder.exists():
+        if output_folder.is_dir() and next(os.scandir(output_folder), None):
+            raise ValueError("Output folder is not empty!")
+        elif output_folder.is_file():
+            raise ValueError("A file already exists with the provided name!")
+    else:
+        os.mkdir(output_folder)
     # Create a new U8Archive object and load the provided U8 file data into it.
     u8_archive = U8Archive()
     u8_archive.load(u8_data)
