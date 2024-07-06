@@ -7,7 +7,7 @@ import io
 import hashlib
 from typing import List
 from ..types import _ContentRecord
-from ..shared import _pad_bytes
+from ..shared import _pad_bytes, _align_value
 from .crypto import decrypt_content, encrypt_content
 
 
@@ -97,7 +97,10 @@ class ContentRegion:
         # Calculate the size of the whole content region.
         content_region_size = 0
         for record in range(len(self.content_records)):
-            content_region_size += self.content_records[record].content_size
+            if record is len(self.content_records) - 1:
+                content_region_size += self.content_records[record].content_size
+            else:
+                content_region_size += _align_value(self.content_records[record].content_size, 64)
         return content_region_data, content_region_size
 
     def get_enc_content_by_index(self, index: int) -> bytes:
