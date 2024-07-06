@@ -31,8 +31,8 @@ class TMD:
     """
     def __init__(self):
         self.blob_header: bytes = b''
-        self.sig_type: int = 0
-        self.sig: bytes = b''
+        self.signature_type: int = 0
+        self.signature: bytes = b''
         self.issuer: bytes = b''  # Follows the format "Root-CA%08x-CP%08x"
         self.tmd_version: int = 0  # This seems to always be 0 no matter what?
         self.ca_crl_version: int = 0  # Certificate Authority Certificate Revocation List version
@@ -68,8 +68,12 @@ class TMD:
             # ====================================================================================
             # Parses each of the keys contained in the TMD.
             # ====================================================================================
+            # Signature type.
             tmd_data.seek(0x0)
-            self.blob_header = tmd_data.read(320)
+            self.signature_type = tmd_data.read(4)
+            # Signature data.
+            tmd_data.seek(0x04)
+            self.signature = tmd_data.read(256)
             # Signing certificate issuer.
             tmd_data.seek(0x140)
             self.issuer = tmd_data.read(64)
@@ -157,8 +161,12 @@ class TMD:
             The full TMD file as bytes.
         """
         tmd_data = b''
-        # Signed blob header.
-        tmd_data += self.blob_header
+        # Signature type.
+        tmd_data += self.signature_type
+        # Signature data.
+        tmd_data += self.signature
+        # Padding to 64 bytes.
+        tmd_data += b'\x00' * 60
         # Signing certificate issuer.
         tmd_data += self.issuer
         # TMD version.
