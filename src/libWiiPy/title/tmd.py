@@ -50,6 +50,7 @@ class TMD:
         self.reserved2: bytes = b''  # Other "Reserved" data from WiiBrew.
         self.access_rights: bytes = b''
         self.title_version: int = 0  # The version of the associated title.
+        self.title_version_converted: int = 0  # The title version in vX.X format.
         self.num_contents: int = 0  # The number of contents contained in the associated title.
         self.boot_index: int = 0  # The content index that contains the bootable executable.
         self.content_records: List[_ContentRecord] = []
@@ -128,12 +129,14 @@ class TMD:
             # Access rights of the title; DVD-video access and AHBPROT.
             tmd_data.seek(0x1D8)
             self.access_rights = tmd_data.read(4)
-            # Calculate the version number by multiplying 0x1DC by 256 and adding 0x1DD.
+            # Version number straight from the TMD.
+            tmd_data.seek(0x1DC)
+            self.title_version = int.from_bytes(tmd_data.read(2))
+            # Calculate the converted version number by multiplying 0x1DC by 256 and adding 0x1DD.
             tmd_data.seek(0x1DC)
             title_version_high = int.from_bytes(tmd_data.read(1)) * 256
-            tmd_data.seek(0x1DD)
             title_version_low = int.from_bytes(tmd_data.read(1))
-            self.title_version = title_version_high + title_version_low
+            self.title_version_converted = title_version_high + title_version_low
             # The number of contents listed in the TMD.
             tmd_data.seek(0x1DE)
             self.num_contents = int.from_bytes(tmd_data.read(2))
@@ -200,10 +203,7 @@ class TMD:
         # Access rights.
         tmd_data += self.access_rights
         # Title version.
-        title_version_high = round(self.title_version / 256)
-        tmd_data += int.to_bytes(title_version_high, 1)
-        title_version_low = self.title_version % 256
-        tmd_data += int.to_bytes(title_version_low, 1)
+        tmd_data += int.to_bytes(self.title_version, 2)
         # Number of contents.
         tmd_data += int.to_bytes(self.num_contents, 2)
         # Boot index.
