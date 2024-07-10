@@ -53,6 +53,7 @@ class TMD:
         self.title_version_converted: int = 0  # The title version in vX.X format.
         self.num_contents: int = 0  # The number of contents contained in the associated title.
         self.boot_index: int = 0  # The content index that contains the bootable executable.
+        self.minor_version: int = 0  # Minor version (unused typically).
         self.content_records: List[_ContentRecord] = []
 
     def load(self, tmd: bytes) -> None:
@@ -143,6 +144,9 @@ class TMD:
             # The content index that contains the bootable executable.
             tmd_data.seek(0x1E0)
             self.boot_index = int.from_bytes(tmd_data.read(2))
+            # The minor version of the title (typically unused).
+            tmd_data.seek(0x1E2)
+            self.minor_version = int.from_bytes(tmd_data.read(2))
             # Get content records for the number of contents in num_contents.
             self.content_records = []
             for content in range(0, self.num_contents):
@@ -208,8 +212,8 @@ class TMD:
         tmd_data += int.to_bytes(self.num_contents, 2)
         # Boot index.
         tmd_data += int.to_bytes(self.boot_index, 2)
-        # Minor version. Unused so write \x00.
-        tmd_data += b'\x00\x00'
+        # Minor version.
+        tmd_data += int.to_bytes(self.minor_version, 2)
         # Iterate over content records, write them back into raw data, then add them to the TMD.
         for content_record in range(self.num_contents):
             content_data = b''
