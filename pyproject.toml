@@ -9,17 +9,28 @@ description = "A modern Python library for handling files used by the Wii"
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
-    "Programming Language :: Python :: 3",
+    # How mature is this project? Common values are
+    #   3 - Alpha
+    #   4 - Beta
+    #   5 - Production/Stable
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
     "pycryptodome",
     "requests"
 ]
+keywords = ["Wii", "wii"]
 
 [project.urls]
 Homepage = "https://github.com/NinjaCheetah/libWiiPy"
+Documentation = "https://ninjacheetah.github.io/libWiiPy/"
+Repository = "https://github.com/NinjaCheetah/libWiiPy.git"
 Issues = "https://github.com/NinjaCheetah/libWiiPy/issues"
 
 [build-system]
