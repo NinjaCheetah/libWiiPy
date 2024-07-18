@@ -235,6 +235,9 @@ class TMD:
         older IOS versions that incorrectly check the hash using strcmp() instead of memcmp(). The signature will also
         be erased and replaced with all NULL bytes.
 
+        The hash is brute-forced by incrementing an unused 16-bit integer in the TMD by 1 until an appropriate hash is
+        found.
+
         This modifies the TMD object in place. You will need to call this method after any changes, and before dumping
         the TMD object back into bytes.
         """

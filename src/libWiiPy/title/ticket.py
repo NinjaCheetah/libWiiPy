@@ -234,6 +234,9 @@ class Ticket:
         older IOS versions that incorrectly check the hash using strcmp() instead of memcmp(). The signature will also
         be erased and replaced with all NULL bytes.
 
+        The hash is brute-forced by using the first two bytes of an unused section of the Ticket as a 16-bit integer,
+        and incrementing that value by 1 until an appropriate hash is found.
+
         This modifies the Ticket object in place. You will need to call this method after any changes, and before
         dumping the Ticket object back into bytes.
         """
