@@ -234,3 +234,18 @@ class Title:
         """
         # Load the decrypted content.
         self.content.load_content(dec_content, index, self.ticket.get_title_key())
+
+    def fakesign(self) -> None:
+        """
+        Fakesigns this Title for the trucha bug.
+
+        This is done by brute-forcing a TMD and Ticket body hash starting with 00, causing it to pass signature
+        verification on older IOS versions that incorrectly check the hash using strcmp() instead of memcmp(). The TMD
+        and Ticket signatures will also be erased and replaced with all NULL bytes.
+
+        This modifies the TMD and Ticket objects that are part of this Title in place. You will need to call this method
+        after any changes to the TMD or Ticket, and before dumping the Title object into a WAD to ensure that the WAD
+        is properly fakesigned.
+        """
+        self.tmd.fakesign()
+        self.ticket.fakesign()

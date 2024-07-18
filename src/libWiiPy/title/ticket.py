@@ -5,6 +5,7 @@
 
 import io
 import binascii
+import hashlib
 from dataclasses import dataclass as _dataclass
 from .crypto import decrypt_title_key
 from typing import List
@@ -162,8 +163,7 @@ class Ticket:
 
     def dump(self) -> bytes:
         """
-        Dumps the Ticket object back into bytes. This also sets the raw Ticket attribute of Ticket object to the
-        dumped data, and triggers load() again to ensure that the raw data and object match.
+        Dumps the Ticket object back into bytes.
 
         Returns
         -------
@@ -225,6 +225,37 @@ class Ticket:
             # Write the entry to the ticket.
             ticket_data += title_limit_data
         return ticket_data
+
+    def fakesign(self) -> None:
+        """
+        Fakesigns this Ticket for the trucha bug.
+
+        This is done by brute-forcing a Ticket body hash starting with 00, causing it to pass signature verification on
+        older IOS versions that incorrectly check the hash using strcmp() instead of memcmp(). The signature will also
+        be erased and replaced with all NULL bytes.
+
+        This modifies the Ticket object in place. You will need to call this method after any changes, and before
+        dumping the Ticket object back into bytes.
+        """
+        # Clear the signature, so that the hash derived from it is guaranteed to always be
+        # '0000000000000000000000000000000000000000'.
+        self.signature = b'\x00' * 256
+        current_int = 0
+        test_hash = ''
+        while test_hash[:2] != '00':
+            current_int += 1
+            # We're using the first 2 bytes of this unused region of the Ticket as a 16-bit integer, and incrementing
+            # that to brute-force the hash we need.
+            data_to_edit = self.unknown2
+            data_to_edit = int.to_bytes(current_int, 2) + data_to_edit[2:]
+            self.unknown2 = data_to_edit
+            # Trim off the first 320 bytes, because we're only looking for the hash of the Ticket's body.
+            # This is a try-except because an OverflowError will be thrown if the number being used to brute-force the
+            # hash gets too big, as it is only a 16-bit integer. If that happens, then fakesigning has failed.
+            try:
+                test_hash = hashlib.sha1(self.dump()[320:]).hexdigest()
+            except OverflowError:
+                raise Exception("An error occurred during fakesigning. Ticket could not be fakesigned!")
 
     def get_title_id(self) -> str:
         """

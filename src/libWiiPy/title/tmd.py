@@ -5,6 +5,7 @@
 
 import io
 import binascii
+import hashlib
 import struct
 from typing import List
 from ..types import _ContentRecord
@@ -159,8 +160,7 @@ class TMD:
 
     def dump(self) -> bytes:
         """
-        Dumps the TMD object back into bytes. This also sets the raw TMD attribute of TMD object to the dumped data,
-        and triggers load() again to ensure that the raw data and object match.
+        Dumps the TMD object back into bytes.
 
         Returns
         -------
@@ -226,6 +226,33 @@ class TMD:
             # Write the record to the TMD.
             tmd_data += content_data
         return tmd_data
+
+    def fakesign(self) -> None:
+        """
+        Fakesigns this TMD for the trucha bug.
+
+        This is done by brute-forcing a TMD body hash starting with 00, causing it to pass signature verification on
+        older IOS versions that incorrectly check the hash using strcmp() instead of memcmp(). The signature will also
+        be erased and replaced with all NULL bytes.
+
+        This modifies the TMD object in place. You will need to call this method after any changes, and before dumping
+        the TMD object back into bytes.
+        """
+        # Clear the signature, so that the hash derived from it is guaranteed to always be
+        # '0000000000000000000000000000000000000000'.
+        self.signature = b'\x00' * 256
+        current_int = 0
+        test_hash = ''
+        while test_hash[:2] != '00':
+            current_int += 1
+            self.minor_version = current_int
+            # Trim off the first 320 bytes, because we're only looking for the hash of the TMD's body.
+            # This is a try-except because an OverflowError will be thrown if the number being used to brute-force the
+            # hash gets too big, as it is only a 16-bit integer. If that happens, then fakesigning has failed.
+            try:
+                test_hash = hashlib.sha1(self.dump()[320:]).hexdigest()
+            except OverflowError:
+                raise Exception("An error occurred during fakesigning. TMD could not be fakesigned!")
 
     def get_title_region(self) -> str:
         """
