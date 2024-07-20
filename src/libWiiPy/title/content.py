@@ -355,7 +355,10 @@ class ContentRegion:
                              "Expected hash is: {}\n".format(self.content_records[index].content_hash.decode()) +
                              "Actual hash is: {}".format(content_hash))
         # If the hash matches, encrypt the content and set it where it belongs.
-        enc_content = encrypt_content(dec_content, title_key, index)
+        # This uses the index from the content records instead of just the index given, because there are some strange
+        # circumstances where the actual index in the array and the assigned content index don't match up, and this
+        # needs to accommodate that.
+        enc_content = encrypt_content(dec_content, title_key, self.content_records[index].index)
         if (index + 1) > len(self.content_list):
             self.content_list.append(enc_content)
         else:
