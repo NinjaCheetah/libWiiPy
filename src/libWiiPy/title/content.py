@@ -357,7 +357,7 @@ class ContentRegion:
         # If the hash matches, encrypt the content and set it where it belongs.
         # This uses the index from the content records instead of just the index given, because there are some strange
         # circumstances where the actual index in the array and the assigned content index don't match up, and this
-        # needs to accommodate that.
+        # needs to accommodate that. Seems to only apply to cIOS WADs?
         enc_content = encrypt_content(dec_content, title_key, self.content_records[index].index)
         if (index + 1) > len(self.content_list):
             self.content_list.append(enc_content)

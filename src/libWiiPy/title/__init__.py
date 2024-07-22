@@ -7,4 +7,5 @@ from .nus import *
 from .ticket import *
 from .title import *
 from .tmd import *
+from .util import *
 from .wad import *

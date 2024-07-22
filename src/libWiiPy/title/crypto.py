@@ -7,7 +7,7 @@ from .commonkeys import get_common_key
 from Crypto.Cipher import AES as _AES
 
 
-def _convert_tid_to_iv(title_id: str) -> bytes:
+def _convert_tid_to_iv(title_id: str | bytes) -> bytes:
     # Converts a Title ID in various formats into the format required to act as an IV. Private function used by other
     # crypto functions.
     title_key_iv = b''

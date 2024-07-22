@@ -9,6 +9,7 @@ import hashlib
 import struct
 from typing import List
 from ..types import _ContentRecord
+from .util import title_ver_dec_to_standard, title_ver_standard_to_dec
 
 
 class TMD:
@@ -134,11 +135,11 @@ class TMD:
             # Version number straight from the TMD.
             tmd_data.seek(0x1DC)
             self.title_version = int.from_bytes(tmd_data.read(2))
-            # Calculate the converted version number by multiplying 0x1DC by 256 and adding 0x1DD.
-            tmd_data.seek(0x1DC)
-            title_version_high = int.from_bytes(tmd_data.read(1)) * 256
-            title_version_low = int.from_bytes(tmd_data.read(1))
-            self.title_version_converted = title_version_high + title_version_low
+            # Calculate the converted version number via util module.
+            try:
+                self.title_version_converted = title_ver_dec_to_standard(self.title_version, self.title_id)
+            except ValueError:
+                self.title_version_converted = ""
             # The number of contents listed in the TMD.
             tmd_data.seek(0x1DE)
             self.num_contents = int.from_bytes(tmd_data.read(2))
@@ -374,7 +375,8 @@ class TMD:
 
     def set_title_id(self, title_id) -> None:
         """
-        Sets the Title ID of the title in the ticket.
+        Sets the Title ID property of the TMD. Recommended over setting the property directly because of input
+        validation.
 
         Parameters
         ----------
@@ -384,3 +386,37 @@ class TMD:
         if len(title_id) != 16:
             raise ValueError("Invalid Title ID! Title IDs must be 8 bytes long.")
         self.title_id = title_id
+
+    def set_title_version(self, new_version: str | int) -> None:
+        """
+        Sets the version of the title in the TMD. Recommended over setting the data directly because of input
+        validation.
+
+        Accepts either standard form (vX.X) as a string or decimal form (vXXX) as an integer.
+
+        Parameters
+        ----------
+        new_version : str, int
+            The new version of the title. See description for valid formats.
+        """
+        if type(new_version) is str:
+            # Validate string input is in the correct format, then validate that the version isn't higher than v255.0.
+            # If checks pass, set that as the converted version, then convert to decimal form and set that as well.
+            version_str_split = new_version.split(".")
+            if len(version_str_split) != 2:
+                raise ValueError("Title version is not valid! String version must be entered in format \"X.X\".")
+            if int(version_str_split[0]) > 255 or (int(version_str_split[0]) == 255 and int(version_str_split[1]) > 0):
+                raise ValueError("Title version is not valid! String version number cannot exceed v255.0.")
+            self.title_version_converted = new_version
+            version_converted = title_ver_standard_to_dec(new_version, self.title_id)
+            self.title_version = version_converted
+        elif type(new_version) is int:
+            # Validate that the version isn't higher than v65280. If the check passes, set that as the title version,
+            # then convert to standard form and set that as well.
+            if new_version > 65280:
+                raise ValueError("Title version is not valid! Integer version number cannot exceed v65280.")
+            self.title_version = new_version
+            version_converted = title_ver_dec_to_standard(new_version, self.title_id)
+            self.title_version_converted = version_converted
+        else:
+            raise TypeError("Title version type is not valid! Type must be either integer or string.")

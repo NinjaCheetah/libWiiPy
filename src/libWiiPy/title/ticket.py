@@ -9,6 +9,7 @@ import hashlib
 from dataclasses import dataclass as _dataclass
 from .crypto import decrypt_title_key
 from typing import List
+from .util import title_ver_standard_to_dec
 
 
 @_dataclass
@@ -66,7 +67,6 @@ class Ticket:
         self.ticket_id: bytes = b''  # Used as the IV when decrypting the title key for console-specific title installs.
         self.console_id: int = 0  # ID of the console that the ticket was issued for.
         self.title_id: bytes = b''  # TID/IV used for AES-CBC encryption.
-        self.title_id_str: str = ""  # TID in string form for comparing against the TMD.
         self.unknown1: bytes = b''  # Some unknown data, not always the same so reading it just in case.
         self.title_version: int = 0  # Version of the ticket's associated title.
         self.permitted_titles: bytes = b''  # Permitted titles mask
@@ -125,8 +125,6 @@ class Ticket:
             # Title ID.
             ticket_data.seek(0x1DC)
             self.title_id = binascii.hexlify(ticket_data.read(8))
-            # Title ID (as a string).
-            self.title_id_str = str(self.title_id.decode())
             # Unknown data 1.
             ticket_data.seek(0x1E4)
             self.unknown1 = ticket_data.read(2)
@@ -307,7 +305,8 @@ class Ticket:
 
     def set_title_id(self, title_id) -> None:
         """
-        Sets the Title ID of the title in the Ticket.
+        Sets the Title ID property of the Ticket. Recommended over setting the property directly because of input
+        validation.
 
         Parameters
         ----------
@@ -316,5 +315,34 @@ class Ticket:
         """
         if len(title_id) != 16:
             raise ValueError("Invalid Title ID! Title IDs must be 8 bytes long.")
-        self.title_id_str = title_id
         self.title_id = binascii.unhexlify(title_id)
+
+    def set_title_version(self, new_version: str | int) -> None:
+        """
+        Sets the version of the title in the Ticket. Recommended over setting the data directly because of input
+        validation.
+
+        Accepts either standard form (vX.X) as a string or decimal form (vXXX) as an integer.
+
+        Parameters
+        ----------
+        new_version : str, int
+            The new version of the title. See description for valid formats.
+        """
+        if type(new_version) is str:
+            # Validate string input is in the correct format, then validate that the version isn't higher than v255.0.
+            # If checks pass, convert to decimal form and set that as the title version.
+            version_str_split = new_version.split(".")
+            if len(version_str_split) != 2:
+                raise ValueError("Title version is not valid! String version must be entered in format \"X.X\".")
+            if int(version_str_split[0]) > 255 or (int(version_str_split[0]) == 255 and int(version_str_split[1]) > 0):
+                raise ValueError("Title version is not valid! String version number cannot exceed v255.0.")
+            version_converted = title_ver_standard_to_dec(new_version, str(self.title_id.decode()))
+            self.title_version = version_converted
+        elif type(new_version) is int:
+            # Validate that the version isn't higher than v65280. If the check passes, set that as the title version.
+            if new_version > 65280:
+                raise ValueError("Title version is not valid! Integer version number cannot exceed v65280.")
+            self.title_version = new_version
+        else:
+            raise TypeError("Title version type is not valid! Type must be either integer or string.")

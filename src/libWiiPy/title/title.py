@@ -56,7 +56,7 @@ class Title:
         self.content.load(self.wad.get_content_data(), self.tmd.content_records)
         # Ensure that the Title IDs of the TMD and Ticket match before doing anything else. If they don't, throw an
         # error because clearly something strange has gone on with the WAD and editing it probably won't work.
-        if self.tmd.title_id != self.ticket.title_id_str:
+        if self.tmd.title_id != str(self.ticket.title_id.decode()):
             raise ValueError("The Title IDs of the TMD and Ticket in this WAD do not match. This WAD appears to be "
                              "invalid.")
 
@@ -130,6 +130,20 @@ class Title:
             raise ValueError("Invalid Title ID! Title IDs must be 8 bytes long.")
         self.tmd.set_title_id(title_id)
         self.ticket.set_title_id(title_id)
+
+    def set_title_version(self, title_version: str | int) -> None:
+        """
+        Sets the version of the title in both the TMD and Ticket.
+
+        Accepts either standard form (vX.X) as a string or decimal form (vXXX) as an integer.
+
+        Parameters
+        ----------
+        title_version : str, int
+            The new version of the title. See description for valid formats.
+        """
+        self.tmd.set_title_version(title_version)
+        self.ticket.set_title_version(title_version)
 
     def get_content_by_index(self, index: id) -> bytes:
         """
