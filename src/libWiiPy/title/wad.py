@@ -103,13 +103,13 @@ class WAD:
             # Calculate file offsets from sizes. Every section of the WAD is padded out to a multiple of 0x40.
             # ====================================================================================
             wad_cert_offset = self.wad_hdr_size
-            # crl isn't ever used, however an entry for its size exists in the header, so its calculated just in case.
+            # crl isn't ever used, however an entry for its size exists in the header, so it's calculated just in case.
             wad_crl_offset = _align_value(wad_cert_offset + self.wad_cert_size)
             wad_tik_offset = _align_value(wad_crl_offset + self.wad_crl_size)
             wad_tmd_offset = _align_value(wad_tik_offset + self.wad_tik_size)
+            wad_content_offset = _align_value(wad_tmd_offset + self.wad_tmd_size)
             # meta isn't guaranteed to be used, but some older SDK titles use it, and not reading it breaks things.
-            wad_meta_offset = _align_value(wad_tmd_offset + self.wad_tmd_size)
-            wad_content_offset = _align_value(wad_meta_offset + self.wad_meta_size)
+            wad_meta_offset = _align_value(wad_content_offset + self.wad_content_size)
             # ====================================================================================
             # Load data for each WAD section based on the previously calculated offsets.
             # ====================================================================================

@@ -10,7 +10,8 @@ vwii_key = '30bfc76e7c19afbb23163330ced7c28d'
 
 def get_common_key(common_key_index) -> bytes:
     """
-    Gets the specified Wii Common Key based on the index provided.
+    Gets the specified Wii Common Key based on the index provided. If an invalid common key index is provided, this
+    function falls back on always returning key 0 (the Common Key).
 
     Possible values for common_key_index: 0: Common Key, 1: Korean Key, 2: vWii Key
 
@@ -32,5 +33,5 @@ def get_common_key(common_key_index) -> bytes:
         case 2:
             common_key_bin = binascii.unhexlify(vwii_key)
         case _:
-            raise ValueError("The common key index provided, " + str(common_key_index) + ", does not exist.")
+            common_key_bin = binascii.unhexlify(common_key)
     return common_key_bin

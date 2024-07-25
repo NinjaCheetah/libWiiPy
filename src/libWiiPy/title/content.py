@@ -84,7 +84,7 @@ class ContentRegion:
         content_region_data = b''
         for content in self.content_list:
             # If this isn't the first content, pad the whole region to 64 bytes before the next one.
-            if content_region_data is not b'':
+            if content_region_data != b'':
                 content_region_data = _pad_bytes(content_region_data, 64)
             # Calculate padding after this content before the next one.
             padding_bytes = 0
@@ -127,7 +127,7 @@ class ContentRegion:
         Parameters
         ----------
         cid : int
-            The Content ID of the content you want to get. Expected to be in decimal form.
+            The Content ID of the content you want to get. Expected to be in decimal form, not hex.
 
         Returns
         -------
@@ -197,7 +197,7 @@ class ContentRegion:
         Parameters
         ----------
         cid : int
-            The Content ID of the content you want to get. Expected to be in decimal form.
+            The Content ID of the content you want to get. Expected to be in decimal form, not hex.
         title_key : bytes
             The Title Key for the title the content is from.
 
