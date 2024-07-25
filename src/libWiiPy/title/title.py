@@ -159,10 +159,7 @@ class Title:
         bytes
             The decrypted content listed in the content record.
         """
-        # Load the Title Key from the Ticket.
-        title_key = self.ticket.get_title_key()
-        # Get the decrypted content and return it.
-        dec_content = self.content.get_content_by_index(index, title_key)
+        dec_content = self.content.get_content_by_index(index, self.ticket.get_title_key())
         return dec_content
 
     def get_content_by_cid(self, cid: int) -> bytes:
@@ -179,65 +176,75 @@ class Title:
         bytes
             The decrypted content listed in the content record.
         """
-        # Load the Title Key from the Ticket.
-        title_key = self.ticket.get_title_key()
-        # Get the decrypted content and return it.
-        dec_content = self.content.get_content_by_cid(cid, title_key)
+        dec_content = self.content.get_content_by_cid(cid, self.ticket.get_title_key())
         return dec_content
 
-    def set_enc_content(self, enc_content: bytes, cid: int, index: int, content_type: int, content_size: int,
-                        content_hash: bytes) -> None:
+    def set_enc_content(self, enc_content: bytes, index: int, content_size: int, content_hash: bytes, cid: int = None,
+                        content_type: int = None) -> None:
         """
-        Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
-        set in the content record, with a new record being added if necessary. The TMD is also updated to match the new
-        records.
+        Sets the content at the provided content index to the provided new encrypted content. The provided hash and
+        content size are set in the corresponding content record. A new Content ID or content type can also be
+        specified, but if it isn't than the current values are preserved.
+
+        This uses the content index, which is the value tied to each content and used as the IV for encryption, rather
+        than the literal index in the array of content, because sometimes the contents end up out of order in a WAD
+        while still retaining the original indices.
+
+        This also updates the content records in the TMD after the content is set.
 
         Parameters
         ----------
         enc_content : bytes
             The new encrypted content to set.
-        cid : int
-            The Content ID to assign the new content in the content record.
         index : int
             The index to place the new content at.
-        content_type : int
-            The type of the new content.
         content_size : int
             The size of the new encrypted content when decrypted.
         content_hash : bytes
             The hash of the new encrypted content when decrypted.
+        cid : int
+            The Content ID to assign the new content in the content record.
+        content_type : int
+            The type of the new content.
         """
         # Set the encrypted content.
-        self.content.set_enc_content(enc_content, cid, index, content_type, content_size, content_hash)
+        self.content.set_enc_content(enc_content, index, content_size, content_hash, cid, content_type)
         # Update the TMD to match.
         self.tmd.content_records = self.content.content_records
 
-    def set_content(self, dec_content: bytes, cid: int, index: int, content_type: int) -> None:
+    def set_content(self, dec_content: bytes, index: int, cid: int = None, content_type: int = None) -> None:
         """
-        Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
-        set in the content record, with a new record being added if necessary. The Title Key is sourced from this
-        title's loaded ticket. The TMD is also updated to match the new records.
+        Sets the content at the provided content index to the provided new decrypted content. The hash and content size
+        of this content will be generated and then set in the corresponding content record. A new Content ID or content
+        type can also be specified, but if it isn't than the current values are preserved.
+
+        This also updates the content records in the TMD after the content is set.
 
         Parameters
         ----------
         dec_content : bytes
             The new decrypted content to set.
-        cid : int
-            The Content ID to assign the new content in the content record.
         index : int
             The index to place the new content at.
-        content_type : int
+        cid : int, optional
+            The Content ID to assign the new content in the content record.
+        content_type : int, optional
             The type of the new content.
         """
         # Set the decrypted content.
-        self.content.set_content(dec_content, cid, index, content_type, self.ticket.get_title_key())
+        self.content.set_content(dec_content, index, self.ticket.get_title_key(), cid, content_type)
         # Update the TMD to match.
         self.tmd.content_records = self.content.content_records
 
     def load_content(self, dec_content: bytes, index: int) -> None:
         """
-        Loads the provided decrypted content into the content region at the specified index, but first checks to make
-        sure it matches the record at that index before loading. This content will be encrypted when loaded.
+        Loads the provided decrypted content into the ContentRegion at the specified index, but first checks to make
+        sure that it matches the corresponding record. This content will then be encrypted using the title's Title Key
+        before being loaded.
+
+        This uses the content index, which is the value tied to each content and used as the IV for encryption, rather
+        than the literal index in the array of content, because sometimes the contents end up out of order in a WAD
+        while still retaining the original indices.
 
         Parameters
         ----------

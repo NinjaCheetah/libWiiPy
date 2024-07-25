@@ -107,6 +107,10 @@ class ContentRegion:
         """
         Gets an individual content from the content region based on the provided index, in encrypted form.
 
+        This uses the content index, which is the value tied to each content and used as the IV for encryption, rather
+        than the literal index in the array of content, because sometimes the contents end up out of order in a WAD
+        while still retaining the original indices.
+
         Parameters
         ----------
         index : int
@@ -117,7 +121,17 @@ class ContentRegion:
         bytes
             The encrypted content listed in the content record.
         """
-        content_enc = self.content_list[index]
+        # Get a list of the current content indices, so we can make sure the target one exists. Doing it this way
+        # ensures we can find the target, even if the highest content index is greater than the highest literal index.
+        current_indices = []
+        for record in self.content_records:
+            current_indices.append(record.index)
+        if index not in current_indices:
+            raise ValueError("You are trying to get the content at index " + str(index) + ", but no content with that "
+                             "index exists!")
+        # This is the literal index in the list of content that we're going to get.
+        target_index = current_indices.index(index)
+        content_enc = self.content_list[target_index]
         return content_enc
 
     def get_enc_content_by_cid(self, cid: int) -> bytes:
@@ -134,16 +148,16 @@ class ContentRegion:
         bytes
             The encrypted content listed in the content record.
         """
-        # Find the index of the requested Content ID.
-        content_index = None
-        for content in self.content_records:
-            if content.content_id == cid:
-                content_index = content.index
-        # If finding a matching ID was unsuccessful, that means that no content with that ID is in the TMD, so
-        # return a Value Error.
-        if content_index is None:
-            raise ValueError("The Content ID requested does not exist in the TMD's content records.")
-        # Call get_enc_content_by_index() using the index we just found.
+        # Get a list of the current Content IDs, so we can make sure the target one exists.
+        content_ids = []
+        for record in self.content_records:
+            content_ids.append(record.content_id)
+        if cid not in content_ids:
+            raise ValueError("You are trying to get a content with Content ID " + str(cid) + ", but no content with "
+                             "that ID exists!")
+        # Get the content index associated with the CID we now know exists.
+        target_index = content_ids.index(cid)
+        content_index = self.content_records[target_index].index
         content_enc = self.get_enc_content_by_index(content_index)
         return content_enc
 
@@ -162,10 +176,14 @@ class ContentRegion:
         """
         Gets an individual content from the content region based on the provided index, in decrypted form.
 
+        This uses the content index, which is the value tied to each content and used as the IV for encryption, rather
+        than the literal index in the array of content, because sometimes the contents end up out of order in a WAD
+        while still retaining the original indices.
+
         Parameters
         ----------
         index : int
-            The index of the content you want to get.
+            The content index of the content you want to get.
         title_key : bytes
             The Title Key for the title the content is from.
 
@@ -174,14 +192,19 @@ class ContentRegion:
         bytes
             The decrypted content listed in the content record.
         """
-        # Load the encrypted content at the specified index and then decrypt it with the Title Key.
+        # Get a list of the current content indices, so we can make sure the target one exists. Doing it this way
+        # ensures we can find the target, even if the highest content index is greater than the highest literal index.
+        current_indices = []
+        for record in self.content_records:
+            current_indices.append(record.index)
+        # This is the literal index in the list of content that we're going to get.
+        target_index = current_indices.index(index)
         content_enc = self.get_enc_content_by_index(index)
-        content_dec = decrypt_content(content_enc, title_key, self.content_records[index].index,
-                                      self.content_records[index].content_size)
+        content_dec = decrypt_content(content_enc, title_key, index, self.content_records[target_index].content_size)
         # Hash the decrypted content and ensure that the hash matches the one in its Content Record.
         # If it does not, then something has gone wrong in the decryption, and an error will be thrown.
         content_dec_hash = hashlib.sha1(content_dec).hexdigest()
-        content_record_hash = str(self.content_records[index].content_hash.decode())
+        content_record_hash = str(self.content_records[target_index].content_hash.decode())
         # Compare the hash and throw a ValueError if the hash doesn't match.
         if content_dec_hash != content_record_hash:
             raise ValueError("Content hash did not match the expected hash in its record! The incorrect Title Key may "
@@ -206,16 +229,16 @@ class ContentRegion:
         bytes
             The decrypted content listed in the content record.
         """
-        # Find the index of the requested Content ID.
-        content_index = None
-        for content in self.content_records:
-            if content.content_id == cid:
-                content_index = content.index
-        # If finding a matching ID was unsuccessful, that means that no content with that ID is in the TMD, so
-        # return a Value Error.
-        if content_index is None:
-            raise ValueError("The Content ID requested does not exist in the TMD's content records.")
-        # Call get_content_by_index() using the index we just found.
+        # Get a list of the current Content IDs, so we can make sure the target one exists.
+        content_ids = []
+        for record in self.content_records:
+            content_ids.append(record.content_id)
+        if cid not in content_ids:
+            raise ValueError("You are trying to get a content with Content ID " + str(cid) + ", but no content with "
+                             "that ID exists!")
+        # Get the content index associated with the CID we now know exists.
+        target_index = content_ids.index(cid)
+        content_index = self.content_records[target_index].index
         content_dec = self.get_content_by_index(content_index, title_key)
         return content_dec
 
@@ -239,16 +262,16 @@ class ContentRegion:
             dec_contents.append(self.get_content_by_index(content, title_key))
         return dec_contents
 
-    def set_enc_content(self, enc_content: bytes, cid: int, index: int, content_type: int, content_size: int,
+    def add_enc_content(self, enc_content: bytes, cid: int, index: int, content_type: int, content_size: int,
                         content_hash: bytes) -> None:
         """
-        Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
-        set in the content record, with a new record being added if necessary.
+        Adds a new encrypted content to the ContentRegion, and adds the provided Content ID, index, content type,
+        content size, and content hash to a new record in the ContentRecord list.
 
         Parameters
         ----------
         enc_content : bytes
-            The new encrypted content to set.
+            The new encrypted content to add.
         cid : int
             The Content ID to assign the new content in the content record.
         index : int
@@ -260,37 +283,28 @@ class ContentRegion:
         content_hash : bytes
             The hash of the new encrypted content when decrypted.
         """
-        # Save the number of contents currently in the content region and records.
-        num_contents = len(self.content_records)
-        # Check if a record already exists for this index. If it doesn't, create it.
-        if (index + 1) > num_contents:
-            # Ensure that you aren't attempting to create a gap before appending.
-            if (index + 1) > num_contents + 1:
-                raise ValueError("You are trying to set the content at position " + str(index) + ", but no content "
-                                 "exists at position " + str(index - 1) + "!")
-            self.content_records.append(_ContentRecord(cid, index, content_type, content_size, content_hash))
-        # If it does, reassign the values in it.
-        else:
-            self.content_records[index].content_id = cid
-            self.content_records[index].content_type = content_type
-            self.content_records[index].content_size = content_size
-            self.content_records[index].content_hash = content_hash
-        # Check if a content already occupies the provided index. If it does, reassign it to the new content, if it
-        # doesn't, then append a new entry.
-        if (index + 1) > num_contents:
-            self.content_list.append(enc_content)
-        else:
-            self.content_list[index] = enc_content
+        # Check to make sure this isn't reusing an already existing Content ID or index first.
+        for record in self.content_records:
+            if record.content_id == cid:
+                raise ValueError("Content with a Content ID of " + str(cid) + " already exists!")
+            elif record.index == index:
+                raise ValueError("Content with an index of " + str(index) + " already exists!")
+        # If we're good, then append all the data and create a new ContentRecord().
+        self.content_list.append(enc_content)
+        self.content_records.append(_ContentRecord(cid, index, content_type, content_size, content_hash))
 
-    def set_content(self, dec_content: bytes, cid: int, index: int, content_type: int, title_key: bytes) -> None:
+    def add_content(self, dec_content: bytes, cid: int, index: int, content_type: int, title_key: bytes) -> None:
         """
-        Sets the provided index to a new content with the provided Content ID. Hashes and size of the content are
-        set in the content record, with a new record being added if necessary.
+        Adds a new decrypted content to the ContentRegion, and adds the provided Content ID, index, content type,
+        content size, and content hash to a new record in the ContentRecord list.
+
+        This first gets the content hash and size from the provided data, and then encrypts the content with the
+        provided Title Key before adding it to the ContentRegion.
 
         Parameters
         ----------
         dec_content : bytes
-            The new decrypted content to set.
+            The new decrypted content to add.
         cid : int
             The Content ID to assign the new content in the content record.
         index : int
@@ -298,22 +312,98 @@ class ContentRegion:
         content_type : int
             The type of the new content.
         title_key : bytes
+            The Title Key that matches the other content in the ContentRegion.
+        """
+        content_size = len(dec_content)
+        content_hash = str.encode(hashlib.sha1(dec_content).hexdigest())
+        enc_content = encrypt_content(dec_content, title_key, index)
+        self.add_enc_content(enc_content, cid, index, content_type, content_size, content_hash)
+
+    def set_enc_content(self, enc_content: bytes, index: int, content_size: int, content_hash: bytes, cid: int = None,
+                        content_type: int = None) -> None:
+        """
+        Sets the content at the provided content index to the provided new encrypted content. The provided hash and
+        content size are set in the corresponding content record. A new Content ID or content type can also be
+        specified, but if it isn't than the current values are preserved.
+
+        This uses the content index, which is the value tied to each content and used as the IV for encryption, rather
+        than the literal index in the array of content, because sometimes the contents end up out of order in a WAD
+        while still retaining the original indices.
+
+        Parameters
+        ----------
+        enc_content : bytes
+            The new encrypted content to set.
+        index : int
+            The target content index to set the new content at.
+        content_size : int
+            The size of the new encrypted content when decrypted.
+        content_hash : bytes
+            The hash of the new encrypted content when decrypted.
+        cid : int, optional
+            The Content ID to assign the new content in the content record. Current value will be preserved if not set.
+        content_type : int, optional
+            The type of the new content. Current value will be preserved if not set.
+        """
+        # Get a list of the current content indices, so we can make sure the target one exists. Doing it this way
+        # ensures we can find the target, even if the highest content index is greater than the highest literal index.
+        current_indices = []
+        for record in self.content_records:
+            current_indices.append(record.index)
+        if index not in current_indices:
+            raise ValueError("You are trying to set the content at index " + str(index) + ", but no content with that "
+                             "index currently exists!")
+        # This is the literal index in the list of content/content records that we're going to change.
+        target_index = current_indices.index(index)
+        # Reassign the values, but only set the optional ones if they were passed.
+        self.content_records[target_index].content_size = content_size
+        self.content_records[target_index].content_hash = content_hash
+        if cid is not None:
+            self.content_records[target_index].content_id = cid
+        if content_type is not None:
+            self.content_records[target_index].content_type = content_type
+        self.content_list[target_index] = enc_content
+
+    def set_content(self, dec_content: bytes, index: int, title_key: bytes, cid: int = None,
+                    content_type: int = None) -> None:
+        """
+        Sets the content at the provided content index to the provided new decrypted content. The hash and content size
+        of this content will be generated and then set in the corresponding content record. A new Content ID or content
+        type can also be specified, but if it isn't than the current values are preserved.
+
+        The provided Title Key is used to encrypt the content so that it can be set in the ContentRegion.
+
+        Parameters
+        ----------
+        dec_content : bytes
+            The new decrypted content to set.
+        index : int
+            The index to place the new content at.
+        title_key : bytes
             The Title Key that matches the new decrypted content.
+        cid : int
+            The Content ID to assign the new content in the content record.
+        content_type : int
+            The type of the new content.
         """
         # Store the size of the new content.
-        dec_content_size = len(dec_content)
+        content_size = len(dec_content)
         # Calculate the hash of the new content.
-        dec_content_hash = str.encode(hashlib.sha1(dec_content).hexdigest())
+        content_hash = str.encode(hashlib.sha1(dec_content).hexdigest())
         # Encrypt the content using the provided Title Key and index.
         enc_content = encrypt_content(dec_content, title_key, index)
         # Pass values to set_enc_content()
-        self.set_enc_content(enc_content, cid, index, content_type, dec_content_size, dec_content_hash)
+        self.set_enc_content(enc_content, index, content_size, content_hash, cid, content_type)
 
     def load_enc_content(self, enc_content: bytes, index: int) -> None:
         """
         Loads the provided encrypted content into the content region at the specified index, with the assumption that
         it matches the record at that index. Not recommended for most use cases, use decrypted content and
         load_content() instead.
+
+        This uses the content index, which is the value tied to each content and used as the IV for encryption, rather
+        than the literal index in the array of content, because sometimes the contents end up out of order in a WAD
+        while still retaining the original indices.
 
         Parameters
         ----------
@@ -322,18 +412,30 @@ class ContentRegion:
         index : int
             The content index to load the content at.
         """
-        if (index + 1) > len(self.content_records) or len(self.content_records) == 0:
-            raise IndexError("No content records have been loaded, or that index is higher than the highest entry in "
-                             "the content records.")
-        if (index + 1) > len(self.content_list):
-            self.content_list.append(enc_content)
-        else:
-            self.content_list[index] = enc_content
+        # Get a list of the current content indices, so we can make sure the target one exists. Doing it this way
+        # ensures we can find the target, even if the highest content index is greater than the highest literal index.
+        current_indices = []
+        for record in self.content_records:
+            current_indices.append(record.index)
+        if index not in current_indices:
+            raise ValueError("You are trying to load the content at index " + str(index) + ", but no content with that "
+                             "index currently exists! Make sure the correct content records have been loaded.")
+        # Add blank entries to the list to ensure that its length matches the length of the content record list.
+        while len(self.content_list) < len(self.content_records):
+            self.content_list.append(b'')
+        # This is the literal index in the list of content/content records that we're going to change.
+        target_index = current_indices.index(index)
+        self.content_list[target_index] = enc_content
 
     def load_content(self, dec_content: bytes, index: int, title_key: bytes) -> None:
         """
-        Loads the provided decrypted content into the content region at the specified index, but first checks to make
-        sure it matches the record at that index before loading. This content will be encrypted when loaded.
+        Loads the provided decrypted content into the ContentRegion at the specified index, but first checks to make
+        sure that it matches the corresponding record. This content will then be encrypted using the provided Title Key
+        before being loaded.
+
+        This uses the content index, which is the value tied to each content and used as the IV for encryption, rather
+        than the literal index in the array of content, because sometimes the contents end up out of order in a WAD
+        while still retaining the original indices.
 
         Parameters
         ----------
@@ -344,22 +446,28 @@ class ContentRegion:
         title_key: bytes
             The Title Key that matches the decrypted content.
         """
-        # Make sure that content records exist and that the provided index exists in them.
-        if (index + 1) > len(self.content_records) or len(self.content_records) == 0:
-            raise IndexError("No content records have been loaded, or that index is higher than the highest entry in "
-                             "the content records.")
+        # Get a list of the current content indices, so we can make sure the target one exists. Doing it this way
+        # ensures we can find the target, even if the highest content index is greater than the highest literal index.
+        current_indices = []
+        for record in self.content_records:
+            current_indices.append(record.index)
+        if index not in current_indices:
+            raise ValueError("You are trying to load the content at index " + str(index) + ", but no content with that "
+                             "index currently exists! Make sure the correct content records have been loaded.")
+        # This is the literal index in the list of content/content records that we're going to change.
+        target_index = current_indices.index(index)
         # Check the hash of the content against the hash stored in the record to ensure it matches.
         content_hash = hashlib.sha1(dec_content).hexdigest()
-        if content_hash != self.content_records[index].content_hash.decode():
+        if content_hash != self.content_records[target_index].content_hash.decode():
             raise ValueError("The decrypted content provided does not match the record at the provided index. \n"
                              "Expected hash is: {}\n".format(self.content_records[index].content_hash.decode()) +
                              "Actual hash is: {}".format(content_hash))
+        # Add blank entries to the list to ensure that its length matches the length of the content record list.
+        while len(self.content_list) < len(self.content_records):
+            self.content_list.append(b'')
         # If the hash matches, encrypt the content and set it where it belongs.
         # This uses the index from the content records instead of just the index given, because there are some strange
         # circumstances where the actual index in the array and the assigned content index don't match up, and this
-        # needs to accommodate that. Seems to only apply to cIOS WADs?
-        enc_content = encrypt_content(dec_content, title_key, self.content_records[index].index)
-        if (index + 1) > len(self.content_list):
-            self.content_list.append(enc_content)
-        else:
-            self.content_list[index] = enc_content
+        # needs to accommodate that. Seems to only apply to custom WADs ? (Like cIOS WADs?)
+        enc_content = encrypt_content(dec_content, title_key, index)
+        self.content_list[target_index] = enc_content
