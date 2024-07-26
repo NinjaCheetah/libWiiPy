@@ -172,7 +172,7 @@ class ContentRegion:
         """
         return self.content_list
 
-    def get_content_by_index(self, index: int, title_key: bytes) -> bytes:
+    def get_content_by_index(self, index: int, title_key: bytes, skip_hash=False) -> bytes:
         """
         Gets an individual content from the content region based on the provided index, in decrypted form.
 
@@ -186,6 +186,8 @@ class ContentRegion:
             The content index of the content you want to get.
         title_key : bytes
             The Title Key for the title the content is from.
+        skip_hash : bool, optional
+            Skip the hash check and return the content regardless of its hash. Defaults to false.
 
         Returns
         -------
@@ -207,13 +209,16 @@ class ContentRegion:
         content_record_hash = str(self.content_records[target_index].content_hash.decode())
         # Compare the hash and throw a ValueError if the hash doesn't match.
         if content_dec_hash != content_record_hash:
-            raise ValueError("Content hash did not match the expected hash in its record! The incorrect Title Key may "
-                             "have been used!\n"
-                             "Expected hash is: {}\n".format(content_record_hash) +
-                             "Actual hash is: {}".format(content_dec_hash))
+            if skip_hash:
+                print("Ignoring hash mismatch for content index " + str(index))
+            else:
+                raise ValueError("Content hash did not match the expected hash in its record! The incorrect Title Key "
+                                 "may have been used!\n"
+                                 "Expected hash is: {}\n".format(content_record_hash) +
+                                 "Actual hash is: {}".format(content_dec_hash))
         return content_dec
 
-    def get_content_by_cid(self, cid: int, title_key: bytes) -> bytes:
+    def get_content_by_cid(self, cid: int, title_key: bytes, skip_hash=False) -> bytes:
         """
         Gets an individual content from the content region based on the provided Content ID, in decrypted form.
 
@@ -223,6 +228,8 @@ class ContentRegion:
             The Content ID of the content you want to get. Expected to be in decimal form, not hex.
         title_key : bytes
             The Title Key for the title the content is from.
+        skip_hash : bool, optional
+            Skip the hash check and return the content regardless of its hash. Defaults to false.
 
         Returns
         -------
@@ -239,10 +246,10 @@ class ContentRegion:
         # Get the content index associated with the CID we now know exists.
         target_index = content_ids.index(cid)
         content_index = self.content_records[target_index].index
-        content_dec = self.get_content_by_index(content_index, title_key)
+        content_dec = self.get_content_by_index(content_index, title_key, skip_hash)
         return content_dec
 
-    def get_contents(self, title_key: bytes) -> List[bytes]:
+    def get_contents(self, title_key: bytes, skip_hash=False) -> List[bytes]:
         """
         Gets a list of all contents from the content region, in decrypted form.
 
@@ -250,6 +257,8 @@ class ContentRegion:
         ----------
         title_key : bytes
             The Title Key for the title the content is from.
+        skip_hash : bool, optional
+            Skip the hash check and return the content regardless of its hash. Defaults to false.
 
         Returns
         -------
@@ -259,7 +268,7 @@ class ContentRegion:
         dec_contents: List[bytes] = []
         # Iterate over every content, get the decrypted version of it, then add it to a list and return it.
         for content in range(self.num_contents):
-            dec_contents.append(self.get_content_by_index(content, title_key))
+            dec_contents.append(self.get_content_by_index(content, title_key, skip_hash))
         return dec_contents
 
     def add_enc_content(self, enc_content: bytes, cid: int, index: int, content_type: int, content_size: int,
@@ -362,6 +371,9 @@ class ContentRegion:
             self.content_records[target_index].content_id = cid
         if content_type is not None:
             self.content_records[target_index].content_type = content_type
+        # Add blank entries to the list to ensure that its length matches the length of the content record list.
+        while len(self.content_list) < len(self.content_records):
+            self.content_list.append(b'')
         self.content_list[target_index] = enc_content
 
     def set_content(self, dec_content: bytes, index: int, title_key: bytes, cid: int = None,

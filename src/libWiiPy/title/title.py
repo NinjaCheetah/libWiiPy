@@ -145,7 +145,7 @@ class Title:
         self.tmd.set_title_version(title_version)
         self.ticket.set_title_version(title_version)
 
-    def get_content_by_index(self, index: id) -> bytes:
+    def get_content_by_index(self, index: id, skip_hash=False) -> bytes:
         """
         Gets an individual content from the content region based on the provided index, in decrypted form.
 
@@ -153,16 +153,18 @@ class Title:
         ----------
         index : int
             The index of the content you want to get.
+        skip_hash : bool, optional
+            Skip the hash check and return the content regardless of its hash. Defaults to false.
 
         Returns
         -------
         bytes
             The decrypted content listed in the content record.
         """
-        dec_content = self.content.get_content_by_index(index, self.ticket.get_title_key())
+        dec_content = self.content.get_content_by_index(index, self.ticket.get_title_key(), skip_hash)
         return dec_content
 
-    def get_content_by_cid(self, cid: int) -> bytes:
+    def get_content_by_cid(self, cid: int, skip_hash=False) -> bytes:
         """
         Gets an individual content from the content region based on the provided Content ID, in decrypted form.
 
@@ -170,13 +172,15 @@ class Title:
         ----------
         cid : int
             The Content ID of the content you want to get. Expected to be in decimal form.
+        skip_hash : bool, optional
+            Skip the hash check and return the content regardless of its hash. Defaults to false.
 
         Returns
         -------
         bytes
             The decrypted content listed in the content record.
         """
-        dec_content = self.content.get_content_by_cid(cid, self.ticket.get_title_key())
+        dec_content = self.content.get_content_by_cid(cid, self.ticket.get_title_key(), skip_hash)
         return dec_content
 
     def set_enc_content(self, enc_content: bytes, index: int, content_size: int, content_hash: bytes, cid: int = None,
