@@ -569,7 +569,7 @@ class SharedContentMap:
         if type(content_hash) is bytes:
             # This catches the format b'GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG'
             if len(content_hash) == 40:
-                pass
+                content_hash_converted = content_hash
             # This catches the format
             # b'\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG'
             elif len(content_hash) == 20:
@@ -579,7 +579,7 @@ class SharedContentMap:
                 raise ValueError("SHA-1 hash is not valid!")
         # Allow for a string like "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG"
         elif type(content_hash) is str:
-            content_hash_converted = binascii.unhexlify(content_hash)
+            content_hash_converted = content_hash.encode()
         # If the hash isn't bytes or a string, it isn't valid and is rejected.
         else:
             raise TypeError("SHA-1 hash type is not valid! It must be either type str or bytes.")
