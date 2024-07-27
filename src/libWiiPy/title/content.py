@@ -2,10 +2,11 @@
 # https://github.com/NinjaCheetah/libWiiPy
 #
 # See https://wiibrew.org/wiki/Title for details about how titles are formatted
-
+import binascii
 import io
 import hashlib
 from typing import List
+from dataclasses import dataclass as _dataclass
 from ..types import _ContentRecord
 from ..shared import _pad_bytes, _align_value
 from .crypto import decrypt_content, encrypt_content
@@ -483,3 +484,109 @@ class ContentRegion:
         # needs to accommodate that. Seems to only apply to custom WADs ? (Like cIOS WADs?)
         enc_content = encrypt_content(dec_content, title_key, index)
         self.content_list[target_index] = enc_content
+
+
+@_dataclass
+class _SharedContentRecord:
+    """
+    A _SharedContentRecord object used to store the data of a specific content stored in /shared1/. Private class used
+    by the content module.
+
+    Attributes
+    ----------
+    shared_id : str
+        The incremental ID used to store the shared content.
+    content_hash : bytes
+        The SHA-1 hash of the shared content.
+    """
+    shared_id: str
+    content_hash: bytes
+
+
+class SharedContentMap:
+    """
+    A SharedContentMap object to parse and edit the content.map file stored in /shared1/ on the Wii's NAND. This file is
+    used to keep track of all shared contents installed on the console.
+
+    Attributes
+    ----------
+    shared_records : List[_SharedContentRecord]
+        The shared content records stored in content.map.
+    """
+
+    def __init__(self):
+        self.shared_records: List[_SharedContentRecord] = []
+
+    def load(self, content_map: bytes) -> None:
+        """
+        Loads the raw content map and parses the records in it.
+
+        Parameters
+        ----------
+        content_map : bytes
+            The data of a content.map file.
+        """
+        # Sanity check to ensure the length is divisible by 28 bytes. If it isn't, then it is malformed.
+        if (len(content_map) % 28) != 0:
+            raise ValueError("The provided content map appears to be corrupted!")
+        entry_count = len(content_map) // 28
+        with io.BytesIO(content_map) as map_data:
+            for i in range(entry_count):
+                shared_id = str(map_data.read(8).decode())
+                content_hash = binascii.hexlify(map_data.read(20))
+                self.shared_records.append(_SharedContentRecord(shared_id, content_hash))
+
+    def dump(self) -> bytes:
+        """
+        Dumps the SharedContentMap object back into a content.map file.
+
+        Returns
+        -------
+        bytes
+            The raw data of the content.map file.
+        """
+        map_data = b''
+        for record in self.shared_records:
+            map_data += record.shared_id.encode()
+            map_data += binascii.unhexlify(record.content_hash)
+        return map_data
+
+    def add_content(self, content_hash: str | bytes) -> str:
+        """
+        Adds a new shared content SHA-1 hash to the content map and returns the file name assigned to that hash.
+
+        Parameters
+        ----------
+        content_hash : str, bytes
+            The SHA-1 hash of the new shared content.
+
+        Returns
+        -------
+        str
+            The filename assigned to the provided content hash.
+        """
+        content_hash_converted = b''
+        if type(content_hash) is bytes:
+            # This catches the format b'GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG'
+            if len(content_hash) == 40:
+                pass
+            # This catches the format
+            # b'\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG\xGG'
+            elif len(content_hash) == 20:
+                content_hash_converted = binascii.hexlify(content_hash)
+            # If it isn't one of those lengths, it cannot possibly be valid, so reject it.
+            else:
+                raise ValueError("SHA-1 hash is not valid!")
+        # Allow for a string like "GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG"
+        elif type(content_hash) is str:
+            content_hash_converted = binascii.unhexlify(content_hash)
+        # If the hash isn't bytes or a string, it isn't valid and is rejected.
+        else:
+            raise TypeError("SHA-1 hash type is not valid! It must be either type str or bytes.")
+
+        # Generate the file name for the new shared content by incrementing the highest name by 1. Thank you, Nintendo,
+        # for not just storing these as integers like you did EVERYWHERE else.
+        maximum_index = int(self.shared_records[-1].shared_id, 16)
+        new_index = f"{maximum_index + 1:08X}"
+        self.shared_records.append(_SharedContentRecord(new_index, content_hash_converted))
+        return new_index
