@@ -586,7 +586,10 @@ class SharedContentMap:
 
         # Generate the file name for the new shared content by incrementing the highest name by 1. Thank you, Nintendo,
         # for not just storing these as integers like you did EVERYWHERE else.
-        maximum_index = int(self.shared_records[-1].shared_id, 16)
-        new_index = f"{maximum_index + 1:08X}"
+        try:
+            maximum_index = int(self.shared_records[-1].shared_id, 16)
+            new_index = f"{maximum_index + 1:08X}"
+        except IndexError:
+            new_index = f"{0:08X}"
         self.shared_records.append(_SharedContentRecord(new_index, content_hash_converted))
         return new_index
