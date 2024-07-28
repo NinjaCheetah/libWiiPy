@@ -17,7 +17,7 @@ def _convert_tid_to_iv(title_id: str | bytes) -> bytes:
             title_key_iv = binascii.unhexlify(title_id)
         # This catches the format b'\x00\x00\x00\x01\x00\x00\x00\x02'
         elif len(title_id) == 8:
-            pass
+            title_key_iv = title_id
         # If it isn't one of those lengths, it cannot possibly be valid, so reject it.
         else:
             raise ValueError("Title ID is not valid!")
