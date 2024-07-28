@@ -3,6 +3,7 @@
 
 from .content import *
 from .crypto import *
+from .iospatcher import *
 from .nus import *
 from .ticket import *
 from .title import *

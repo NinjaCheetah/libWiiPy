@@ -74,6 +74,7 @@ class Title:
         if self.tmd.title_id == "0000000100000001":
             self.wad.wad_type = "ib"
         # Dump the TMD and set it in the WAD.
+        self.tmd.content_records = self.content.content_records
         self.wad.set_tmd_data(self.tmd.dump())
         # Dump the Ticket and set it in the WAD.
         self.wad.set_ticket_data(self.ticket.dump())
