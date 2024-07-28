@@ -315,7 +315,7 @@ class Ticket:
         """
         if len(title_id) != 16:
             raise ValueError("Invalid Title ID! Title IDs must be 8 bytes long.")
-        self.title_id = binascii.unhexlify(title_id)
+        self.title_id = title_id.encode()
 
     def set_title_version(self, new_version: str | int) -> None:
         """
