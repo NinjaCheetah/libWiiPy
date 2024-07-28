@@ -3,10 +3,12 @@
 #
 # See https://wiibrew.org/wiki/Title for details about how titles are formatted
 
+import math
 from .content import ContentRegion
 from .ticket import Ticket
 from .tmd import TMD
 from .wad import WAD
+from .crypto import encrypt_title_key
 
 
 class Title:
@@ -120,7 +122,8 @@ class Title:
 
     def set_title_id(self, title_id: str) -> None:
         """
-        Sets the Title ID of the title in both the TMD and Ticket.
+        Sets the Title ID of the title in both the TMD and Ticket. This also re-encrypts the Title Key as the Title Key
+        is used as the IV for decrypting it.
 
         Parameters
         ----------
@@ -130,7 +133,10 @@ class Title:
         if len(title_id) != 16:
             raise ValueError("Invalid Title ID! Title IDs must be 8 bytes long.")
         self.tmd.set_title_id(title_id)
+        title_key_decrypted = self.ticket.get_title_key()
         self.ticket.set_title_id(title_id)
+        title_key_encrypted = encrypt_title_key(title_key_decrypted, self.ticket.common_key_index, title_id)
+        self.ticket.title_key_enc = title_key_encrypted
 
     def set_title_version(self, title_version: str | int) -> None:
         """
@@ -183,6 +189,41 @@ class Title:
         """
         dec_content = self.content.get_content_by_cid(cid, self.ticket.get_title_key(), skip_hash)
         return dec_content
+
+    def get_title_size(self) -> int:
+        """
+        Gets the installed size of the title, including the TMD and Ticket, in bytes.
+
+        Returns
+        -------
+        int
+            The installed size of the title, in bytes.
+        """
+        title_size = 0
+        # Dumping and measuring the TMD and Ticket this way to ensure that any changes to them are measured properly.
+        # Yes, the Ticket size should be a constant, but it's still good to check just in case.
+        title_size += len(self.tmd.dump())
+        title_size += len(self.ticket.dump())
+        # For contents, get their sizes from the content records, because they store the intended sizes of the decrypted
+        # contents, which are usually different from the encrypted sizes.
+        for record in self.content.content_records:
+            title_size += record.content_size
+        return title_size
+
+    def get_title_size_blocks(self) -> int:
+        """
+        Gets the installed size of the title, including the TMD and Ticket, in the Wii's displayed "blocks" format.
+
+        1 Wii block is equal to 128KiB, and if any amount of a block is used, the entire block is considered used.
+
+        Returns
+        -------
+        int
+            The installed size of the title, in blocks.
+        """
+        title_size_bytes = self.get_title_size()
+        blocks = math.ceil(title_size_bytes / 131072)
+        return blocks
 
     def set_enc_content(self, enc_content: bytes, index: int, content_size: int, content_hash: bytes, cid: int = None,
                         content_type: int = None) -> None:
