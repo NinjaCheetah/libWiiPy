@@ -130,10 +130,7 @@ class Ticket:
             self.unknown1 = ticket_data.read(2)
             # Title version.
             ticket_data.seek(0x1E6)
-            title_version_high = int.from_bytes(ticket_data.read(1)) * 256
-            ticket_data.seek(0x1E7)
-            title_version_low = int.from_bytes(ticket_data.read(1))
-            self.title_version = title_version_high + title_version_low
+            self.title_version = int.from_bytes(ticket_data.read(2))
             # Permitted titles mask.
             ticket_data.seek(0x1E8)
             self.permitted_titles = ticket_data.read(4)
@@ -196,10 +193,7 @@ class Ticket:
         # Unknown data 1.
         ticket_data += self.unknown1
         # Title version.
-        title_version_high = round(self.title_version / 256)
-        ticket_data += int.to_bytes(title_version_high, 1)
-        title_version_low = self.title_version % 256
-        ticket_data += int.to_bytes(title_version_low, 1)
+        ticket_data += int.to_bytes(self.title_version, 2)
         # Permitted titles mask.
         ticket_data += self.permitted_titles
         # Permit mask.
