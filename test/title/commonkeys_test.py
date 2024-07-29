@@ -1,4 +1,4 @@
-# "test_commonkeys.py" from libWiiPy by NinjaCheetah & Contributors
+# "commonkeys_test.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 
 import unittest

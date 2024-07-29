@@ -5,7 +5,8 @@
 
 import unittest
 
-from test_commonkeys import TestCommonKeys
+from .title.commonkeys_test import *
+from .title.nus_test import *
 
 if __name__ == '__main__':
     unittest.main()
