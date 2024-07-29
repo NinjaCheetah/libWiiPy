@@ -62,19 +62,32 @@ class IOSPatcher:
         """
         return self.title
 
-    def patch_all(self) -> None:
+    def patch_all(self) -> int:
         """
-        Applies all patches to patch in fakesigning, ES_Identify access, /dev/flash access, and the version patch.
-        """
-        self.patch_fakesigning()
-        self.patch_es_identify()
-        self.patch_nand_access()
-        self.patch_version_patch()
+        Applies all patches to patch in fakesigning, ES_Identify access, /dev/flash access, and the version downgrading
+        patch.
 
-    def patch_fakesigning(self) -> None:
+        Returns
+        -------
+        int
+            The number of patches successfully applied.
+        """
+        patch_count = 0
+        patch_count += self.patch_fakesigning()
+        patch_count += self.patch_es_identify()
+        patch_count += self.patch_nand_access()
+        patch_count += self.patch_version_downgrading()
+        return patch_count
+
+    def patch_fakesigning(self) -> int:
         """
         Patches the trucha/fakesigning bug back into the IOS' ES module to allow it to accept fakesigned TMDs and
         Tickets.
+
+        Returns
+        -------
+        int
+            The number of patches successfully applied.
         """
         if self.es_module_index == -1:
             raise Exception("No valid IOS is loaded! Patching cannot continue.")
@@ -93,22 +106,26 @@ class IOSPatcher:
                     target_content = content_data.read()
                     patch_count += 1
 
-        # If neither structure was found, then no patches could be applied, so return an error.
-        if patch_count == 0:
-            raise Exception("No patches could be applied because the required data could not be found!")
-
         self.title.set_content(target_content, self.es_module_index)
 
-    def patch_es_identify(self) -> None:
+        return patch_count
+
+    def patch_es_identify(self) -> int:
         """
         Patches the ability to call ES_Identify back into the IOS' ES module to allow for changing the permissions of a
         title.
+
+        Returns
+        -------
+        int
+            The number of patches successfully applied.
         """
         if self.es_module_index == -1:
             raise Exception("No valid IOS is loaded! Patching cannot continue.")
 
         target_content = self.title.get_content_by_index(self.es_module_index)
 
+        patch_count = 0
         patch_sequence = b'\x28\x03\xd1\x23'
         start_offset = target_content.find(patch_sequence)
         if start_offset != -1:
@@ -117,21 +134,28 @@ class IOSPatcher:
                 content_data.write(b'\x00\x00')
                 content_data.seek(0)
                 target_content = content_data.read()
-        else:
-            raise Exception("No patches could be applied because the required data could not be found!")
+                patch_count += 1
 
         self.title.set_content(target_content, self.es_module_index)
 
-    def patch_nand_access(self) -> None:
+        return patch_count
+
+    def patch_nand_access(self) -> int:
         """
         Patches the ability to directly access /dev/flash back into the IOS' ES module to allow for raw access to the
         Wii's filesystem.
+
+        Returns
+        -------
+        int
+            The number of patches successfully applied.
         """
         if self.es_module_index == -1:
             raise Exception("No valid IOS is loaded! Patching cannot continue.")
 
         target_content = self.title.get_content_by_index(self.es_module_index)
 
+        patch_count = 0
         patch_sequence = b'\x42\x8b\xd0\x01\x25\x66'
         start_offset = target_content.find(patch_sequence)
         if start_offset != -1:
@@ -140,20 +164,27 @@ class IOSPatcher:
                 content_data.write(b'\xe0')
                 content_data.seek(0)
                 target_content = content_data.read()
-        else:
-            raise Exception("No patches could be applied because the required data could not be found!")
+                patch_count += 1
 
         self.title.set_content(target_content, self.es_module_index)
 
-    def patch_version_patch(self) -> None:
+        return patch_count
+
+    def patch_version_downgrading(self) -> int:
         """
-        Patches the ability to idk man do something I guess back into IOS' ES module. (Awaiting a real explanation)
+        Patches the ability to downgrade installed titles into IOS' ES module.
+
+        Returns
+        -------
+        int
+            The number of patches successfully applied.
         """
         if self.es_module_index == -1:
             raise Exception("No valid IOS is loaded! Patching cannot continue.")
 
         target_content = self.title.get_content_by_index(self.es_module_index)
 
+        patch_count = 0
         patch_sequence = b'\xd2\x01\x4e\x56'
         start_offset = target_content.find(patch_sequence)
         if start_offset != -1:
@@ -162,7 +193,8 @@ class IOSPatcher:
                 content_data.write(b'\xe0')
                 content_data.seek(0)
                 target_content = content_data.read()
-        else:
-            raise Exception("No patches could be applied because the required data could not be found!")
+                patch_count += 1
 
         self.title.set_content(target_content, self.es_module_index)
+
+        return patch_count
