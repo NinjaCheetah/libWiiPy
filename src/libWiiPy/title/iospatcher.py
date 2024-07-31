@@ -107,6 +107,7 @@ class IOSPatcher:
                     patch_count += 1
 
         self.title.set_content(target_content, self.es_module_index)
+        self.title.content.content_records[self.es_module_index].content_type = 1  # Sets content to be non-shared
 
         return patch_count
 
@@ -137,6 +138,7 @@ class IOSPatcher:
                 patch_count += 1
 
         self.title.set_content(target_content, self.es_module_index)
+        self.title.content.content_records[self.es_module_index].content_type = 1  # Sets content to be non-shared
 
         return patch_count
 
@@ -167,6 +169,7 @@ class IOSPatcher:
                 patch_count += 1
 
         self.title.set_content(target_content, self.es_module_index)
+        self.title.content.content_records[self.es_module_index].content_type = 1  # Sets content to be non-shared
 
         return patch_count
 
@@ -196,5 +199,51 @@ class IOSPatcher:
                 patch_count += 1
 
         self.title.set_content(target_content, self.es_module_index)
+        self.title.content.content_records[self.es_module_index].content_type = 1  # Sets content to be non-shared
+
+        return patch_count
+
+    def patch_drive_inquiry(self) -> int:
+        """
+        Patches out IOS' drive inquiry on startup, allowing IOS to load without a disc drive. Only required/useful if
+        you do not have a disc drive connected to your console.
+
+        Returns
+        -------
+        int
+            The number of patches successfully applied.
+        """
+        if self.es_module_index == -1:
+            raise Exception("No valid IOS is loaded! Patching cannot continue.")
+
+        # This patch is applied to the DIP module rather than to ES, so we need to search the contents for the right one
+        # first.
+        dip_content_index = -1
+        for content in range(len(self.title.content.content_records)):
+            target_content = self.title.get_content_by_index(self.title.content.content_records[content].index)
+            dip_offset = target_content.find(b'\x44\x49\x50\x3a')  # This is looking for "DIP:"
+            if dip_offset != -1:
+                dip_content_index = self.title.content.content_records[content].index
+                break
+
+        # If we get here with no content index, then DIP wasn't found. That probably means that this isn't IOS.
+        if dip_content_index == -1:
+            raise Exception("DIP module could not be found! Please ensure that this is an intact copy of an IOS.")
+
+        target_content = self.title.get_content_by_index(dip_content_index)
+
+        patch_count = 0
+        patch_sequence = b'\x49\x4c\x23\x90\x68\x0a'  # 49 4c 23 90 68 0a
+        start_offset = target_content.find(patch_sequence)
+        if start_offset != -1:
+            with io.BytesIO(target_content) as content_data:
+                content_data.seek(start_offset)
+                content_data.write(b'\x20\x00\xe5\x38')
+                content_data.seek(0)
+                target_content = content_data.read()
+                patch_count += 1
+
+        self.title.set_content(target_content, dip_content_index)
+        self.title.content.content_records[dip_content_index].content_type = 1  # Sets content to be non-shared
 
         return patch_count
