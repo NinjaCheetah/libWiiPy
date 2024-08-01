@@ -174,11 +174,11 @@ class WAD:
         # Retrieve the TMD data and write it out.
         wad_data += self.get_tmd_data()
         wad_data = _pad_bytes(wad_data)
-        # Retrieve the meta/footer data and write it out.
-        wad_data += self.get_meta_data()
-        wad_data = _pad_bytes(wad_data)
         # Retrieve the content data and write it out.
         wad_data += self.get_content_data()
+        wad_data = _pad_bytes(wad_data)
+        # Retrieve the meta/footer data and write it out.
+        wad_data += self.get_meta_data()
         wad_data = _pad_bytes(wad_data)
         return wad_data
 
