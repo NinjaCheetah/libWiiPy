@@ -13,10 +13,17 @@ class IOSPatcher:
 
     Attributes
     ----------
+    title : Title
+        The loaded Title object to be patched.
+    es_module_index : int
+        The content index that ES resides in and where ES patches are applied.
+    dip_module_index : int
+        The content index that DIP resides in and where DIP patches are applied. -1 if DIP patches are not applied.
     """
     def __init__(self):
         self.title: Title = Title()
         self.es_module_index: int = -1
+        self.dip_module_index: int = -1
 
     def load(self, title: Title) -> None:
         """
@@ -138,7 +145,6 @@ class IOSPatcher:
                 patch_count += 1
 
         self.title.set_content(target_content, self.es_module_index)
-        self.title.content.content_records[self.es_module_index].content_type = 1  # Sets content to be non-shared
 
         return patch_count
 
@@ -169,7 +175,6 @@ class IOSPatcher:
                 patch_count += 1
 
         self.title.set_content(target_content, self.es_module_index)
-        self.title.content.content_records[self.es_module_index].content_type = 1  # Sets content to be non-shared
 
         return patch_count
 
@@ -199,7 +204,6 @@ class IOSPatcher:
                 patch_count += 1
 
         self.title.set_content(target_content, self.es_module_index)
-        self.title.content.content_records[self.es_module_index].content_type = 1  # Sets content to be non-shared
 
         return patch_count
 
@@ -218,19 +222,18 @@ class IOSPatcher:
 
         # This patch is applied to the DIP module rather than to ES, so we need to search the contents for the right one
         # first.
-        dip_content_index = -1
         for content in range(len(self.title.content.content_records)):
             target_content = self.title.get_content_by_index(self.title.content.content_records[content].index)
             dip_offset = target_content.find(b'\x44\x49\x50\x3a')  # This is looking for "DIP:"
             if dip_offset != -1:
-                dip_content_index = self.title.content.content_records[content].index
+                self.dip_module_index = self.title.content.content_records[content].index
                 break
 
         # If we get here with no content index, then DIP wasn't found. That probably means that this isn't IOS.
-        if dip_content_index == -1:
+        if self.dip_module_index == -1:
             raise Exception("DIP module could not be found! Please ensure that this is an intact copy of an IOS.")
 
-        target_content = self.title.get_content_by_index(dip_content_index)
+        target_content = self.title.get_content_by_index(self.dip_module_index)
 
         patch_count = 0
         patch_sequence = b'\x49\x4c\x23\x90\x68\x0a'  # 49 4c 23 90 68 0a
@@ -243,7 +246,6 @@ class IOSPatcher:
                 target_content = content_data.read()
                 patch_count += 1
 
-        self.title.set_content(target_content, dip_content_index)
-        self.title.content.content_records[dip_content_index].content_type = 1  # Sets content to be non-shared
+        self.title.set_content(target_content, self.dip_module_index)
 
         return patch_count
