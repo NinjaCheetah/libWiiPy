@@ -405,16 +405,16 @@ class TMD:
             version_str_split = new_version.split(".")
             if len(version_str_split) != 2:
                 raise ValueError("Title version is not valid! String version must be entered in format \"X.X\".")
-            if int(version_str_split[0]) > 255 or (int(version_str_split[0]) == 255 and int(version_str_split[1]) > 0):
-                raise ValueError("Title version is not valid! String version number cannot exceed v255.0.")
+            if int(version_str_split[0]) > 255 or int(version_str_split[1]) > 255:
+                raise ValueError("Title version is not valid! String version number cannot exceed v255.255.")
             self.title_version_converted = new_version
             version_converted = title_ver_standard_to_dec(new_version, self.title_id)
             self.title_version = version_converted
         elif type(new_version) is int:
             # Validate that the version isn't higher than v65280. If the check passes, set that as the title version,
             # then convert to standard form and set that as well.
-            if new_version > 65280:
-                raise ValueError("Title version is not valid! Integer version number cannot exceed v65280.")
+            if new_version > 65535:
+                raise ValueError("Title version is not valid! Integer version number cannot exceed v65535.")
             self.title_version = new_version
             version_converted = title_ver_dec_to_standard(new_version, self.title_id)
             self.title_version_converted = version_converted
