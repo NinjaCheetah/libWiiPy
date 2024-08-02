@@ -114,7 +114,6 @@ class IOSPatcher:
                     patch_count += 1
 
         self.title.set_content(target_content, self.es_module_index)
-        self.title.content.content_records[self.es_module_index].content_type = 1  # Sets content to be non-shared
 
         return patch_count
 
