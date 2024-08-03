@@ -49,6 +49,10 @@ def _pad_bytes(data, alignment=64) -> bytes:
     return data
 
 
+def _bitmask(x: int) -> int:
+    return 1 << x
+
+
 _wii_menu_versions = {
     "Prelaunch": [0, 1, 2],
     "1.0J": 64,
