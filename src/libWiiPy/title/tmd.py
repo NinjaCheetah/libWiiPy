@@ -257,6 +257,27 @@ class TMD:
             except OverflowError:
                 raise Exception("An error occurred during fakesigning. TMD could not be fakesigned!")
 
+    def get_is_fakesigned(self) -> bool:
+        """
+        Checks the TMD object to see if it is currently fakesigned. For a description of fakesigning, refer to the
+        fakesign() method.
+
+        Returns
+        -------
+        bool:
+            True if the TMD is fakesigned, False otherwise.
+
+        See Also
+        --------
+        libWiiPy.title.tmd.TMD.fakesign()
+        """
+        if self.signature != b'\x00' * 256:
+            return False
+        test_hash = hashlib.sha1(self.dump()[320:]).hexdigest()
+        if test_hash[:2] != '00':
+            return False
+        return True
+
     def get_title_region(self) -> str:
         """
         Gets the region of the TMD's associated title.
@@ -386,7 +407,7 @@ class TMD:
         Returns
         -------
         bool
-            Whether the flag is enabled.
+            True if the flag is enabled, False otherwise.
         """
         return bool(self.access_rights & _bitmask(flag))
 
