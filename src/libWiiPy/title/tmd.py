@@ -43,7 +43,7 @@ class TMD:
         self.ios_tid: str = ""  # The Title ID of the IOS version the associated title runs on.
         self.ios_version: int = 0  # The IOS version the associated title runs on.
         self.title_id: str = ""  # The Title ID of the associated title.
-        self.content_type: str = ""  # The type of content contained within the associated title.
+        self.title_type: str = ""  # The type of the associated title.
         self.group_id: int = 0  # The ID of the publisher of the associated title.
         self.region: int = 0  # The ID of the region of the associated title.
         self.ratings: bytes = b''  # The parental controls rating of the associated title.
@@ -109,7 +109,7 @@ class TMD:
             tmd_data.seek(0x194)
             content_type_bin = tmd_data.read(4)
             content_type_hex = binascii.hexlify(content_type_bin)
-            self.content_type = str(content_type_hex.decode())
+            self.title_type = str(content_type_hex.decode())
             # Publisher of the title.
             tmd_data.seek(0x198)
             self.group_id = int.from_bytes(tmd_data.read(2))
@@ -190,7 +190,7 @@ class TMD:
         # Title's Title ID.
         tmd_data += binascii.unhexlify(self.title_id)
         # Content type.
-        tmd_data += binascii.unhexlify(self.content_type)
+        tmd_data += binascii.unhexlify(self.title_type)
         # Group ID.
         tmd_data += int.to_bytes(self.group_id, 2)
         # 2 bytes of zero for reasons.
@@ -263,7 +263,7 @@ class TMD:
         Gets the region of the TMD's associated title.
 
         Can be one of several possible values:
-        'JAP', 'USA', 'EUR', 'WORLD', or 'KOR'.
+        'Japan', 'North America', 'Europe', 'World', or 'Korea'.
 
         Returns
         -------
@@ -272,29 +272,15 @@ class TMD:
         """
         match self.region:
             case 0:
-                return "JAP"
+                return "Japan"
             case 1:
-                return "USA"
+                return "North America"
             case 2:
-                return "EUR"
+                return "Europe"
             case 3:
-                return "WORLD"
+                return "World"
             case 4:
-                return "KOR"
-
-    def get_is_vwii_title(self) -> bool:
-        """
-        Gets whether the TMD is designed for the vWii or not.
-
-        Returns
-        -------
-        bool
-            If the title is for vWii.
-        """
-        if self.vwii == 1:
-            return True
-        else:
-            return False
+                return "Korea"
 
     def get_title_type(self) -> str:
         """
@@ -308,8 +294,7 @@ class TMD:
         str
             The type of the title.
         """
-        title_id_high = self.title_id[:8]
-        match title_id_high:
+        match self.title_type:
             case '00000001':
                 return "System"
             case '00010000':
@@ -327,28 +312,40 @@ class TMD:
             case _:
                 return "Unknown"
 
-    def get_content_type(self):
+    def get_content_type(self, content_index: int) -> str:
         """
         Gets the type of content contained in the TMD's associated title.
 
         Can be one of several possible values:
         'Normal', 'Development/Unknown', 'Hash Tree', 'DLC', or 'Shared'
 
+        Parameters
+        ----------
+        content_index : int
+            The index of the content you want the type of.
+
         Returns
         -------
         str
             The type of content.
         """
-        match self.content_type:
-            case '00000001':
+        # Get a list of the current content indices, so we can make sure the target one exists. Doing it this way
+        # ensures we can find the target, even if the highest content index is greater than the highest literal index.
+        current_indices = []
+        for record in self.content_records:
+            current_indices.append(record.index)
+        # This is the literal index in the list of content that we're going to get.
+        target_index = current_indices.index(content_index)
+        match self.content_records[target_index].content_type:
+            case 1:
                 return "Normal"
-            case '00000002':
+            case 2:
                 return "Development/Unknown"
-            case '00000003':
+            case 3:
                 return "Hash Tree"
-            case '00004001':
+            case 16385:
                 return "DLC"
-            case '00008001':
+            case 32769:
                 return "Shared"
             case _:
                 return "Unknown"
