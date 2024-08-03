@@ -50,7 +50,7 @@ class TMD:
         self.reserved1: bytes = b''  # Unknown data labeled "Reserved" on WiiBrew.
         self.ipc_mask: bytes = b''
         self.reserved2: bytes = b''  # Other "Reserved" data from WiiBrew.
-        self.access_rights: bytes = b''
+        self.access_rights: int = 0
         self.title_version: int = 0  # The version of the associated title.
         self.title_version_converted: int = 0  # The title version in vX.X format.
         self.num_contents: int = 0  # The number of contents contained in the associated title.
@@ -131,7 +131,7 @@ class TMD:
             self.reserved2 = tmd_data.read(18)
             # Access rights of the title; DVD-video and AHB access.
             tmd_data.seek(0x1D8)
-            self.access_rights = tmd_data.read(4)
+            self.access_rights = int.from_bytes(tmd_data.read(4))
             # Version number straight from the TMD.
             tmd_data.seek(0x1DC)
             self.title_version = int.from_bytes(tmd_data.read(2))
@@ -203,7 +203,7 @@ class TMD:
         # "Reserved" 2.
         tmd_data += self.reserved2
         # Access rights.
-        tmd_data += self.access_rights
+        tmd_data += int.to_bytes(self.access_rights, 4)
         # Title version.
         tmd_data += int.to_bytes(self.title_version, 2)
         # Number of contents.
