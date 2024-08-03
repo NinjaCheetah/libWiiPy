@@ -8,7 +8,7 @@ import binascii
 import hashlib
 import struct
 from typing import List
-from enum import Enum
+from enum import IntEnum
 from ..types import _ContentRecord
 from ..shared import _bitmask
 from .util import title_ver_dec_to_standard, title_ver_standard_to_dec
@@ -369,6 +369,10 @@ class TMD:
             raise IndexError("Invalid content record! TMD lists '" + str(self.num_contents - 1) +
                              "' contents but index was '" + str(record) + "'!")
 
+    class AccessFlags(IntEnum):
+        AHB = 0
+        DVD_VIDEO = 1
+
     def get_access_right(self, flag: int) -> bool:
         """
         Gets whether an access rights flag is enabled or not. This is done by checking the specified bit. Possible flags
@@ -433,8 +437,3 @@ class TMD:
             self.title_version_converted = version_converted
         else:
             raise TypeError("Title version type is not valid! Type must be either integer or string.")
-
-
-class AccessFlags(Enum):
-    AHB = 0
-    DVD_VIDEO = 1
