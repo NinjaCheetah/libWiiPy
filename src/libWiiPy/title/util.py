@@ -4,9 +4,10 @@
 # General title-related utilities that don't fit within a specific module.
 
 import math
+from ..shared import _wii_menu_versions, _vwii_menu_versions
 
 
-def title_ver_dec_to_standard(version: int, title_id: str) -> str:
+def title_ver_dec_to_standard(version: int, title_id: str, vwii: bool = False) -> str:
     """
     Converts a title's version from decimal form (vXXX, the way the version is stored in the TMD/Ticket) to its standard
     and human-readable form (vX.X). The Title ID is required as some titles handle this version differently from others.
@@ -18,6 +19,8 @@ def title_ver_dec_to_standard(version: int, title_id: str) -> str:
         The version of the title, in decimal form.
     title_id : str
         The Title ID that the version is associated with.
+    vwii : bool
+        Whether this title is for the vWii or not. Only relevant for the System Menu.
 
     Returns
     -------
@@ -26,7 +29,16 @@ def title_ver_dec_to_standard(version: int, title_id: str) -> str:
     """
     version_out = ""
     if title_id == "0000000100000002":
-        raise ValueError("The System Menu's version cannot currently be converted.")
+        if vwii:
+            try:
+                version_out = list(_vwii_menu_versions.keys())[list(_vwii_menu_versions.values()).index(version)]
+            except ValueError:
+                version_out = ""
+        else:
+            try:
+                version_out = list(_wii_menu_versions.keys())[list(_wii_menu_versions.values()).index(version)]
+            except ValueError:
+                version_out = ""
     else:
         # For most channels, we need to get the floored value of version / 256 for the major version, and the version %
         # 256 as the minor version. Minor versions > 9 are intended, as Nintendo themselves frequently used them.

@@ -129,17 +129,14 @@ class TMD:
             # "Reserved" data 2.
             tmd_data.seek(0x1C6)
             self.reserved2 = tmd_data.read(18)
-            # Access rights of the title; DVD-video access and AHBPROT.
+            # Access rights of the title; DVD-video and AHB access.
             tmd_data.seek(0x1D8)
             self.access_rights = tmd_data.read(4)
             # Version number straight from the TMD.
             tmd_data.seek(0x1DC)
             self.title_version = int.from_bytes(tmd_data.read(2))
             # Calculate the converted version number via util module.
-            try:
-                self.title_version_converted = title_ver_dec_to_standard(self.title_version, self.title_id)
-            except ValueError:
-                self.title_version_converted = ""
+            self.title_version_converted = title_ver_dec_to_standard(self.title_version, self.title_id, bool(self.vwii))
             # The number of contents listed in the TMD.
             tmd_data.seek(0x1DE)
             self.num_contents = int.from_bytes(tmd_data.read(2))
@@ -413,7 +410,7 @@ class TMD:
             if new_version > 65535:
                 raise ValueError("Title version is not valid! Integer version number cannot exceed v65535.")
             self.title_version = new_version
-            version_converted = title_ver_dec_to_standard(new_version, self.title_id)
+            version_converted = title_ver_dec_to_standard(new_version, self.title_id, bool(self.vwii))
             self.title_version_converted = version_converted
         else:
             raise TypeError("Title version type is not valid! Type must be either integer or string.")
