@@ -211,6 +211,8 @@ class IOSPatcher:
         Patches out IOS' drive inquiry on startup, allowing IOS to load without a disc drive. Only required/useful if
         you do not have a disc drive connected to your console.
 
+        This drive inquiry patch is EXPERIMENTAL, and may introduce unexpected side effects on some consoles.
+
         Returns
         -------
         int
