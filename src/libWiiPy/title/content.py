@@ -2,6 +2,7 @@
 # https://github.com/NinjaCheetah/libWiiPy
 #
 # See https://wiibrew.org/wiki/Title for details about how titles are formatted
+
 import binascii
 import io
 import hashlib
@@ -565,7 +566,6 @@ class SharedContentMap:
         str
             The filename assigned to the provided content hash.
         """
-        content_hash_converted = b''
         if type(content_hash) is bytes:
             # This catches the format b'GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG'
             if len(content_hash) == 40:
