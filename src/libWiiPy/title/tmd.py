@@ -8,7 +8,9 @@ import binascii
 import hashlib
 import struct
 from typing import List
+from enum import IntEnum
 from ..types import _ContentRecord
+from ..shared import _bitmask
 from .util import title_ver_dec_to_standard, title_ver_standard_to_dec
 
 
@@ -50,7 +52,7 @@ class TMD:
         self.reserved1: bytes = b''  # Unknown data labeled "Reserved" on WiiBrew.
         self.ipc_mask: bytes = b''
         self.reserved2: bytes = b''  # Other "Reserved" data from WiiBrew.
-        self.access_rights: bytes = b''
+        self.access_rights: int = 0
         self.title_version: int = 0  # The version of the associated title.
         self.title_version_converted: int = 0  # The title version in vX.X format.
         self.num_contents: int = 0  # The number of contents contained in the associated title.
@@ -131,7 +133,7 @@ class TMD:
             self.reserved2 = tmd_data.read(18)
             # Access rights of the title; DVD-video and AHB access.
             tmd_data.seek(0x1D8)
-            self.access_rights = tmd_data.read(4)
+            self.access_rights = int.from_bytes(tmd_data.read(4))
             # Version number straight from the TMD.
             tmd_data.seek(0x1DC)
             self.title_version = int.from_bytes(tmd_data.read(2))
@@ -203,7 +205,7 @@ class TMD:
         # "Reserved" 2.
         tmd_data += self.reserved2
         # Access rights.
-        tmd_data += self.access_rights
+        tmd_data += int.to_bytes(self.access_rights, 4)
         # Title version.
         tmd_data += int.to_bytes(self.title_version, 2)
         # Number of contents.
@@ -254,6 +256,27 @@ class TMD:
                 test_hash = hashlib.sha1(self.dump()[320:]).hexdigest()
             except OverflowError:
                 raise Exception("An error occurred during fakesigning. TMD could not be fakesigned!")
+
+    def get_is_fakesigned(self) -> bool:
+        """
+        Checks the TMD object to see if it is currently fakesigned. For a description of fakesigning, refer to the
+        fakesign() method.
+
+        Returns
+        -------
+        bool:
+            True if the TMD is fakesigned, False otherwise.
+
+        See Also
+        --------
+        libWiiPy.title.tmd.TMD.fakesign()
+        """
+        if self.signature != b'\x00' * 256:
+            return False
+        test_hash = hashlib.sha1(self.dump()[320:]).hexdigest()
+        if test_hash[:2] != '00':
+            return False
+        return True
 
     def get_title_region(self) -> str:
         """
@@ -366,6 +389,27 @@ class TMD:
         else:
             raise IndexError("Invalid content record! TMD lists '" + str(self.num_contents - 1) +
                              "' contents but index was '" + str(record) + "'!")
+
+    class AccessFlags(IntEnum):
+        AHB = 0
+        DVD_VIDEO = 1
+
+    def get_access_right(self, flag: int) -> bool:
+        """
+        Gets whether an access rights flag is enabled or not. This is done by checking the specified bit. Possible flags
+        and their corresponding bits are defined in the AccessFlags enum.
+
+        Parameters
+        ----------
+        flag : int
+            The flag to check.
+
+        Returns
+        -------
+        bool
+            True if the flag is enabled, False otherwise.
+        """
+        return bool(self.access_rights & _bitmask(flag))
 
     def set_title_id(self, title_id) -> None:
         """

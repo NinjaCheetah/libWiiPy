@@ -316,3 +316,22 @@ class Title:
         """
         self.tmd.fakesign()
         self.ticket.fakesign()
+
+    def get_is_fakesigned(self):
+        """
+        Checks the Title object to see if it is currently fakesigned. This ensures that both the TMD and Ticket are
+        fakesigned. For a description of fakesigning, refer to the fakesign() method.
+
+        Returns
+        -------
+        bool:
+            True if the Title is fakesigned, False otherwise.
+
+        See Also
+        --------
+        libWiiPy.title.title.Title.fakesign()
+        """
+        if self.tmd.get_is_fakesigned and self.ticket.get_is_fakesigned():
+            return True
+        else:
+            return False
