@@ -26,6 +26,14 @@
    :show-inheritance:
 ```
 
+### libWiiPy.title.emunand module
+```{eval-rst}
+.. automodule:: libWiiPy.title.emunand
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
 ### libWiipy.title.iospatcher module
 ```{eval-rst}
 .. automodule:: libWiiPy.title.iospatcher
