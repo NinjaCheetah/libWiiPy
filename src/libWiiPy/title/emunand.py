@@ -17,12 +17,18 @@ class EmuNAND:
     EmuNAND, and can optionally take in a callback function to send logs to.
 
     Parameters
-    emunand_root : str
+    ----------
+    emunand_root : str, pathlib.Path
         The path to the EmuNAND root directory.
     callback : function
         A callback function to send EmuNAND logs to.
+
+    Attributes
+    ----------
+    emunand_root : pathlib.Path
+        The path to the EmuNAND root directory.
     """
-    def __init__(self, emunand_root: str, callback: callable = None):
+    def __init__(self, emunand_root: str | pathlib.Path, callback: callable = None):
         self.emunand_root = pathlib.Path(emunand_root)
         self.log = callback if callback is not None else None
 
