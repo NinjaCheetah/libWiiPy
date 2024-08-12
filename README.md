@@ -1,22 +1,28 @@
 ![banner](https://github.com/NinjaCheetah/libWiiPy/assets/58050615/00ea4c41-673c-4a74-addb-fbb40b4313c8)
 # libWiiPy
-libWiiPy is a modern Python 3 library for handling the various files and formats found on the Wii. It aims to be simple to use, well maintained, and offer as many features as reasonably possible in one library, so that a newly-written Python program could reasonably do 100% of its Wii-related work with just one library. It also aims to be fully cross-platform, so that any tools written with it can also be cross-platform.
+libWiiPy is a modern Python 3 library for handling the various files and formats found on the Wii. It aims to be simple to use, well maintained, and offer as many features as reasonably possible in one library, so that a newly-written Python program could do 100% of its Wii-related work with just one library. It also aims to be fully cross-platform, so that any tools written with it can also be cross-platform.
 
 libWiiPy is inspired by [libWiiSharp](https://github.com/TheShadowEevee/libWiiSharp), which was originally created by `Leathl` and is now maintained by [@TheShadowEevee](https://github.com/TheShadowEevee). If you're looking for a Wii library that isn't in Python, then go check it out!
 
 
 # Features
 This list will expand as libWiiPy is developed, but these features are currently available:
-- TMD and Ticket parsing (`.tmd`, `.tik`)
-- Title content decryption, re-encryption
-- Packing and unpacking WAD files (`.wad`)
+- TMD and Ticket parsing/editing (`.tmd`, `.tik`)
+- Title parsing/editing, including content encryption/decryption
+- WAD file parsing/editing (`.wad`)
 - Downloading titles from the NUS
 - Packing and unpacking U8 archives (`.app`, `.arc`)
 - Decompressing ASH files (`.ash`, both the standard variants and the variants found in My Pokémon Ranch)
+- IOS patching
+- NAND-related functionality:
+  - EmuNAND title management (currently requires an existing EmuNAND)
+  - `content.map` parsing/editing
+  - `uid.sys` parsing/editing
+- Assorted miscellaneous features used to make the other core features possible
+
+For a more detailed look at what's available in libWiiPy, check out our [API docs](https://ninjacheetah.github.io/libWiiPy).
 
 # Usage
-A wiki, and in the future a potential documenation site, is being worked on, and can be accessed [here](https://github.com/NinjaCheetah/libWiiPy/wiki). It is currently fairly barebones, but it will be improved in the future.
-
 The easiest way to get libWiiPy for your project is to install the latest version of the library from PyPI, as shown below. 
 ```sh
 pip install -U libWiiPy
@@ -28,6 +34,8 @@ Because libWiiPy is very early in development, you may want to use the latest ve
 pip install -U git+https://github.com/NinjaCheetah/libWiiPy
 ```
 Please be aware that because libWiiPy is in a very early state right now, many features may be subject to change, and methods and properties available now have the potential to disappear in the future.
+                               
+For more tips on getting started, see our guide [here](https://ninjacheetah.github.io/libWiiPy/usage/installation.html).
 
 # Building
 To build this package locally, the steps are quite simple, and should apply to all platforms. Make sure you've set up your `venv` first!
