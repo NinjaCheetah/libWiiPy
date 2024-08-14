@@ -1,0 +1,135 @@
+# "nand/setting.py" from libWiiPy by NinjaCheetah & Contributors
+# https://github.com/NinjaCheetah/libWiiPy
+#
+# See https://wiibrew.org/wiki//title/00000001/00000002/data/setting.txt for information about setting.txt.
+
+import io
+from ..shared import _pad_bytes
+
+
+_key = 0x73B5DBFA
+
+class SettingTxt:
+    """
+    A SettingTxt object that allows for decrypting and then parsing a setting.txt file from the Wii.
+
+    Attributes
+    ----------
+    area : str
+        The region of the System Menu this file matches with.
+    model : str
+        The model of the console, usually RVL-001 or RVL-101.
+    dvd : int
+        Unknown, might have to do with indicating support for scrapped DVD playback capabilities.
+    mpch : str
+        Unknown, generally accepted value is "0x7FFE".
+    code : str
+        Unknown code, may match with manufacturer code in serial number?
+    serial_number : str
+        Serial number of the console.
+    video : str
+        Video mode, either NTSC or PAL.
+    game : str
+        Another region code, possibly set by the hidden region select channel.
+    """
+    def __init__(self):
+        self.area: str = ""
+        self.model: str = ""
+        self.dvd: int = 0
+        self.mpch: str = ""  # What does this mean, Movie Player Channel? It's also a hex string, it seems.
+        self.code: str = ""
+        self.serial_number: str = ""
+        self.video: str = ""
+        self.game: str = ""
+
+    def load(self, setting_txt: bytes) -> None:
+        """
+        Loads the raw data of an encrypted setting.txt file and decrypts it to parse its arguments
+
+        Parameters
+        ----------
+        setting_txt : bytes
+            The data of an encrypted setting.txt file.
+        """
+        with io.BytesIO(setting_txt) as setting_data:
+            global _key  # I still don't actually know what *kind* of encryption this is.
+            setting_txt_dec: [int] = []
+            for i in range(0, 256):
+                setting_txt_dec.append(int.from_bytes(setting_data.read(1)) ^ (_key & 0xff))
+                _key = (_key << 1) | (_key >> 31)
+        setting_txt_dec = bytes(setting_txt_dec)
+        try:
+            setting_str = setting_txt_dec.decode('utf-8')
+        except UnicodeDecodeError:
+            last_newline_pos = setting_txt_dec.rfind(b'\n')  # This makes sure we don't try to decode any garbage data.
+            setting_str = setting_txt_dec[:last_newline_pos + 1].decode('utf-8')
+        self.load_decrypted(setting_str)
+
+    def load_decrypted(self, setting_txt: str) -> None:
+        """
+        Loads the raw data of a decrypted setting.txt file and parses its arguments
+
+        Parameters
+        ----------
+        setting_txt : str
+            The data of a decrypted setting.txt file.
+        """
+        setting_dict = {}
+        print(setting_txt)
+        # Iterate over every key in the file to create a dictionary.
+        for line in setting_txt.splitlines():
+            line = line.strip()
+            if line is not None:
+                key, value = line.split('=', 1)
+                setting_dict[key.strip()] = value.strip()
+        # Load the values from the dictionary into the object.
+        self.area = setting_dict["AREA"]
+        self.model = setting_dict["MODEL"]
+        self.dvd = int(setting_dict["DVD"])
+        self.mpch = setting_dict["MPCH"]
+        self.code = setting_dict["CODE"]
+        self.serial_number = setting_dict["SERNO"]
+        self.video = setting_dict["VIDEO"]
+        self.game = setting_dict["GAME"]
+
+    def dump(self) -> bytes:
+        """
+        Dumps the SettingTxt object back into an encrypted bytes that the Wii can load.
+
+        Returns
+        -------
+        bytes
+            The setting.txt file as encrypted bytes.
+        """
+        setting_str = self.dump_decrypted()
+        setting_txt_dec = setting_str.encode()
+        global _key
+        # This could probably be made more efficient somehow.
+        setting_txt_enc: [int] = []
+        with io.BytesIO(setting_txt_dec) as setting_data:
+            for i in range(0, len(setting_txt_dec)):
+                setting_txt_enc.append(int.from_bytes(setting_data.read(1)) ^ (_key & 0xff))
+                _key = (_key << 1) | (_key >> 31)
+        setting_txt_enc = _pad_bytes(bytes(setting_txt_enc), 256)
+        return setting_txt_enc
+
+    def dump_decrypted(self) -> str:
+        """
+        Dumps the SettingTxt object into a decrypted string.
+
+        Returns
+        -------
+        str
+            The setting.txt file as decrypted text.
+        """
+        # Write the keys back into a text file that can then be manually edited or re-encrypted.
+        setting_txt = ""
+        setting_txt += f"AREA={self.area}\n"
+        setting_txt += f"MODEL={self.model}\n"
+        setting_txt += f"DVD={self.dvd}\n"
+        setting_txt += f"MPCH={self.mpch}\n"
+        setting_txt += f"CODE={self.code}\n"
+        setting_txt += f"SERNO={self.serial_number}\n"
+        setting_txt += f"VIDEO={self.video}\n"
+        setting_txt += f"GAME={self.game}\n"
+        return setting_txt

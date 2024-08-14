@@ -1,4 +1,4 @@
-# "title/sys.py" from libWiiPy by NinjaCheetah & Contributors
+# "nand/sys.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
 # See https://wiibrew.org/wiki//sys/uid.sys for information about uid.sys.
@@ -28,7 +28,7 @@ class _UidSysEntry:
 class UidSys:
     """
     A UidSys object to parse and edit the uid.sys file stored in /sys/ on the Wii's NAND. This file is used to track all
-    the titles installed on the console.
+    the titles that have been launched on a console.
 
     Attributes
     ----------

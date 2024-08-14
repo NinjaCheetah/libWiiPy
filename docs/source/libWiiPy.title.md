@@ -26,14 +26,6 @@
    :show-inheritance:
 ```
 
-### libWiiPy.title.emunand module
-```{eval-rst}
-.. automodule:: libWiiPy.title.emunand
-   :members:
-   :undoc-members:
-   :show-inheritance:
-```
-
 ### libWiipy.title.iospatcher module
 ```{eval-rst}
 .. automodule:: libWiiPy.title.iospatcher
@@ -45,14 +37,6 @@
 ### libWiiPy.title.nus module
 ```{eval-rst}
 .. automodule:: libWiiPy.title.nus
-   :members:
-   :undoc-members:
-   :show-inheritance:
-```
-
-### libWiiPy.title.sys module
-```{eval-rst}
-.. automodule:: libWiiPy.title.sys
    :members:
    :undoc-members:
    :show-inheritance:

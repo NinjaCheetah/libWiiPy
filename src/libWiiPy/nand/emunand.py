@@ -1,4 +1,4 @@
-# "title/emunand.py" from libWiiPy by NinjaCheetah & Contributors
+# "nand/emunand.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
 # Code for handling setting up and modifying a Wii EmuNAND.
@@ -6,8 +6,8 @@
 import os
 import pathlib
 import shutil
-from .title import Title
-from .content import SharedContentMap as _SharedContentMap
+from ..title.title import Title
+from ..title.content import SharedContentMap as _SharedContentMap
 from .sys import UidSys as _UidSys
 
 

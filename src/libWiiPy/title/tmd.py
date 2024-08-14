@@ -37,7 +37,7 @@ class TMD:
         self.blob_header: bytes = b''
         self.signature_type: int = 0
         self.signature: bytes = b''
-        self.issuer: bytes = b''  # Follows the format "Root-CA%08x-CP%08x"
+        self.signature_issuer: str = ""  # Follows the format "Root-CA%08x-CP%08x"
         self.tmd_version: int = 0  # This seems to always be 0 no matter what?
         self.ca_crl_version: int = 0  # Certificate Authority Certificate Revocation List version
         self.signer_crl_version: int = 0  # Certificate Policy Certificate Revocation List version
@@ -82,7 +82,7 @@ class TMD:
             self.signature = tmd_data.read(256)
             # Signing certificate issuer.
             tmd_data.seek(0x140)
-            self.issuer = tmd_data.read(64)
+            self.signature_issuer = str(tmd_data.read(64).decode())
             # TMD version, seems to usually be 0, but I've seen references to other numbers.
             tmd_data.seek(0x180)
             self.tmd_version = int.from_bytes(tmd_data.read(1))
@@ -175,7 +175,7 @@ class TMD:
         # Padding to 64 bytes.
         tmd_data += b'\x00' * 60
         # Signing certificate issuer.
-        tmd_data += self.issuer
+        tmd_data += str.encode(self.signature_issuer)
         # TMD version.
         tmd_data += int.to_bytes(self.tmd_version, 1)
         # Certificate Authority CRL version.
