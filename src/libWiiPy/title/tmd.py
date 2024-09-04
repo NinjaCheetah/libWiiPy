@@ -280,10 +280,11 @@ class TMD:
 
     def get_title_region(self) -> str:
         """
-        Gets the region of the TMD's associated title.
+        Gets the system region specified in the TMD. This is not necessarily the true region of the title, but is the
+        hardware region that this title is designed and allowed to be run on.
 
         Can be one of several possible values:
-        'Japan', 'North America', 'Europe', 'World', or 'Korea'.
+        'JPN', 'USA', 'EUR', 'None', or 'KOR'.
 
         Returns
         -------
@@ -292,15 +293,15 @@ class TMD:
         """
         match self.region:
             case 0:
-                return "Japan"
+                return "JPN"
             case 1:
-                return "North America"
+                return "USA"
             case 2:
-                return "Europe"
+                return "EUR"
             case 3:
-                return "World"
+                return "None"
             case 4:
-                return "Korea"
+                return "KOR"
 
     def get_title_type(self) -> str:
         """
