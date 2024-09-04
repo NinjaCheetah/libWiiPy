@@ -190,9 +190,15 @@ class Title:
         dec_content = self.content.get_content_by_cid(cid, self.ticket.get_title_key(), skip_hash)
         return dec_content
 
-    def get_title_size(self) -> int:
+    def get_title_size(self, absolute=False) -> int:
         """
-        Gets the installed size of the title, including the TMD and Ticket, in bytes.
+        Gets the installed size of the title, including the TMD and Ticket, in bytes. The "absolute" option determines
+        whether shared content sizes should be included in the total size or not. This option defaults to False.
+
+        Parameters
+        ----------
+        absolute : bool, optional
+            Whether shared contents should be included in the total size or not. Defaults to False.
 
         Returns
         -------
@@ -207,21 +213,32 @@ class Title:
         # For contents, get their sizes from the content records, because they store the intended sizes of the decrypted
         # contents, which are usually different from the encrypted sizes.
         for record in self.content.content_records:
-            title_size += record.content_size
+            if record.content_type == 32769:
+                if absolute:
+                    title_size += record.content_size
+            else:
+                title_size += record.content_size
         return title_size
 
-    def get_title_size_blocks(self) -> int:
+    def get_title_size_blocks(self, absolute=False) -> int:
         """
-        Gets the installed size of the title, including the TMD and Ticket, in the Wii's displayed "blocks" format.
+        Gets the installed size of the title, including the TMD and Ticket, in the Wii's displayed "blocks" format. The
+        "absolute" option determines whether shared content sizes should be included in the total size or not. This
+        option defaults to False.
 
         1 Wii block is equal to 128KiB, and if any amount of a block is used, the entire block is considered used.
+
+        Parameters
+        ----------
+        absolute : bool, optional
+            Whether shared contents should be included in the total size or not. Defaults to False.
 
         Returns
         -------
         int
             The installed size of the title, in blocks.
         """
-        title_size_bytes = self.get_title_size()
+        title_size_bytes = self.get_title_size(absolute)
         blocks = math.ceil(title_size_bytes / 131072)
         return blocks
 
