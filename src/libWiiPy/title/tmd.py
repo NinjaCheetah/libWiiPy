@@ -45,7 +45,7 @@ class TMD:
         self.ios_tid: str = ""  # The Title ID of the IOS version the associated title runs on.
         self.ios_version: int = 0  # The IOS version the associated title runs on.
         self.title_id: str = ""  # The Title ID of the associated title.
-        self.title_type: str = ""  # The type of the associated title.
+        self.title_type: bytes = b''  # The type of the associated title. Should always be 00000001 in a Wii TMD.
         self.group_id: int = 0  # The ID of the publisher of the associated title.
         self.region: int = 0  # The ID of the region of the associated title.
         self.ratings: bytes = b''  # The parental controls rating of the associated title.
@@ -107,11 +107,10 @@ class TMD:
             title_id_bin = tmd_data.read(8)
             title_id_hex = binascii.hexlify(title_id_bin)
             self.title_id = str(title_id_hex.decode())
-            # Type of content.
+            # Type of the title. This is an internal property used to show if this title is for the ill-fated
+            # NetCard (0), or the Wii (1), and is therefore always 1 for Wii TMDs.
             tmd_data.seek(0x194)
-            content_type_bin = tmd_data.read(4)
-            content_type_hex = binascii.hexlify(content_type_bin)
-            self.title_type = str(content_type_hex.decode())
+            self.title_type = tmd_data.read(4)
             # Publisher of the title.
             tmd_data.seek(0x198)
             self.group_id = int.from_bytes(tmd_data.read(2))
@@ -188,8 +187,8 @@ class TMD:
         tmd_data += binascii.unhexlify(self.ios_tid)
         # Title's Title ID.
         tmd_data += binascii.unhexlify(self.title_id)
-        # Content type.
-        tmd_data += binascii.unhexlify(self.title_type)
+        # Title type.
+        tmd_data += self.title_type
         # Group ID.
         tmd_data += int.to_bytes(self.group_id, 2)
         # 2 bytes of zero for reasons.
@@ -305,7 +304,7 @@ class TMD:
 
     def get_title_type(self) -> str:
         """
-        Gets the type of the TMD's associated title.
+        Gets the type of the title this TMD describes. The title_type field is not related to these types.
 
         Can be one of several possible values:
         'System', 'Game', 'Channel', 'SystemChannel', 'GameChannel', or 'HiddenChannel'
@@ -315,7 +314,7 @@ class TMD:
         str
             The type of the title.
         """
-        match self.title_type:
+        match self.title_id[:8]:
             case '00000001':
                 return "System"
             case '00010000':
