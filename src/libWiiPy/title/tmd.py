@@ -8,7 +8,7 @@ import binascii
 import hashlib
 import struct
 from typing import List
-from enum import IntEnum
+from enum import IntEnum as _IntEnum
 from ..types import _ContentRecord
 from ..shared import _bitmask
 from .util import title_ver_dec_to_standard, title_ver_standard_to_dec
@@ -390,7 +390,7 @@ class TMD:
             raise IndexError("Invalid content record! TMD lists '" + str(self.num_contents - 1) +
                              "' contents but index was '" + str(record) + "'!")
 
-    class AccessFlags(IntEnum):
+    class AccessFlags(_IntEnum):
         AHB = 0
         DVD_VIDEO = 1
 

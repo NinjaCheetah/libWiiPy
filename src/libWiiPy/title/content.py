@@ -8,9 +8,17 @@ import io
 import hashlib
 from typing import List
 from dataclasses import dataclass as _dataclass
+from enum import IntEnum as _IntEnum
 from ..types import _ContentRecord
 from ..shared import _pad_bytes, _align_value
 from .crypto import decrypt_content, encrypt_content
+
+
+class ContentType(_IntEnum):
+    NORMAL = 1
+    HASH_TREE = 3
+    DLC = 16385
+    SHARED = 32769
 
 
 class ContentRegion:
@@ -286,7 +294,7 @@ class ContentRegion:
         cid : int
             The Content ID to assign the new content in the content record.
         index : int
-            The index to place the new content at.
+            The index used when encrypting the new content.
         content_type : int
             The type of the new content.
         content_size : int
@@ -304,10 +312,11 @@ class ContentRegion:
         self.content_list.append(enc_content)
         self.content_records.append(_ContentRecord(cid, index, content_type, content_size, content_hash))
 
-    def add_content(self, dec_content: bytes, cid: int, index: int, content_type: int, title_key: bytes) -> None:
+    def add_content(self, dec_content: bytes, cid: int, content_type: int, title_key: bytes) -> None:
         """
-        Adds a new decrypted content to the ContentRegion, and adds the provided Content ID, index, content type,
-        content size, and content hash to a new record in the ContentRecord list.
+        Adds a new decrypted content to the end of the ContentRegion, and adds the provided Content ID, content type,
+        content size, and content hash to a new record in the ContentRecord list. The index will be automatically
+        assigned by incrementing the current highest index in the records.
 
         This first gets the content hash and size from the provided data, and then encrypts the content with the
         provided Title Key before adding it to the ContentRegion.
@@ -318,13 +327,16 @@ class ContentRegion:
             The new decrypted content to add.
         cid : int
             The Content ID to assign the new content in the content record.
-        index : int
-            The index to place the new content at.
         content_type : int
             The type of the new content.
         title_key : bytes
             The Title Key that matches the other content in the ContentRegion.
         """
+        # Find the current highest content index and increment it for this content.
+        content_indices = []
+        for record in self.content_records:
+            content_indices.append(record.index)
+        index = max(content_indices) + 1
         content_size = len(dec_content)
         content_hash = str.encode(hashlib.sha1(dec_content).hexdigest())
         enc_content = encrypt_content(dec_content, title_key, index)

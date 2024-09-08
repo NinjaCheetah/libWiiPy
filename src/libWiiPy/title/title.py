@@ -76,7 +76,9 @@ class Title:
         if self.tmd.title_id == "0000000100000001":
             self.wad.wad_type = "ib"
         # Dump the TMD and set it in the WAD.
+        # This requires updating the content records and number of contents in the TMD first.
         self.tmd.content_records = self.content.content_records
+        self.tmd.num_contents = len(self.content.content_records)
         self.wad.set_tmd_data(self.tmd.dump())
         # Dump the Ticket and set it in the WAD.
         self.wad.set_ticket_data(self.ticket.dump())
@@ -247,7 +249,7 @@ class Title:
         """
         Sets the content at the provided content index to the provided new encrypted content. The provided hash and
         content size are set in the corresponding content record. A new Content ID or content type can also be
-        specified, but if it isn't than the current values are preserved.
+        specified, but if it isn't then the current values are preserved.
 
         This uses the content index, which is the value tied to each content and used as the IV for encryption, rather
         than the literal index in the array of content, because sometimes the contents end up out of order in a WAD
@@ -279,7 +281,7 @@ class Title:
         """
         Sets the content at the provided content index to the provided new decrypted content. The hash and content size
         of this content will be generated and then set in the corresponding content record. A new Content ID or content
-        type can also be specified, but if it isn't than the current values are preserved.
+        type can also be specified, but if it isn't then the current values are preserved.
 
         This also updates the content records in the TMD after the content is set.
 
