@@ -498,6 +498,54 @@ class ContentRegion:
         enc_content = encrypt_content(dec_content, title_key, index)
         self.content_list[target_index] = enc_content
 
+    def remove_content_by_index(self, index: int) -> None:
+        """
+        Removes the content at the specified index from the ContentRegion and content records.
+
+        This will allow gaps to be left in content indices, however this should not cause any issues.
+
+        Parameters
+        ----------
+        index : int
+            The index of the content you want to remove.
+        """
+        # Get a list of the current content indices, so we can make sure the target one exists. Doing it this way
+        # ensures we can find the target, even if the highest content index is greater than the highest literal index.
+        current_indices = []
+        for record in self.content_records:
+            current_indices.append(record.index)
+        if index not in current_indices:
+            raise ValueError("You are trying to remove the content at index " + str(index) + ", but no content with "
+                             "that index currently exists!")
+        # This is the literal index in the list of content/content records that we're going to change.
+        target_index = current_indices.index(index)
+        # Delete the target index from both the content list and content records.
+        self.content_list.pop(target_index)
+        self.content_records.pop(target_index)
+
+    def remove_content_by_cid(self, cid: int) -> None:
+        """
+        Removes the content with the specified Content ID from the ContentRegion and content records.
+
+        This will allow gaps to be left in content indices, however this should not cause any issues.
+
+        Parameters
+        ----------
+        cid : int
+            The Content ID of the content you want to remove.
+        """
+        # Get a list of the current Content IDs, so we can make sure the target one exists.
+        content_ids = []
+        for record in self.content_records:
+            content_ids.append(record.content_id)
+        if cid not in content_ids:
+            raise ValueError("You are trying to remove content with Content ID " + str(cid) + ", but no content with "
+                             "that ID exists!")
+        # Remove the content index associated with the CID we now know exists.
+        target_index = content_ids.index(cid)
+        content_index = self.content_records[target_index].index
+        self.remove_content_by_index(content_index)
+
 
 @_dataclass
 class _SharedContentRecord:
