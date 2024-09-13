@@ -158,16 +158,11 @@ class ContentRegion:
         bytes
             The encrypted content listed in the content record.
         """
-        # Get a list of the current Content IDs, so we can make sure the target one exists.
-        content_ids = []
-        for record in self.content_records:
-            content_ids.append(record.content_id)
-        if cid not in content_ids:
-            raise ValueError("You are trying to get a content with Content ID " + str(cid) + ", but no content with "
-                             "that ID exists!")
-        # Get the content index associated with the CID we now know exists.
-        target_index = content_ids.index(cid)
-        content_index = self.content_records[target_index].index
+        try:
+            content_index = self.get_index_from_cid(cid)
+        except ValueError:
+            raise ValueError(f"You are trying to get a content with Content ID {cid}, "
+                             f"but no content with that ID exists!")
         content_enc = self.get_enc_content_by_index(content_index)
         return content_enc
 
@@ -246,16 +241,11 @@ class ContentRegion:
         bytes
             The decrypted content listed in the content record.
         """
-        # Get a list of the current Content IDs, so we can make sure the target one exists.
-        content_ids = []
-        for record in self.content_records:
-            content_ids.append(record.content_id)
-        if cid not in content_ids:
-            raise ValueError("You are trying to get a content with Content ID " + str(cid) + ", but no content with "
-                             "that ID exists!")
-        # Get the content index associated with the CID we now know exists.
-        target_index = content_ids.index(cid)
-        content_index = self.content_records[target_index].index
+        try:
+            content_index = self.get_index_from_cid(cid)
+        except ValueError:
+            raise ValueError(f"You are trying to get a content with Content ID {cid}, "
+                             f"but no content with that ID exists!")
         content_dec = self.get_content_by_index(content_index, title_key, skip_hash)
         return content_dec
 
@@ -280,6 +270,32 @@ class ContentRegion:
         for content in range(self.num_contents):
             dec_contents.append(self.get_content_by_index(content, title_key, skip_hash))
         return dec_contents
+
+    def get_index_from_cid(self, cid: int) -> int:
+        """
+        Gets the content index of a content by its Content ID. The returned index is the value tied to each content and
+        used as the IV for encryption, rather than the literal index in the array of content, because sometimes the
+        contents end up out of order in a WAD while still retaining the original indices.
+
+        Parameters
+        ----------
+        cid : int
+            The Content ID to get the index of.
+
+        Returns
+        -------
+        int
+            The content index.
+        """
+        # Get a list of the current Content IDs, so we can make sure the target one exists.
+        content_ids = []
+        for record in self.content_records:
+            content_ids.append(record.content_id)
+        if cid not in content_ids:
+            raise ValueError("The specified Content ID does not exist!")
+        literal_index = content_ids.index(cid)
+        target_index = self.content_records[literal_index].index
+        return target_index
 
     def add_enc_content(self, enc_content: bytes, cid: int, index: int, content_type: int, content_size: int,
                         content_hash: bytes) -> None:
@@ -534,16 +550,11 @@ class ContentRegion:
         cid : int
             The Content ID of the content you want to remove.
         """
-        # Get a list of the current Content IDs, so we can make sure the target one exists.
-        content_ids = []
-        for record in self.content_records:
-            content_ids.append(record.content_id)
-        if cid not in content_ids:
-            raise ValueError("You are trying to remove content with Content ID " + str(cid) + ", but no content with "
-                             "that ID exists!")
-        # Remove the content index associated with the CID we now know exists.
-        target_index = content_ids.index(cid)
-        content_index = self.content_records[target_index].index
+        try:
+            content_index = self.get_index_from_cid(cid)
+        except ValueError:
+            raise ValueError(f"You are trying to remove content with Content ID {cid}, "
+                             f"but no content with that ID exists!")
         self.remove_content_by_index(content_index)
 
 

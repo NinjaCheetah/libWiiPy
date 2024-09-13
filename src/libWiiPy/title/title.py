@@ -244,6 +244,55 @@ class Title:
         blocks = math.ceil(title_size_bytes / 131072)
         return blocks
 
+    def add_enc_content(self, enc_content: bytes, cid: int, index: int, content_type: int, content_size: int,
+                        content_hash: bytes) -> None:
+        """
+        Adds a new encrypted content to the ContentRegion, and adds the provided Content ID, index, content type,
+        content size, and content hash to a new record in the ContentRecord list.
+
+        Parameters
+        ----------
+        enc_content : bytes
+            The new encrypted content to add.
+        cid : int
+            The Content ID to assign the new content in the content record.
+        index : int
+            The index used when encrypting the new content.
+        content_type : int
+            The type of the new content.
+        content_size : int
+            The size of the new encrypted content when decrypted.
+        content_hash : bytes
+            The hash of the new encrypted content when decrypted.
+        """
+        # Add the encrypted content.
+        self.content.add_enc_content(enc_content, cid, index, content_type, content_size, content_hash)
+        # Update the TMD to match.
+        self.tmd.content_records = self.content.content_records
+
+    def add_content(self, dec_content: bytes, cid: int, content_type: int) -> None:
+        """
+        Adds a new decrypted content to the end of the ContentRegion, and adds the provided Content ID, content type,
+        content size, and content hash to a new record in the ContentRecord list. The index will be automatically
+        assigned by incrementing the current highest index in the records.
+
+        This first gets the content hash and size from the provided data, and then encrypts the content with the
+        Title Key before adding it to the ContentRegion.
+
+        Parameters
+        ----------
+        dec_content : bytes
+            The new decrypted content to add.
+        cid : int
+            The Content ID to assign the new content in the content record.
+        content_type : int
+            The type of the new content.
+        """
+        # Add the decrypted content.
+        self.content.add_content(dec_content, cid, content_type, self.ticket.get_title_key())
+        # Update the TMD to match.
+        self.tmd.content_records = self.content.content_records
+
     def set_enc_content(self, enc_content: bytes, index: int, content_size: int, content_hash: bytes, cid: int = None,
                         content_type: int = None) -> None:
         """
