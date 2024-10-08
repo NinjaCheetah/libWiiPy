@@ -75,7 +75,6 @@ class SettingTxt:
             The data of a decrypted setting.txt file.
         """
         setting_dict = {}
-        print(setting_txt)
         # Iterate over every key in the file to create a dictionary.
         for line in setting_txt.splitlines():
             line = line.strip()
