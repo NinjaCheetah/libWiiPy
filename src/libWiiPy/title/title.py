@@ -137,7 +137,8 @@ class Title:
         self.tmd.set_title_id(title_id)
         title_key_decrypted = self.ticket.get_title_key()
         self.ticket.set_title_id(title_id)
-        title_key_encrypted = encrypt_title_key(title_key_decrypted, self.ticket.common_key_index, title_id)
+        title_key_encrypted = encrypt_title_key(title_key_decrypted, self.ticket.common_key_index, title_id,
+                                                self.ticket.is_dev)
         self.ticket.title_key_enc = title_key_encrypted
 
     def set_title_version(self, title_version: str | int) -> None:

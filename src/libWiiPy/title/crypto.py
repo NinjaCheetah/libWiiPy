@@ -30,7 +30,7 @@ def _convert_tid_to_iv(title_id: str | bytes) -> bytes:
     return title_key_iv
 
 
-def decrypt_title_key(title_key_enc: bytes, common_key_index: int, title_id: bytes | str) -> bytes:
+def decrypt_title_key(title_key_enc: bytes, common_key_index: int, title_id: bytes | str, dev=False) -> bytes:
     """
     Gets the decrypted version of the encrypted Title Key provided.
 
@@ -44,6 +44,8 @@ def decrypt_title_key(title_key_enc: bytes, common_key_index: int, title_id: byt
         The index of the common key used to encrypt the Title Key.
     title_id : bytes, str
         The Title ID of the title that the key is for.
+    dev : bool
+        Whether the Title Key is encrypted with the development key or not.
 
     Returns
     -------
@@ -51,7 +53,7 @@ def decrypt_title_key(title_key_enc: bytes, common_key_index: int, title_id: byt
         The decrypted Title Key.
     """
     # Load the correct common key for the title.
-    common_key = get_common_key(common_key_index)
+    common_key = get_common_key(common_key_index, dev)
     # Convert the IV into the correct format based on the type provided.
     title_key_iv = _convert_tid_to_iv(title_id)
     # The IV will always be in the same format by this point, so add the last 8 bytes.
@@ -63,7 +65,7 @@ def decrypt_title_key(title_key_enc: bytes, common_key_index: int, title_id: byt
     return title_key
 
 
-def encrypt_title_key(title_key_dec: bytes, common_key_index: int, title_id: bytes | str) -> bytes:
+def encrypt_title_key(title_key_dec: bytes, common_key_index: int, title_id: bytes | str, dev=False) -> bytes:
     """
     Encrypts the provided Title Key with the selected common key.
 
@@ -77,6 +79,8 @@ def encrypt_title_key(title_key_dec: bytes, common_key_index: int, title_id: byt
         The index of the common key used to encrypt the Title Key.
     title_id : bytes, str
         The Title ID of the title that the key is for.
+    dev : bool
+        Whether the Title Key is encrypted with the development key or not.
 
     Returns
     -------
@@ -84,7 +88,7 @@ def encrypt_title_key(title_key_dec: bytes, common_key_index: int, title_id: byt
         An encrypted Title Key.
     """
     # Load the correct common key for the title.
-    common_key = get_common_key(common_key_index)
+    common_key = get_common_key(common_key_index, dev)
     # Convert the IV into the correct format based on the type provided.
     title_key_iv = _convert_tid_to_iv(title_id)
     # The IV will always be in the same format by this point, so add the last 8 bytes.

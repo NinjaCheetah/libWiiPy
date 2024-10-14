@@ -40,6 +40,9 @@ class Ticket:
 
     Attributes
     ----------
+    is_dev : bool
+        Whether this Ticket is signed for development or not, and whether the Title Key is encrypted for development
+        or not.
     signature : bytes
         The signature applied to the ticket.
     ticket_version : int
@@ -56,6 +59,8 @@ class Ticket:
         The index of the common key required to decrypt this ticket's Title Key.
     """
     def __init__(self):
+        # If this is a dev ticket
+        self.is_dev: bool = False  # Defaults to false, set to true during load if this ticket is using dev certs.
         # Signature blob header
         self.signature_type: bytes = b''  # Type of signature, always 0x10001 for RSA-2048
         self.signature: bytes = b''  # Actual signature data
@@ -155,6 +160,11 @@ class Ticket:
                 limit_type = int.from_bytes(ticket_data.read(4))
                 limit_value = int.from_bytes(ticket_data.read(4))
                 self.title_limits_list.append(_TitleLimit(limit_type, limit_value))
+        # Check certs to see if this is a retail or dev ticket. Treats unknown certs as being retail for now.
+        if self.signature_issuer.find("Root-CA00000002-XS00000006") != -1:
+            self.is_dev = True
+        else:
+            self.is_dev = False
 
     def dump(self) -> bytes:
         """
@@ -315,7 +325,7 @@ class Ticket:
         bytes
             The decrypted title key.
         """
-        title_key = decrypt_title_key(self.title_key_enc, self.common_key_index, self.title_id)
+        title_key = decrypt_title_key(self.title_key_enc, self.common_key_index, self.title_id, self.is_dev)
         return title_key
 
     def set_title_id(self, title_id) -> None:
