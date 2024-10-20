@@ -77,7 +77,7 @@ class Title:
             self.wad.wad_type = "ib"
         # Dump the TMD and set it in the WAD.
         # This requires updating the content records and number of contents in the TMD first.
-        self.tmd.content_records = self.content.content_records
+        self.tmd.content_records = self.content.content_records  # This may not be needed because it's a ref already
         self.tmd.num_contents = len(self.content.content_records)
         self.wad.set_tmd_data(self.tmd.dump())
         # Dump the Ticket and set it in the WAD.
@@ -119,8 +119,9 @@ class Title:
         """
         if not self.tmd.content_records:
             ValueError("No TMD appears to have been loaded, so content records cannot be read from it.")
-        # Load the content records into the ContentRegion object.
+        # Load the content records into the ContentRegion object, and update the number of contents.
         self.content.content_records = self.tmd.content_records
+        self.content.num_contents = self.tmd.num_contents
 
     def set_title_id(self, title_id: str) -> None:
         """
@@ -297,13 +298,9 @@ class Title:
     def set_enc_content(self, enc_content: bytes, index: int, content_size: int, content_hash: bytes, cid: int = None,
                         content_type: int = None) -> None:
         """
-        Sets the content at the provided content index to the provided new encrypted content. The provided hash and
-        content size are set in the corresponding content record. A new Content ID or content type can also be
-        specified, but if it isn't then the current values are preserved.
-
-        This uses the content index, which is the value tied to each content and used as the IV for encryption, rather
-        than the literal index in the array of content, because sometimes the contents end up out of order in a WAD
-        while still retaining the original indices.
+        Sets the content at the provided index to the provided new encrypted content. The provided hash and content size
+        are set in the corresponding content record. A new Content ID or content type can also be specified, but if it
+        isn't then the current values are preserved.
 
         This also updates the content records in the TMD after the content is set.
 
@@ -329,9 +326,9 @@ class Title:
 
     def set_content(self, dec_content: bytes, index: int, cid: int = None, content_type: int = None) -> None:
         """
-        Sets the content at the provided content index to the provided new decrypted content. The hash and content size
-        of this content will be generated and then set in the corresponding content record. A new Content ID or content
-        type can also be specified, but if it isn't then the current values are preserved.
+        Sets the content at the provided index to the provided new decrypted content. The hash and content size of this
+        content will be generated and then set in the corresponding content record. A new Content ID or content type can
+        also be specified, but if it isn't then the current values are preserved.
 
         This also updates the content records in the TMD after the content is set.
 
@@ -357,16 +354,12 @@ class Title:
         sure that it matches the corresponding record. This content will then be encrypted using the title's Title Key
         before being loaded.
 
-        This uses the content index, which is the value tied to each content and used as the IV for encryption, rather
-        than the literal index in the array of content, because sometimes the contents end up out of order in a WAD
-        while still retaining the original indices.
-
         Parameters
         ----------
         dec_content : bytes
             The decrypted content to load.
         index : int
-            The content index to load the content at.
+            The index to load the content at.
         """
         # Load the decrypted content.
         self.content.load_content(dec_content, index, self.ticket.get_title_key())
@@ -383,6 +376,7 @@ class Title:
         after any changes to the TMD or Ticket, and before dumping the Title object into a WAD to ensure that the WAD
         is properly fakesigned.
         """
+        self.tmd.num_contents = self.content.num_contents  # This needs to be updated in case it was changed
         self.tmd.fakesign()
         self.ticket.fakesign()
 
