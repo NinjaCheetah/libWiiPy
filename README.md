@@ -8,7 +8,7 @@ libWiiPy is inspired by [libWiiSharp](https://github.com/TheShadowEevee/libWiiSh
 # Features
 This list will expand as libWiiPy is developed, but these features are currently available:
 - TMD and Ticket parsing/editing (`.tmd`, `.tik`)
-- Title parsing/editing, including content encryption/decryption
+- Title parsing/editing, including content encryption/decryption (both retail and development)
 - WAD file parsing/editing (`.wad`)
 - Downloading titles from the NUS
 - Packing and unpacking U8 archives (`.app`, `.arc`)
