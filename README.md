@@ -1,4 +1,4 @@
-![banner](https://github.com/NinjaCheetah/libWiiPy/assets/58050615/00ea4c41-673c-4a74-addb-fbb40b4313c8)
+![banner](https://github.com/user-attachments/assets/eb30a500-6d27-42f1-bded-24221930a8e3)
 # libWiiPy
 libWiiPy is a modern Python 3 library for handling the various files and formats found on the Wii. It aims to be simple to use, well maintained, and offer as many features as reasonably possible in one library, so that a newly-written Python program could do 100% of its Wii-related work with just one library. It also aims to be fully cross-platform, so that any tools written with it can also be cross-platform.
 
