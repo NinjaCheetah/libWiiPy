@@ -66,7 +66,28 @@ class U8Archive:
             u8_data.seek(0x0)
             self.u8_magic = u8_data.read(4)
             if self.u8_magic != b'\x55\xAA\x38\x2D':
-                raise TypeError("This is not a valid U8 archive!")
+                # Check for an IMET header, if the file doesn't start with the proper magic number. The header magic
+                # may be at either 0x40 or 0x80 depending on whether this title has a build tag at the start or not.
+                u8_data.seek(0x40)
+                self.u8_magic = u8_data.read(4)
+                if self.u8_magic == b'\x49\x4D\x45\x54':
+                    # IMET with no build tag means the U8 archive should start at 0x600.
+                    u8_data.seek(0x600)
+                    self.u8_magic = u8_data.read(4)
+                    if self.u8_magic != b'\x55\xAA\x38\x2D':
+                        raise TypeError("This is not a valid U8 archive!")
+                else:
+                    # This check will pass if the IMET comes after a build tag.
+                    u8_data.seek(0x80)
+                    self.u8_magic = u8_data.read(4)
+                    if self.u8_magic == b'\x49\x4D\x45\x54':
+                        # IMET with a build tag means the U8 archive should start at 0x640.
+                        u8_data.seek(0x640)
+                        self.u8_magic = u8_data.read(4)
+                        if self.u8_magic != b'\x55\xAA\x38\x2D':
+                            raise TypeError("This is not a valid U8 archive!")
+                    else:
+                        raise TypeError("This is not a valid U8 archive!")
             # Offset of the root node, which will always be 0x20.
             self.root_node_offset = int.from_bytes(u8_data.read(4))
             # The size of the U8 header.
@@ -257,7 +278,7 @@ def _pack_u8_dir(u8_archive: U8Archive, current_path, node_count, parent_node):
     return u8_archive, node_count
 
 
-def pack_u8(input_path) -> bytes:
+def pack_u8(input_path, generate_imet=False, imet_titles:List[str]=None) -> bytes:
     """
     Packs the provided file or folder into a new U8 archive, and returns the raw file data for it.
 
@@ -265,6 +286,12 @@ def pack_u8(input_path) -> bytes:
     ----------
     input_path
         The path to the input file or folder.
+    generate_imet : bool, optional
+        Whether an IMET header should be generated for this U8 archive or not. IMET headers are only used for channel
+        banners (00000000.app). Defaults to False.
+    imet_titles : List[str], optional
+        A list of the channel title in different languages for the IMET header. If only one item is provided, that
+        item will be used for all entries in the header. Defaults to None, and is only used when generate_imet is True.
 
     Returns
     -------
@@ -287,4 +314,4 @@ def pack_u8(input_path) -> bytes:
     elif input_path.is_file():
         raise ValueError("This does not appear to be a directory.")
     else:
-        raise FileNotFoundError("Input directory: \"" + str(input_path) + "\" does not exist!")
+        raise FileNotFoundError(f"Input directory: \"{input_path}\" does not exist!")

@@ -23,12 +23,11 @@ class _TitleLimit:
     Attributes
     ----------
     limit_type : int
-        The type of play limit applied.
+        The type of play limit applied. 0 and 3 are none, 1 is a time limit, and 4 is a launch count limit.
     maximum_usage : int
         The maximum value for the type of play limit applied.
     """
     # The type of play limit applied.
-    # 0 = None, 1 = Time Limit, 3 = None, 4 = Launch Count
     limit_type: int
     # The maximum value of the limit applied.
     maximum_usage: int
