@@ -1,6 +1,7 @@
 # "title/__init__.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 
+from .banner import *
 from .content import *
 from .crypto import *
 from .iospatcher import *

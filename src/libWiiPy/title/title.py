@@ -58,9 +58,9 @@ class Title:
         self.content.load(self.wad.get_content_data(), self.tmd.content_records)
         # Ensure that the Title IDs of the TMD and Ticket match before doing anything else. If they don't, throw an
         # error because clearly something strange has gone on with the WAD and editing it probably won't work.
-        if self.tmd.title_id != str(self.ticket.title_id.decode()):
-            raise ValueError("The Title IDs of the TMD and Ticket in this WAD do not match. This WAD appears to be "
-                             "invalid.")
+        #if self.tmd.title_id != str(self.ticket.title_id.decode()):
+        #    raise ValueError("The Title IDs of the TMD and Ticket in this WAD do not match. This WAD appears to be "
+        #                     "invalid.")
 
     def dump_wad(self) -> bytes:
         """
