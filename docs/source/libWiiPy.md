@@ -6,6 +6,7 @@
 :maxdepth: 4
 
 libWiiPy.archive
+libWiiPy.media
 libWiiPy.nand
 libWiiPy.title
 ```
