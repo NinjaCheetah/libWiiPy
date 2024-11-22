@@ -8,6 +8,7 @@ import os
 import pathlib
 from dataclasses import dataclass as _dataclass
 from typing import List
+from ..media.banner import IMETHeader as _IMETHeader
 from ..shared import _align_value, _pad_bytes
 
 
@@ -36,13 +37,25 @@ class _U8Node:
 
 
 class U8Archive:
-    def __init__(self):
-        """
-        A U8 object that allows for managing the contents of a U8 archive.
+    """
+    A U8 object that allows for parsing and editing the contents of a U8 archive.
 
-        Attributes
-        ----------
-        """
+    Attributes
+    ----------
+    u8_node_list : List[_U8Node]
+        A list of U8Node objects representing the nodes of the U8 archive.
+    file_name_list : List[str]
+        A list of the names of the files in the U8 archive.
+    file_data_list : List[bytes]
+        A list of file data for the files in the U8 archive; corresponds with file_name_list.
+    header_size : int
+        The size of the U8 archive header.
+    data_offset : int
+        The offset of the data region of the U8 archive.
+    imet_header: IMETHeader
+        The IMET header of the U8 archive, if one exists. Otherwise, an empty IMETHeader object.
+    """
+    def __init__(self):
         self.u8_magic = b''
         self.u8_node_list: List[_U8Node] = []  # All the nodes in the header of a U8 file.
         self.file_name_list: List[str] = []
@@ -51,6 +64,7 @@ class U8Archive:
         self.header_size: int = 0
         self.data_offset: int = 0
         self.root_node: _U8Node = _U8Node(0, 0, 0, 0)
+        self.imet_header: _IMETHeader = _IMETHeader()
 
     def load(self, u8_data: bytes) -> None:
         """
@@ -76,6 +90,9 @@ class U8Archive:
                     self.u8_magic = u8_data.read(4)
                     if self.u8_magic != b'\x55\xAA\x38\x2D':
                         raise TypeError("This is not a valid U8 archive!")
+                    # Parse the IMET header, then continue parsing the U8 archive.
+                    u8_data.seek(0x0)
+                    self.imet_header.load(u8_data.read(0x600))
                 else:
                     # This check will pass if the IMET comes after a build tag.
                     u8_data.seek(0x80)
@@ -86,6 +103,9 @@ class U8Archive:
                         self.u8_magic = u8_data.read(4)
                         if self.u8_magic != b'\x55\xAA\x38\x2D':
                             raise TypeError("This is not a valid U8 archive!")
+                        # Parse the IMET header, then continue parsing the U8 archive.
+                        u8_data.seek(0x40)
+                        self.imet_header.load(u8_data.read(0x600))
                     else:
                         raise TypeError("This is not a valid U8 archive!")
             # Offset of the root node, which will always be 0x20.
@@ -236,7 +256,7 @@ def extract_u8(u8_data, output_folder) -> None:
             open(current_dir.joinpath(u8_archive.file_name_list[node]), "wb").write(u8_archive.file_data_list[node])
         # Handle an invalid node type.
         elif u8_archive.u8_node_list[node].type != 0 and u8_archive.u8_node_list[node].type != 1:
-            raise ValueError("A node with an invalid type (" + str(u8_archive.u8_node_list[node].type) + ") was found!")
+            raise ValueError(f"A node with an invalid type ({str(u8_archive.u8_node_list[node].type)}) was found!")
 
 
 def _pack_u8_dir(u8_archive: U8Archive, current_path, node_count, parent_node):
@@ -282,13 +302,16 @@ def pack_u8(input_path, generate_imet=False, imet_titles:List[str]=None) -> byte
     """
     Packs the provided file or folder into a new U8 archive, and returns the raw file data for it.
 
+    To generate an IMET header for this U8 archive, the archive must contain the required banner files "icon.bin",
+    "banner.bin", and "sound.bin", because the sizes of these files are stored in the header.
+
     Parameters
     ----------
     input_path
         The path to the input file or folder.
     generate_imet : bool, optional
         Whether an IMET header should be generated for this U8 archive or not. IMET headers are only used for channel
-        banners (00000000.app). Defaults to False.
+        banners (00000000.app), and required banner files must exist to generate this header. Defaults to False.
     imet_titles : List[str], optional
         A list of the channel title in different languages for the IMET header. If only one item is provided, that
         item will be used for all entries in the header. Defaults to None, and is only used when generate_imet is True.
@@ -310,6 +333,8 @@ def pack_u8(input_path, generate_imet=False, imet_titles:List[str]=None) -> byte
         # subdirectory and file. Discard node_count and name_offset since we don't care about them here, as they're
         # really only necessary for the directory recursion.
         u8_archive, _ = _pack_u8_dir(u8_archive, input_path, node_count=1, parent_node=0)
+        if generate_imet:
+            print("gen imet")
         return u8_archive.dump()
     elif input_path.is_file():
         raise ValueError("This does not appear to be a directory.")

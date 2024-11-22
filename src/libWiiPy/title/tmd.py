@@ -396,8 +396,8 @@ class TMD:
 
     def get_access_right(self, flag: int) -> bool:
         """
-        Gets whether an access rights flag is enabled or not. This is done by checking the specified bit. Possible flags
-        and their corresponding bits are defined in the AccessFlags enum.
+        Gets whether the specified access rights flag is enabled or not. This is done by checking the specified bit.
+        Possible flags and their corresponding bits are defined in AccessFlags.
 
         Parameters
         ----------
@@ -408,6 +408,10 @@ class TMD:
         -------
         bool
             True if the flag is enabled, False otherwise.
+
+        See Also
+        --------
+        libWiiPy.title.tmd.TMD.AccessFlags
         """
         return bool(self.access_rights & _bitmask(flag))
 

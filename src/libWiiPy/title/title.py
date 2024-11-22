@@ -9,6 +9,7 @@ from .ticket import Ticket
 from .tmd import TMD
 from .wad import WAD
 from .crypto import encrypt_title_key
+from ..archive.u8 import U8Archive as _U8Archive
 
 
 class Title:
@@ -398,3 +399,25 @@ class Title:
             return True
         else:
             return False
+
+    def get_channel_name(self) -> str:
+        """
+        Gets the English localization of this title's name, if this title is a channel.
+
+        Returns
+        -------
+        str
+            The English channel name.
+        """
+        # First, we need to get the banner (00000000.app) from the title and load it into a U8Archive() object, which
+        # will expose the IMET header, if one exists. If it isn't a U8 archive, then this title has no banner.
+        banner_data = self.get_content_by_index(0)
+        banner_u8 = _U8Archive()
+        try:
+            banner_u8.load(banner_data)
+        except TypeError:
+            raise ValueError("This Title is not a channel and does not have a channel name!")
+        # Check to see if the IMETHeader() has any content by checking its magic property.
+        if banner_u8.imet_header.magic == "":
+            raise ValueError("This Title is not a channel and does not have a channel name!")
+        return banner_u8.imet_header.get_channel_names(banner_u8.imet_header.LocalizedTitles.TITLE_ENGLISH)
