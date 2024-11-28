@@ -6,6 +6,8 @@
 import os
 import pathlib
 import shutil
+from dataclasses import dataclass as _dataclass
+from typing import List
 from ..title.title import Title
 from ..title.content import SharedContentMap as _SharedContentMap
 from .sys import UidSys as _UidSys
@@ -159,3 +161,42 @@ class EmuNAND:
         # On the off chance this title has a meta entry, delete that too.
         if self.meta_dir.joinpath(tid_upper).joinpath(tid_lower).joinpath("title.met").exists():
             shutil.rmtree(self.meta_dir.joinpath(tid_upper).joinpath(tid_lower))
+
+    @_dataclass
+    class InstalledTitles:
+        """
+        An InstalledTitles object that is used to track a title type and any titles that belong to that type that are
+        installed to an EmuNAND.
+
+        Attributes
+        ----------
+        type : str
+            The type (Title ID high) of the installed titles.
+        titles : List[str]
+            The Title ID low of each installed title.
+        """
+        type: str
+        titles: List[str]
+
+    def query_titles(self) -> List[InstalledTitles]:
+        """
+        Scans for installed titles and returns a list of InstalledTitles objects, which each contain a title type
+        (Title ID high) and a list of Title ID lows that are installed under it.
+
+        Returns
+        -------
+        List[InstalledTitles]
+            The titles installed to the EmuNAND.
+        """
+        # Scan for TID highs present.
+        tid_highs = [d for d in self.title_dir.iterdir() if d.is_dir()]
+        # Iterate through each one, verify that every TID low directory contains a TMD, and then add it to the list.
+        installed_titles = []
+        for high in tid_highs:
+            tid_lows = [d for d in high.iterdir() if d.is_dir()]
+            valid_lows = []
+            for low in tid_lows:
+                if low.joinpath("content", "title.tmd").exists():
+                    valid_lows.append(low.name)
+            installed_titles.append(self.InstalledTitles(high.name, valid_lows))
+        return installed_titles
