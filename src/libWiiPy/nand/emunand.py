@@ -7,7 +7,7 @@ import os
 import pathlib
 import shutil
 from dataclasses import dataclass as _dataclass
-from typing import List, Tuple
+from typing import List
 from ..title.ticket import Ticket
 from ..title.title import Title
 from ..title.tmd import TMD
@@ -203,23 +203,22 @@ class EmuNAND:
             installed_titles.append(self.InstalledTitles(high.name, valid_lows))
         return installed_titles
 
-    def get_title_data(self, tid: str) -> Tuple[TMD, Ticket]:
+    def get_title_tmd(self, tid: str) -> TMD:
         """
-        Gets the TMD and Ticket for a title installed to the EmuNAND, and returns them as TMD and Ticket objects in a
-        Tuple. This assumes that the Title in question is installed and is valid, so both the TMD and Ticket need to
-        exist.
+        Gets the TMD for a title installed to the EmuNAND, and returns it as a TMD objects. Returns an error if the
+        TMD for the specified Title ID does not exist.
 
         Parameters
         ----------
         tid : str
-            The Title ID of the Title to get the data for.
+            The Title ID of the Title to get the TMD for.
 
         Returns
         -------
-        Tuple[TMD, Ticket]
-            The TMD and Ticket for the Title.
+        TMD
+            The TMD for the Title.
         """
-        # Validate the TID, then build a path to the TMD and Ticket files to verify that they exist.
+        # Validate the TID, then build a path to the TMD file to verify that it exists.
         if len(tid) != 16:
             raise ValueError(f"Title ID \"{tid}\" is not a valid!")
         tid_high = tid[:8]
@@ -227,11 +226,33 @@ class EmuNAND:
         tmd_path = self.title_dir.joinpath(tid_high, tid_low, "content", "title.tmd")
         if not tmd_path.exists():
             raise FileNotFoundError(f"Title with Title ID {tid} does not appear to be installed!")
+        tmd = TMD()
+        tmd.load(tmd_path.read_bytes())
+        return tmd
+
+    def get_title_ticket(self, tid: str) -> Ticket:
+        """
+        Gets the Ticket for a title installed to the EmuNAND, and returns it as a Ticket object. Returns an error if
+        the Ticket for the specified Title ID does not exist.
+
+        Parameters
+        ----------
+        tid : str
+            The Title ID of the Title to get the Ticket for.
+
+        Returns
+        -------
+        Ticket
+            The Ticket for the Title.
+        """
+        # Validate the TID, then build a path to the Ticket files to verify that it exists.
+        if len(tid) != 16:
+            raise ValueError(f"Title ID \"{tid}\" is not a valid!")
+        tid_high = tid[:8]
+        tid_low = tid[8:]
         ticket_path = self.ticket_dir.joinpath(tid_high, f"{tid_low}.tik")
         if not ticket_path.exists():
             raise FileNotFoundError(f"No Ticket exists for the title with Title ID {tid}!")
-        tmd = TMD()
-        tmd.load(tmd_path.read_bytes())
         ticket = Ticket()
         ticket.load(ticket_path.read_bytes())
-        return tmd, ticket
+        return ticket
