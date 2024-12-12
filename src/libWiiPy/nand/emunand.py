@@ -221,8 +221,8 @@ class EmuNAND:
         # Validate the TID, then build a path to the TMD file to verify that it exists.
         if len(tid) != 16:
             raise ValueError(f"Title ID \"{tid}\" is not a valid!")
-        tid_high = tid[:8]
-        tid_low = tid[8:]
+        tid_high = tid[:8].lower()
+        tid_low = tid[8:].lower()
         tmd_path = self.title_dir.joinpath(tid_high, tid_low, "content", "title.tmd")
         if not tmd_path.exists():
             raise FileNotFoundError(f"Title with Title ID {tid} does not appear to be installed!")
@@ -248,8 +248,8 @@ class EmuNAND:
         # Validate the TID, then build a path to the Ticket files to verify that it exists.
         if len(tid) != 16:
             raise ValueError(f"Title ID \"{tid}\" is not a valid!")
-        tid_high = tid[:8]
-        tid_low = tid[8:]
+        tid_high = tid[:8].lower()
+        tid_low = tid[8:].lower()
         ticket_path = self.ticket_dir.joinpath(tid_high, f"{tid_low}.tik")
         if not ticket_path.exists():
             raise FileNotFoundError(f"No Ticket exists for the title with Title ID {tid}!")
