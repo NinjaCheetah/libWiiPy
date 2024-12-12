@@ -7,8 +7,10 @@ import os
 import pathlib
 import shutil
 from dataclasses import dataclass as _dataclass
-from typing import List
+from typing import List, Tuple
+from ..title.ticket import Ticket
 from ..title.title import Title
+from ..title.tmd import TMD
 from ..title.content import SharedContentMap as _SharedContentMap
 from .sys import UidSys as _UidSys
 
@@ -178,7 +180,7 @@ class EmuNAND:
         type: str
         titles: List[str]
 
-    def query_titles(self) -> List[InstalledTitles]:
+    def get_installed_titles(self) -> List[InstalledTitles]:
         """
         Scans for installed titles and returns a list of InstalledTitles objects, which each contain a title type
         (Title ID high) and a list of Title ID lows that are installed under it.
@@ -200,3 +202,36 @@ class EmuNAND:
                     valid_lows.append(low.name)
             installed_titles.append(self.InstalledTitles(high.name, valid_lows))
         return installed_titles
+
+    def get_title_data(self, tid: str) -> Tuple[TMD, Ticket]:
+        """
+        Gets the TMD and Ticket for a title installed to the EmuNAND, and returns them as TMD and Ticket objects in a
+        Tuple. This assumes that the Title in question is installed and is valid, so both the TMD and Ticket need to
+        exist.
+
+        Parameters
+        ----------
+        tid : str
+            The Title ID of the Title to get the data for.
+
+        Returns
+        -------
+        Tuple[TMD, Ticket]
+            The TMD and Ticket for the Title.
+        """
+        # Validate the TID, then build a path to the TMD and Ticket files to verify that they exist.
+        if len(tid) != 16:
+            raise ValueError(f"Title ID \"{tid}\" is not a valid!")
+        tid_high = tid[:8]
+        tid_low = tid[8:]
+        tmd_path = self.title_dir.joinpath(tid_high, tid_low, "content", "title.tmd")
+        if not tmd_path.exists():
+            raise FileNotFoundError(f"Title with Title ID {tid} does not appear to be installed!")
+        ticket_path = self.ticket_dir.joinpath(tid_high, f"{tid_low}.tik")
+        if not ticket_path.exists():
+            raise FileNotFoundError(f"No Ticket exists for the title with Title ID {tid}!")
+        tmd = TMD()
+        tmd.load(tmd_path.read_bytes())
+        ticket = Ticket()
+        ticket.load(ticket_path.read_bytes())
+        return tmd, ticket
