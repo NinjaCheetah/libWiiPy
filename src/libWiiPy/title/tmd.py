@@ -6,6 +6,7 @@
 import io
 import binascii
 import hashlib
+import math
 import struct
 from typing import List
 from enum import IntEnum as _IntEnum
@@ -389,6 +390,52 @@ class TMD:
         else:
             raise IndexError("Invalid content record! TMD lists '" + str(self.num_contents - 1) +
                              "' contents but index was '" + str(record) + "'!")
+
+    def get_content_size(self, absolute=False) -> int:
+        """
+        Gets the installed size of the content listed in the TMD, in bytes. The "absolute" option determines
+        whether shared content sizes should be included in the total size or not. This option defaults to False.
+
+        Parameters
+        ----------
+        absolute : bool, optional
+            Whether shared contents should be included in the total size or not. Defaults to False.
+
+        Returns
+        -------
+        int
+            The installed size of the content, in bytes.
+        """
+        title_size = 0
+        for record in self.content_records:
+            if record.content_type == 32769:
+                if absolute:
+                    title_size += record.content_size
+            else:
+                title_size += record.content_size
+        return title_size
+
+    def get_content_size_blocks(self, absolute=False) -> int:
+        """
+        Gets the installed size of the content listed in the TMD, in the Wii's displayed "blocks" format. The
+        "absolute" option determines whether shared content sizes should be included in the total size or not. This
+        option defaults to False.
+
+        1 Wii block is equal to 128KiB, and if any amount of a block is used, the entire block is considered used.
+
+        Parameters
+        ----------
+        absolute : bool, optional
+            Whether shared contents should be included in the total size or not. Defaults to False.
+
+        Returns
+        -------
+        int
+            The installed size of the content, in blocks.
+        """
+        title_size_bytes = self.get_content_size(absolute)
+        blocks = math.ceil(title_size_bytes / 131072)
+        return blocks
 
     class AccessFlags(_IntEnum):
         AHB = 0
