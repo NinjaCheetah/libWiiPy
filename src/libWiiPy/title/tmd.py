@@ -391,15 +391,20 @@ class TMD:
             raise IndexError("Invalid content record! TMD lists '" + str(self.num_contents - 1) +
                              "' contents but index was '" + str(record) + "'!")
 
-    def get_content_size(self, absolute=False) -> int:
+    def get_content_size(self, absolute=False, dlc=False) -> int:
         """
-        Gets the installed size of the content listed in the TMD, in bytes. The "absolute" option determines
-        whether shared content sizes should be included in the total size or not. This option defaults to False.
+        Gets the installed size of the content listed in the TMD, in bytes. This does not include the size of hash tree
+        content, so the size of disc titles will not be calculated. The "absolute" option determines whether shared
+        content sizes should be included in the total size or not. This option defaults to False. The "dlc" option
+        determines whether DLC content sizes should be included in the total size or not. This option also defaults to
+        False.
 
         Parameters
         ----------
-        absolute : bool, optional
+        absolute: bool, optional
             Whether shared contents should be included in the total size or not. Defaults to False.
+        dlc: bool, optional
+            Whether DLC contents should be included in the total size or not. Defaults to False.
 
         Returns
         -------
@@ -408,18 +413,22 @@ class TMD:
         """
         title_size = 0
         for record in self.content_records:
-            if record.content_type == 32769:
+            if record.content_type == 0x8001:
                 if absolute:
                     title_size += record.content_size
-            else:
+            elif record.content_type == 0x4001:
+                if dlc:
+                    title_size += record.content_size
+            elif record.content_type != 3:
                 title_size += record.content_size
         return title_size
 
-    def get_content_size_blocks(self, absolute=False) -> int:
+    def get_content_size_blocks(self, absolute=False, dlc=False) -> int:
         """
         Gets the installed size of the content listed in the TMD, in the Wii's displayed "blocks" format. The
         "absolute" option determines whether shared content sizes should be included in the total size or not. This
-        option defaults to False.
+        option defaults to False. The "dlc" option determines whether DLC content sizes should be included in the total
+        size or not. This option also defaults to False.
 
         1 Wii block is equal to 128KiB, and if any amount of a block is used, the entire block is considered used.
 
@@ -427,13 +436,15 @@ class TMD:
         ----------
         absolute : bool, optional
             Whether shared contents should be included in the total size or not. Defaults to False.
+        dlc: bool, optional
+            Whether DLC contents should be included in the total size or not. Defaults to False.
 
         Returns
         -------
         int
             The installed size of the content, in blocks.
         """
-        title_size_bytes = self.get_content_size(absolute)
+        title_size_bytes = self.get_content_size(absolute, dlc)
         blocks = math.ceil(title_size_bytes / 131072)
         return blocks
 
