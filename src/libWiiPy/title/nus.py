@@ -15,7 +15,7 @@ _nus_endpoint = ["http://nus.cdn.shop.wii.com/ccs/download/", "http://ccs.cdn.wu
 
 
 def download_title(title_id: str, title_version: int = None, wiiu_endpoint: bool = False,
-                   endpoint_override: str = False) -> Title:
+                   endpoint_override: str = None) -> Title:
     """
     Download an entire title and all of its contents, then load the downloaded components into a Title object for
     further use. This method is NOT recommended for general use, as it has absolutely no verbosity. It is instead
