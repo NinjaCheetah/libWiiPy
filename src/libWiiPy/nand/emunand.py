@@ -77,7 +77,7 @@ class EmuNAND:
         # Tickets are installed as <tid_lower>.tik in /ticket/<tid_upper>/
         ticket_dir = self.ticket_dir.joinpath(tid_upper)
         ticket_dir.mkdir(exist_ok=True)
-        open(ticket_dir.joinpath(tid_lower + ".tik"), "wb").write(title.wad.get_ticket_data())
+        ticket_dir.joinpath(f"{tid_lower}.tik").write_bytes(title.ticket.dump())
 
         # The TMD and normal contents are installed to /title/<tid_upper>/<tid_lower>/content/, with the tmd being named
         # title.tmd and the contents being named <cid>.app.
@@ -89,11 +89,11 @@ class EmuNAND:
         if content_dir.exists():
             shutil.rmtree(content_dir)  # Clear the content directory so old contents aren't left behind.
         content_dir.mkdir(exist_ok=True)
-        open(content_dir.joinpath("title.tmd"), "wb").write(title.wad.get_tmd_data())
+        content_dir.joinpath("title.tmd").write_bytes(title.tmd.dump())
         for content_file in range(0, title.tmd.num_contents):
             if title.tmd.content_records[content_file].content_type == 1:
                 content_file_name = f"{title.tmd.content_records[content_file].content_id:08X}".lower()
-                open(content_dir.joinpath(content_file_name + ".app"), "wb").write(
+                content_dir.joinpath(f"{content_file_name}.app").write_bytes(
                     title.get_content_by_index(content_file, skip_hash=skip_hash))
         title_dir.joinpath("data").mkdir(exist_ok=True)  # Empty directory used for save data for the title.
 
@@ -102,16 +102,16 @@ class EmuNAND:
         content_map = _SharedContentMap()
         existing_hashes = []
         if content_map_path.exists():
-            content_map.load(open(content_map_path, "rb").read())
+            content_map.load(content_map_path.read_bytes())
             for record in content_map.shared_records:
                 existing_hashes.append(record.content_hash)
         for content_file in range(0, title.tmd.num_contents):
             if title.tmd.content_records[content_file].content_type == 32769:
                 if title.tmd.content_records[content_file].content_hash not in existing_hashes:
                     content_file_name = content_map.add_content(title.tmd.content_records[content_file].content_hash)
-                    open(self.shared1_dir.joinpath(content_file_name + ".app"), "wb").write(
+                    self.shared1_dir.joinpath(f"{content_file_name}.app").write_bytes(
                         title.get_content_by_index(content_file, skip_hash=skip_hash))
-        open(self.shared1_dir.joinpath("content.map"), "wb").write(content_map.dump())
+        self.shared1_dir.joinpath("content.map").write_bytes(content_map.dump())
 
         # The "footer" or meta file is installed as title.met in /meta/<tid_upper>/<tid_lower>/. Only write this if meta
         # is not nothing.
@@ -121,7 +121,7 @@ class EmuNAND:
             meta_dir.mkdir(exist_ok=True)
             meta_dir = meta_dir.joinpath(tid_lower)
             meta_dir.mkdir(exist_ok=True)
-            open(meta_dir.joinpath("title.met"), "wb").write(title.wad.get_meta_data())
+            meta_dir.joinpath("title.met").write_bytes(title.wad.get_meta_data())
 
         # Ensure we have a uid.sys file created.
         uid_sys_path = self.sys_dir.joinpath("uid.sys")
