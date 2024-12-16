@@ -1,8 +1,8 @@
 # "title/crypto.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 
-import struct
 import binascii
+import struct
 from .commonkeys import get_common_key
 from Crypto.Cipher import AES as _AES
 
