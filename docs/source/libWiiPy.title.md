@@ -2,6 +2,14 @@
 
 ## Submodules
 
+### libWiiPy.title.cert module
+```{eval-rst}
+.. automodule:: libWiiPy.title.cert
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
 ### libWiiPy.title.commonkeys module
 ```{eval-rst}
 .. automodule:: libWiiPy.title.commonkeys

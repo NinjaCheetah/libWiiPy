@@ -5,7 +5,7 @@
 
 import io
 from enum import IntEnum as _IntEnum
-from ..shared import _pad_bytes
+from ..shared import _align_value, _pad_bytes
 from .ticket import Ticket
 from .tmd import TMD
 from Crypto.Hash import SHA1
@@ -123,6 +123,79 @@ class Certificate:
         return cert_data
 
 
+class CertificateChain:
+    """
+    A CertificateChain object used to parse the chain of certificates stored in a WAD that are used for the Wii's
+    content verification. The certificate chain is the format that the certificates are stored in as part of every WAD.
+
+    Attributes
+    ----------
+    ca_cert: Certificate
+        The CA certificate from the chain.
+    tmd_cert: Certificate
+        The CP (TMD) certificate from the chain.
+    ticket_cert: Certificate
+        The XS (Ticket) certificate from the chain.
+    """
+    def __init__(self):
+        self.ca_cert: Certificate = Certificate()
+        self.tmd_cert: Certificate = Certificate()
+        self.ticket_cert: Certificate = Certificate()
+
+    def load(self, cert_chain: bytes) -> None:
+        """
+        Loads certificate chain data into the CertificateChain object, allowing you to parse the individual
+        certificates stored in the chain.
+
+        Parameters
+        ----------
+        cert_chain: bytes
+            The data for the certificate chain to load.
+        """
+        with (io.BytesIO(cert_chain) as cert_chain_data):
+            # Read the two fields that denote different length sections of the certificate, so that we know how long
+            # this certificate is in total.
+            offset = 0x0
+            for _ in range(3):
+                cert_chain_data.seek(offset)
+                cert_type = CertificateType.from_bytes(cert_chain_data.read(0x4))
+                cert_chain_data.seek(offset + 0x80 + CertificateSignatureLength[cert_type.name].value)
+                key_type = CertificateKeyType.from_bytes(cert_chain_data.read(0x4))
+                cert_size = _align_value(0xC8 + CertificateSignatureLength[cert_type.name].value +
+                                               CertificateKeyLength[key_type.name].value)
+                cert_chain_data.seek(offset + 0x0)
+                cert = Certificate()
+                cert.load(cert_chain_data.read(cert_size))
+                if cert.issuer == "Root":
+                    self.ca_cert = cert
+                elif cert.issuer.find("Root-CA") != -1:
+                    if cert.child_name.find("CP") != -1:
+                        self.tmd_cert = cert
+                    elif cert.child_name.find("XS") != -1:
+                        self.ticket_cert = cert
+                    else:
+                        raise ValueError("Unknown certificate in chain!")
+                else:
+                    raise ValueError("Unknown certificate in chain!")
+                offset += cert_size
+
+    def dump(self) -> bytes:
+        """
+        Dumps the full certificate chain back into bytes. This chain will always be formatted with the CA cert first,
+        followed by the CP (TMD) cert, then finally the XS (Ticket) cert.
+
+        Returns
+        -------
+        bytes
+            The full certificate chain as bytes.
+        """
+        cert_chain_data = b''
+        cert_chain_data += self.ca_cert.dump()
+        cert_chain_data += self.tmd_cert.dump()
+        cert_chain_data += self.ticket_cert.dump()
+        return cert_chain_data
+
+
 def verify_ca_cert(ca_cert: Certificate) -> bool:
     """
     Verify a Wii CA certificate using the root public key.
@@ -180,7 +253,7 @@ def verify_cert_sig(ca_cert: Certificate, target_cert: Certificate) -> bool:
     bool
         Whether the certificate's signature is valid or not.
     """
-    cert_hash = SHA1.new(target_cert.dump()[576:])
+    cert_hash = SHA1.new(target_cert.dump()[320:])
     public_key = RSA.construct((ca_cert.pub_key_modulus, ca_cert.pub_key_exponent))
     try:
         pkcs1_15.new(public_key).verify(cert_hash, target_cert.signature)
