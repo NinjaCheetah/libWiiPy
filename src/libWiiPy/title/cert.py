@@ -212,7 +212,8 @@ class CertificateChain:
 
 def verify_ca_cert(ca_cert: Certificate) -> bool:
     """
-    Verify a Wii CA certificate using the root public key.
+    Verify a Wii CA certificate using the root public key. The retail or development root key will be automatically
+    selected based off of the name of the CA certificate provided.
 
     Parameters
     ----------
