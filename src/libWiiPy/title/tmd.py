@@ -83,7 +83,7 @@ class TMD:
             self.signature = tmd_data.read(256)
             # Signing certificate issuer.
             tmd_data.seek(0x140)
-            self.signature_issuer = str(tmd_data.read(64).decode())
+            self.signature_issuer = str(tmd_data.read(64).replace(b'\x00', b'').decode())
             # TMD version, seems to usually be 0, but I've seen references to other numbers.
             tmd_data.seek(0x180)
             self.tmd_version = int.from_bytes(tmd_data.read(1))
@@ -175,7 +175,10 @@ class TMD:
         # Padding to 64 bytes.
         tmd_data += b'\x00' * 60
         # Signing certificate issuer.
-        tmd_data += str.encode(self.signature_issuer)
+        signature_issuer = self.signature_issuer.encode()
+        while len(signature_issuer) < 0x40:
+            signature_issuer += b'\x00'
+        tmd_data += signature_issuer
         # TMD version.
         tmd_data += int.to_bytes(self.tmd_version, 1)
         # Certificate Authority CRL version.

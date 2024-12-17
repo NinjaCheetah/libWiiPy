@@ -107,7 +107,7 @@ class Ticket:
             self.signature = ticket_data.read(256)
             # Signature issuer.
             ticket_data.seek(0x140)
-            self.signature_issuer = str(ticket_data.read(64).decode())
+            self.signature_issuer = str(ticket_data.read(64).replace(b'\x00', b'').decode())
             # ECDH data.
             ticket_data.seek(0x180)
             self.ecdh_data = ticket_data.read(60)
@@ -182,7 +182,10 @@ class Ticket:
         # Padding to 64 bytes.
         ticket_data += b'\x00' * 60
         # Signature issuer.
-        ticket_data += str.encode(self.signature_issuer)
+        signature_issuer = self.signature_issuer.encode()
+        while len(signature_issuer) < 0x40:
+            signature_issuer += b'\x00'
+        ticket_data += signature_issuer
         # ECDH data.
         ticket_data += self.ecdh_data
         # Ticket version.
