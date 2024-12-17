@@ -43,8 +43,22 @@ class Certificate:
 
     Attributes
     ----------
-    something : bool
-        I'm a placeholder attribute for later.
+    type: CertificateType
+        The type of the certificate, either RSA-2048, RSA-4096, or ECC.
+    signature: bytes
+        The signature data of the certificate.
+    issuer: str
+        The certificate that issued this certificate.
+    pub_key_type: CertificateKeyType
+        The type of public key contained in the certificate, either RSA-2048, RSA-4096, or ECC.
+    child_name: str
+        The name of this certificate.
+    pub_key_id: int
+        The ID of this certificate's public key.
+    pub_key_modulus: int
+        The modulus of this certificate's public key. Combined with the exponent to get the full key.
+    pub_key_exponent: int
+        The exponent of this certificate's public key. Combined with the modulus to get the full key.
     """
     def __init__(self):
         self.type: CertificateType | None = None
