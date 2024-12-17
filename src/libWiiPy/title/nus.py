@@ -40,10 +40,10 @@ def download_title(title_id: str, title_version: int = None, wiiu_endpoint: bool
     """
     # First, create the new title.
     title = Title()
-    # Download and load the TMD, Ticket, and certs.
+    # Download and load the certificate chain, TMD, and Ticket.
+    title.load_cert_chain(download_cert_chain(wiiu_endpoint, endpoint_override))
     title.load_tmd(download_tmd(title_id, title_version, wiiu_endpoint, endpoint_override))
     title.load_ticket(download_ticket(title_id, wiiu_endpoint, endpoint_override))
-    title.wad.set_cert_data(download_cert(wiiu_endpoint, endpoint_override))
     # Download all contents
     title.load_content_records()
     title.content.content_list = download_contents(title_id, title.tmd, wiiu_endpoint, endpoint_override)
@@ -146,9 +146,9 @@ def download_ticket(title_id: str, wiiu_endpoint: bool = False, endpoint_overrid
     return ticket
 
 
-def download_cert(wiiu_endpoint: bool = False, endpoint_override: str = None) -> bytes:
+def download_cert_chain(wiiu_endpoint: bool = False, endpoint_override: str = None) -> bytes:
     """
-    Downloads the signing certificate used by all WADs. This uses System Menu 4.3U as the source.
+    Downloads the signing certificate chain used by all WADs. This uses System Menu 4.3U as the source.
 
     Parameters
     ----------
@@ -163,7 +163,7 @@ def download_cert(wiiu_endpoint: bool = False, endpoint_override: str = None) ->
     bytes
         The cert file.
     """
-    # Download the TMD and cetk for the System Menu 4.3U.
+    # Download the TMD and cetk for System Menu 4.3U (v513).
     if endpoint_override is not None:
         endpoint_url = _validate_endpoint(endpoint_override)
     else:
@@ -175,18 +175,18 @@ def download_cert(wiiu_endpoint: bool = False, endpoint_override: str = None) ->
     cetk_url = endpoint_url + "0000000100000002/cetk"
     tmd = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
     cetk = requests.get(url=cetk_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
-    # Assemble the certificate.
-    cert = b''
+    # Assemble the certificate chain.
+    cert_chain = b''
     # Certificate Authority data.
-    cert += cetk[0x2A4 + 768:]
-    # Certificate Policy data.
-    cert += tmd[0x328:0x328 + 768]
-    # XS data.
-    cert += cetk[0x2A4:0x2A4 + 768]
-    # Since the cert is always the same, check the hash to make sure nothing went wildly wrong.
-    if hashlib.sha1(cert).hexdigest() != "ace0f15d2a851c383fe4657afc3840d6ffe30ad0":
+    cert_chain += cetk[0x2A4 + 768:]
+    # Certificate Policy (TMD certificate) data.
+    cert_chain += tmd[0x328:0x328 + 768]
+    # XS (Ticket certificate) data.
+    cert_chain += cetk[0x2A4:0x2A4 + 768]
+    # Since the cert chain is always the same, check the hash to make sure nothing went wildly wrong.
+    if hashlib.sha1(cert_chain).hexdigest() != "ace0f15d2a851c383fe4657afc3840d6ffe30ad0":
         raise Exception("An unknown error has occurred downloading and creating the certificate.")
-    return cert
+    return cert_chain
 
 
 def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False,

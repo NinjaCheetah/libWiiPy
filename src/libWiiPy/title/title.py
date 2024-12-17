@@ -4,6 +4,7 @@
 # See https://wiibrew.org/wiki/Title for details about how titles are formatted
 
 import math
+from .cert import CertificateChain
 from .content import ContentRegion
 from .ticket import Ticket
 from .tmd import TMD
@@ -19,17 +20,20 @@ class Title:
 
     Attributes
     ----------
-    wad : WAD
+    wad: WAD
         A WAD object of a WAD containing the title's data.
-    tmd : TMD
+    cert_chain: CertificateChain
+        The chain of certificates used to verify the contents of a title.
+    tmd: TMD
         A TMD object of the title's TMD.
-    ticket : Ticket
+    ticket: Ticket
         A Ticket object of the title's Ticket.
     content: ContentRegion
         A ContentRegion object containing the title's contents.
     """
     def __init__(self):
         self.wad: WAD = WAD()
+        self.cert_chain: CertificateChain = CertificateChain()
         self.tmd: TMD = TMD()
         self.ticket: Ticket = Ticket()
         self.content: ContentRegion = ContentRegion()
@@ -47,6 +51,9 @@ class Title:
         # Create a new WAD object based on the WAD data provided.
         self.wad = WAD()
         self.wad.load(wad)
+        # Load the certificate chain.
+        self.cert_chain = CertificateChain()
+        self.cert_chain.load(self.wad.get_cert_data())
         # Load the TMD.
         self.tmd = TMD()
         self.tmd.load(self.wad.get_tmd_data())
@@ -75,6 +82,8 @@ class Title:
         # Set WAD type to ib if the title being packed is boot2.
         if self.tmd.title_id == "0000000100000001":
             self.wad.wad_type = "ib"
+        # Dump the certificate chain and set it in the WAD.
+        self.wad.set_cert_data(self.cert_chain.dump())
         # Dump the TMD and set it in the WAD.
         # This requires updating the content records and number of contents in the TMD first.
         self.tmd.content_records = self.content.content_records  # This may not be needed because it's a ref already
@@ -87,6 +96,19 @@ class Title:
         self.wad.set_content_data(content_data, content_size)
         return self.wad.dump()
 
+    def load_cert_chain(self, cert_chain: bytes) -> None:
+        """
+        Load an existing certificate chain into the title. Note that this will overwrite any existing certificate chain
+        data for this title.
+
+        Parameters
+        ----------
+        cert_chain: bytes
+            The data for the certificate chain to load.
+        """
+        self.cert_chain.load(cert_chain)
+
+
     def load_tmd(self, tmd: bytes) -> None:
         """
         Load existing TMD data into the title. Note that this will overwrite any existing TMD data for this title.
@@ -94,9 +116,8 @@ class Title:
         Parameters
         ----------
         tmd : bytes
-            The data for the WAD you wish to load.
+            The data for the TMD to load.
         """
-        # Load TMD.
         self.tmd.load(tmd)
 
     def load_ticket(self, ticket: bytes) -> None:
@@ -107,9 +128,8 @@ class Title:
         Parameters
         ----------
         ticket : bytes
-            The data for the WAD you wish to load.
+            The data for the Ticket to load.
         """
-        # Load Ticket.
         self.ticket.load(ticket)
 
     def load_content_records(self) -> None:
