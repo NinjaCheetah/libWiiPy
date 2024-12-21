@@ -1,8 +1,7 @@
-# libWiiPy.media package
+# libWiiPy.media.banner Module
 
-## Submodules
+## Module Contents
 
-### libWiiPy.media.banner module
 ```{eval-rst}
 .. automodule:: libWiiPy.media.banner
    :members:

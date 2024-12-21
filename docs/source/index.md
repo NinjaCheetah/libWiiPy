@@ -4,9 +4,11 @@ sd_hide_title: true
 
 # Overview
 
-# libWiiPy API Docs
+# libWiiPy Documentation
 
-Welcome to the API documentation website for libWiiPy! libWiiPy is a modern Python 3 library for handling the various files and formats found on the Wii.
+Welcome to the documentation website for libWiiPy! libWiiPy is a modern Python 3 library for handling the various files and formats found on the Wii.
+
+Just need to see the API? [libWiiPy API Documentation](/api)
 
 ```{toctree}
 :hidden:
@@ -34,13 +36,12 @@ titles/nus-downloading.md
 
 ```{toctree}
 :hidden:
-:caption: Other Useful Pages
+:caption: More
 
-modules.md
+api.md
 ```
 
 ## Indices and tables
 
 * [Full Index](<project:#genindex>)
-* [Module Index](<project:#modules>)
 * <project:#search>

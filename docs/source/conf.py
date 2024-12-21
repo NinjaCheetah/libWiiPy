@@ -11,6 +11,7 @@ from datetime import date
 project = 'libWiiPy'
 copyright = f'{date.today().year}, NinjaCheetah & Contributors'
 author = 'NinjaCheetah & Contributors'
+version = 'main'
 release = 'main'
 
 # -- General configuration ---------------------------------------------------

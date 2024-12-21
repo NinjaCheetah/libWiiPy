@@ -4,11 +4,11 @@
 # See https://wiibrew.org/wiki/Title for details about how titles are formatted
 
 import math
-from .cert import CertificateChain
-from .content import ContentRegion
-from .ticket import Ticket
-from .tmd import TMD
-from .wad import WAD
+from .cert import CertificateChain as _CertificateChain
+from .content import ContentRegion as _ContentRegion
+from .ticket import Ticket as _Ticket
+from .tmd import TMD as _TMD
+from .wad import WAD as _WAD
 from .crypto import encrypt_title_key
 
 
@@ -32,11 +32,11 @@ class Title:
         A ContentRegion object containing the title's contents.
     """
     def __init__(self):
-        self.wad: WAD = WAD()
-        self.cert_chain: CertificateChain = CertificateChain()
-        self.tmd: TMD = TMD()
-        self.ticket: Ticket = Ticket()
-        self.content: ContentRegion = ContentRegion()
+        self.wad: _WAD = _WAD()
+        self.cert_chain: _CertificateChain = _CertificateChain()
+        self.tmd: _TMD = _TMD()
+        self.ticket: _Ticket = _Ticket()
+        self.content: _ContentRegion = _ContentRegion()
 
     def load_wad(self, wad: bytes) -> None:
         """
@@ -49,19 +49,19 @@ class Title:
             The data for the WAD you wish to load.
         """
         # Create a new WAD object based on the WAD data provided.
-        self.wad = WAD()
+        self.wad = _WAD()
         self.wad.load(wad)
         # Load the certificate chain.
-        self.cert_chain = CertificateChain()
+        self.cert_chain = _CertificateChain()
         self.cert_chain.load(self.wad.get_cert_data())
         # Load the TMD.
-        self.tmd = TMD()
+        self.tmd = _TMD()
         self.tmd.load(self.wad.get_tmd_data())
         # Load the ticket.
-        self.ticket = Ticket()
+        self.ticket = _Ticket()
         self.ticket.load(self.wad.get_ticket_data())
         # Load the content.
-        self.content = ContentRegion()
+        self.content = _ContentRegion()
         self.content.load(self.wad.get_content_data(), self.tmd.content_records)
         # Ensure that the Title IDs of the TMD and Ticket match before doing anything else. If they don't, throw an
         # error because clearly something strange has gone on with the WAD and editing it probably won't work.

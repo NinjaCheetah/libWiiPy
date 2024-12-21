@@ -34,7 +34,7 @@ And viola! We have a WAD object that we can use to get each separate part of our
 
 ## Picking the WAD Apart
 
-Now that we have our WAD loaded, we need to separate it out into its components. On top of the parts we already established, a WAD also contains a certificate, checked by IOS during official title installations to ensure that a title was signed by Nintendo, and potentially two more areas called the footer and the CRL. Footers aren't a necessary part of a WAD, and when they do exist, they typically only contain the build timestamp and the machine it was built on. CRLs are even less common, and have never actually been found inside any WAD, but we know they exist because of things we've seen that Nintendo would really rather we hadn't. Because these three components don't have data we can edit, they're only ever represented as bytes, and do not have their own classes.
+Now that we have our WAD loaded, we need to separate it out into its components. On top of the parts we already established, a WAD also contains a certificate chain, which is used by IOS during official title installations to ensure that a title was signed by Nintendo, and potentially two more areas called the footer and the CRL. Footers aren't a necessary part of a WAD, and when they do exist, they typically only contain the build timestamp and the machine it was built on. CRLs are even less common, and have never actually been found inside any WAD, but we know they exist because of things we've seen that Nintendo would really rather we hadn't. Certificate chains also have a class that we'll cover after the main three components, but the latter two components don't have data we can edit, so they're only ever represented as bytes and do not have their own classes.
 
 ### The TMD
 
@@ -110,11 +110,19 @@ Now that we know things are working, why don't we speed things up a little by us
 
 And just like that, we have our TMD, Ticket, and decrypted content all extracted! From here, what you do with them is up to you and whatever program you're working on. For example, to make a simple WAD extractor, you may want to write all these files to an output directory.
 
+### The Certificate Chain
+
+As mentioned at the start of this guide, WADs also contain a certificate chain. We don't necessarily need this data right now, but getting it is very similar to the other components:
+```pycon
+>>> certificate_chain = libWiiPy.title.CertificateChain()
+>>> certificate_chain.load(wad.get_cert_data())
+>>>
+```
+
 ### The Other Data
 
-As mentioned earlier in this guide, WADs also contain up to three extra regions of data: the certificate, the footer, and the CRL. The procedure for extracting all of these is pretty simple, and follows the same formula as any other data in a WAD:
+Also mentioned earlier in this guide, WADs may contain two additional regions of data know as the footer (or "meta"), and the CRL. The procedure for extracting all of these is pretty simple, and follows the same formula as any other data in a WAD:
 ```pycon
->>> certificate = wad.get_cert_data()
 >>> footer = wad.get_meta_data()
 >>> crl = wad.get_crl_data()
 >>>
@@ -123,7 +131,7 @@ As mentioned earlier in this guide, WADs also contain up to three extra regions 
 Beyond getting their raw data, there isn't anything you can directly do with these components with libWiiPy. If one of these components doesn't exist, libWiiPy will simply return an empty bytes object.
 
 :::{note}
-Managed to find a WAD somewhere with CRL data? I'd love to here more, so feel free to email me at [ninjacheetah@ncxprogramming.com](mailto:ninjacheetah@ncxprogramming.com).
+Managed to find a WAD somewhere with CRL data? I'd love to hear more, so feel free to email me at [ninjacheetah@ncxprogramming.com](mailto:ninjacheetah@ncxprogramming.com).
 :::
 
 <hr>
