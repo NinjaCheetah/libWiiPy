@@ -9,10 +9,12 @@ libWiiPy is divided up into a few subpackages to organize related features.
 | [libWiiPy.nand](/nand/nand)          | Used for working with EmuNANDs and core system files on the Wii |
 | [libWiiPy.title](/title/title)       | Used for parsing and manipulating Wii titles                    |
 
+When using libWiiPy in your project, you can choose to either only import the package that you need, or you can use `import libWiiPy` to import the entire package, which each module being available at `libWiiPy.<package>.<module>`.
+
 ## Full Package Contents
 
 ```{toctree}
-:maxdepth: 4
+:maxdepth: 8
 
 /archive/archive
 /media/media
