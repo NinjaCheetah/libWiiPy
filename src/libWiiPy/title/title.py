@@ -4,7 +4,9 @@
 # See https://wiibrew.org/wiki/Title for details about how titles are formatted
 
 import math
-from .cert import CertificateChain as _CertificateChain
+from .cert import (CertificateChain as _CertificateChain,
+                   verify_ca_cert as _verify_ca_cert, verify_cert_sig as _verify_cert_sig,
+                   verify_tmd_sig as _verify_tmd_sig, verify_ticket_sig as _verify_ticket_sig)
 from .content import ContentRegion as _ContentRegion
 from .ticket import Ticket as _Ticket
 from .tmd import TMD as _TMD
@@ -418,3 +420,30 @@ class Title:
             return True
         else:
             return False
+
+    def get_is_signed(self) -> bool:
+        """
+        Uses the certificate chain to verify whether the Title object contains a properly signed title or not. This
+        verifies both the TMD and Ticket, and if either one fails verification then the title is not considered valid.
+
+        This will validate the entire certificate chain. If any part of the chain doesn't match the other pieces, then
+        this method will raise an exception.
+
+        Returns
+        -------
+        bool
+            Whether the title is properly signed or not.
+        """
+        # The entire chain needs to be verified, so start with the CA cert and work our way down. If anything fails
+        # along the way, future steps don't matter so exit the descending if's and return False.
+        try:
+            if _verify_ca_cert(self.cert_chain.ca_cert) is True:
+                if _verify_cert_sig(self.cert_chain.ca_cert, self.cert_chain.tmd_cert) is True:
+                    if _verify_tmd_sig(self.cert_chain.tmd_cert, self.tmd) is True:
+                        if _verify_cert_sig(self.cert_chain.ca_cert, self.cert_chain.ticket_cert) is True:
+                            if _verify_ticket_sig(self.cert_chain.ticket_cert, self.ticket) is True:
+                                return True
+        except ValueError:
+            raise ValueError("This title's certificate chain is not valid, or does not match the signature type of "
+                             "the TMD/Ticket.")
+        return False
