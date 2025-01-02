@@ -199,8 +199,8 @@ class EmuNAND:
             valid_lows = []
             for low in tid_lows:
                 if low.joinpath("content", "title.tmd").exists():
-                    valid_lows.append(low.name)
-            installed_titles.append(self.InstalledTitles(high.name, valid_lows))
+                    valid_lows.append(low.name.upper())
+            installed_titles.append(self.InstalledTitles(high.name.upper(), valid_lows))
         return installed_titles
 
     def get_title_tmd(self, tid: str) -> TMD:

@@ -433,6 +433,10 @@ class Title:
         -------
         bool
             Whether the title is properly signed or not.
+
+        See Also
+        --------
+        libWiiPy.title.cert
         """
         # The entire chain needs to be verified, so start with the CA cert and work our way down. If anything fails
         # along the way, future steps don't matter so exit the descending if's and return False.
