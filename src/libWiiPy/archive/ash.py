@@ -5,7 +5,7 @@
 # co-authored by NinjaCheetah.
 # https://github.com/NinjaCheetah/ASH0-tools
 #
-# See <link pending> for details about the ASH archive format.
+# See <link pending> for details about the ASH compression format.
 
 import io
 from dataclasses import dataclass as _dataclass

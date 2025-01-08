@@ -2,4 +2,5 @@
 # https://github.com/NinjaCheetah/libWiiPy
 
 from .ash import *
+from .lz77 import *
 from .u8 import *

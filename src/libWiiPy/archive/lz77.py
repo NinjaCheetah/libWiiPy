@@ -1,0 +1,62 @@
+# "archive/lz77.py" from libWiiPy by NinjaCheetah & Contributors
+# https://github.com/NinjaCheetah/libWiiPy
+#
+# See https://wiibrew.org/wiki/LZ77 for details about the LZ77 compression format.
+
+import io
+
+
+def decompress_lz77(lz77_data: bytes) -> bytes:
+    """
+    Decompresses LZ77-compressed data and returns the decompressed result. Supports data both with and without the
+    magic number 'LZ77' (which may not be present if the data is embedded in something else).
+
+    Parameters
+    ----------
+    lz77_data: bytes
+        The LZ77-compressed data to decompress.
+
+    Returns
+    -------
+    bytes
+        The decompressed data.
+    """
+    with io.BytesIO(lz77_data) as data:
+        magic = data.read(4)
+        # Assume if we didn't get the magic number that this data starts without it.
+        if magic != b'LZ77':
+            data.seek(0)
+        # Other compression types are used by Nintendo, but only type 0x10 was used on the Wii.
+        compression_type = int.from_bytes(data.read(1))
+        if compression_type != 0x10:
+            raise ValueError("This data is using an unsupported compression type!")
+        decompressed_size = int.from_bytes(data.read(3), byteorder='little')
+        # Use an integer list for storing decompressed data, this is much faster than using (and appending to) a
+        # bytes object.
+        out_data = [0] * decompressed_size
+        pos = 0
+        while pos < decompressed_size:
+            flag = int.from_bytes(data.read(1))
+            # Read bits in the flag from most to least significant.
+            for x in range(7, -1, -1):
+                # Avoids a buffer overrun if the final flag isn't fully used.
+                if pos >= decompressed_size:
+                    break
+                # Result of 1, this means we're copying bytes from earlier in the data.
+                if flag & (1 << x):
+                    reference = int.from_bytes(data.read(2))
+                    length = 3 + ((reference >> 12) & 0xF)
+                    offset = pos - (reference & 0xFFF) - 1
+                    for _ in range(length):
+                        out_data[pos] = out_data[offset]
+                        pos += 1
+                        offset += 1
+                        # Avoids a buffer overrun if the copy length would extend past the end of the file.
+                        if pos >= decompressed_size:
+                            break
+                # Result of 0, use the next byte directly.
+                else:
+                    out_data[pos] = int.from_bytes(data.read(1))
+                    pos += 1
+        out_bytes = bytes(out_data)
+        return out_bytes
