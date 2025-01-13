@@ -205,8 +205,9 @@ def download_cert_chain(wiiu_endpoint: bool = False, endpoint_override: str = No
     # XS (Ticket certificate) data.
     cert_chain += cetk[0x2A4:0x2A4 + 768]
     # Since the cert chain is always the same, check the hash to make sure nothing went wildly wrong.
-    if hashlib.sha1(cert_chain).hexdigest() != "ace0f15d2a851c383fe4657afc3840d6ffe30ad0":
-        raise Exception("An unknown error has occurred downloading and creating the certificate.")
+    # This is currently disabled because of the possibility that one may be downloading non-retail certs (gasp!).
+    #if hashlib.sha1(cert_chain).hexdigest() != "ace0f15d2a851c383fe4657afc3840d6ffe30ad0":
+    #    raise Exception("An unknown error has occurred downloading and creating the certificate.")
     return cert_chain
 
 

@@ -160,7 +160,8 @@ class Ticket:
                 limit_value = int.from_bytes(ticket_data.read(4))
                 self.title_limits_list.append(_TitleLimit(limit_type, limit_value))
         # Check certs to see if this is a retail or dev ticket. Treats unknown certs as being retail for now.
-        if self.signature_issuer.find("Root-CA00000002-XS00000006") != -1:
+        if (self.signature_issuer.find("Root-CA00000002-XS00000006") != -1 or
+                self.signature_issuer.find("Root-CA00000002-XS00000004") != -1):
             self.is_dev = True
         else:
             self.is_dev = False
