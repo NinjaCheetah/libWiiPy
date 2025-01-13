@@ -88,7 +88,14 @@ def download_tmd(title_id: str, title_version: int = None, wiiu_endpoint: bool =
     if title_version is not None:
         tmd_url += "." + str(title_version)
     # Make the request.
-    tmd_request = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+    try:
+        tmd_request = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+    except requests.exceptions.ConnectionError:
+        if endpoint_override:
+            raise ValueError("A connection could not be made to the NUS endpoint. Please make sure that your endpoint "
+                             "override is valid.")
+        else:
+            raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     # Handle a 404 if the TID/version doesn't exist.
     if tmd_request.status_code != 200:
         raise ValueError("The requested Title ID or TMD version does not exist. Please check the Title ID and Title"
@@ -133,7 +140,14 @@ def download_ticket(title_id: str, wiiu_endpoint: bool = False, endpoint_overrid
             endpoint_url = _nus_endpoint[0]
     ticket_url = endpoint_url + title_id + "/cetk"
     # Make the request.
-    ticket_request = requests.get(url=ticket_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+    try:
+        ticket_request = requests.get(url=ticket_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+    except requests.exceptions.ConnectionError:
+        if endpoint_override:
+            raise ValueError("A connection could not be made to the NUS endpoint. Please make sure that your endpoint "
+                             "override is valid.")
+        else:
+            raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     if ticket_request.status_code != 200:
         raise ValueError("The requested Title ID does not exist, or refers to a non-free title. Tickets can only"
                          " be downloaded for titles that are free on the NUS.")
@@ -173,8 +187,15 @@ def download_cert_chain(wiiu_endpoint: bool = False, endpoint_override: str = No
             endpoint_url = _nus_endpoint[0]
     tmd_url = endpoint_url + "0000000100000002/tmd.513"
     cetk_url = endpoint_url + "0000000100000002/cetk"
-    tmd = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
-    cetk = requests.get(url=cetk_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
+    try:
+        tmd = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
+        cetk = requests.get(url=cetk_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
+    except requests.exceptions.ConnectionError:
+        if endpoint_override:
+            raise ValueError("A connection could not be made to the NUS endpoint. Please make sure that your endpoint "
+                             "override is valid.")
+        else:
+            raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     # Assemble the certificate chain.
     cert_chain = b''
     # Certificate Authority data.
@@ -224,7 +245,14 @@ def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False
             endpoint_url = _nus_endpoint[0]
     content_url = endpoint_url + title_id + "/000000" + content_id_hex
     # Make the request.
-    content_request = requests.get(url=content_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+    try:
+        content_request = requests.get(url=content_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+    except requests.exceptions.ConnectionError:
+        if endpoint_override:
+            raise ValueError("A connection could not be made to the NUS endpoint. Please make sure that your endpoint "
+                             "override is valid.")
+        else:
+            raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     if content_request.status_code != 200:
         raise ValueError("The requested Title ID does not exist, or an invalid Content ID is present in the"
                          " content records provided.\n Failed while downloading Content ID: 000000" +
