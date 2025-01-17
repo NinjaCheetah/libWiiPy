@@ -6,6 +6,64 @@
 import io
 
 
+def compress_lz77(data: bytes) -> bytes:
+    """
+
+    Parameters
+    ----------
+    data
+
+    Returns
+    -------
+
+    """
+    def compare_bytes(byte1: bytes, offset1: int, byte2: bytes, offset2: int, len_max: int, abs_len_max: int) -> int:
+        num_matched = 0
+        if len_max > abs_len_max:
+            len_max = abs_len_max
+        for i in range(0, len_max):
+            if byte1[offset1 + 1] == byte2[offset2 + 1]:
+                num_matched += 1
+            else:
+                break
+        if num_matched == len_max:
+            offset1 -= len_max
+            for i in range(0, abs_len_max - len_max):
+                if byte1[offset1 + 1] == byte2[offset2 + 1]:
+                    num_matched += 1
+                else:
+                    break
+        return num_matched
+
+    def search_match(buffer: bytes, pos: int) -> (int, int):
+        bytes_left = len(buffer) - pos
+        # Default to only looking back 4096 bytes, unless we've moved fewer than 4096 bytes, in which case we should
+        # only look as far back as we've gone.
+        max_dist = 0x1000
+        if max_dist > pos:
+            max_dist = pos
+        # We want the longest match we can find.
+        biggest_match = 0
+        biggest_match_pos = 0
+        # Default to only matching up to 18 bytes, unless fewer than 18 bytes remain, in which case we can only match
+        # up to that many bytes.
+        max_len = 0x12
+        if max_len > bytes_left:
+            max_len = bytes_left
+        for i in range(1, max_dist):
+            num_compare = max_len
+            if num_compare > i:
+                num_compare = i
+            if num_compare > max_len:
+                num_compare = max_len
+            num_matched = compare_bytes(buffer, pos - i, buffer, pos, max_len, 0x12)
+
+    output_data = b'LZ77\x10'
+    # Write the header by finding the size of the uncompressed data.
+    output_data += int.to_bytes(len(data), 3, 'little')
+    search_match(data, 0)
+
+
 def decompress_lz77(lz77_data: bytes) -> bytes:
     """
     Decompresses LZ77-compressed data and returns the decompressed result. Supports data both with and without the
