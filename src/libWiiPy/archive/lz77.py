@@ -4,6 +4,66 @@
 # See https://wiibrew.org/wiki/LZ77 for details about the LZ77 compression format.
 
 import io
+from dataclasses import dataclass as _dataclass
+
+
+@_dataclass
+class _LZNode:
+    dist: int = 0
+    len: int = 0
+    weight: int = 0
+
+
+def _compress_compare_bytes(byte1: bytes, offset1: int, byte2: bytes, offset2: int, abs_len_max: int) -> int:
+    # Compare bytes up to the maximum length we can match.
+    num_matched = 0
+    while abs_len_max > 0:
+        if byte1[offset1] != byte2[offset2]:
+            break
+        offset1 += 1
+        offset2 += 1
+        abs_len_max -= 1
+        num_matched += 1
+    return num_matched
+
+
+def _compress_search_matches(buffer: bytes, pos: int) -> (int, int):
+    bytes_left = len(buffer) - pos
+    # Default to only looking back 4096 bytes, unless we've moved fewer than 4096 bytes, in which case we should
+    # only look as far back as we've gone.
+    max_dist = 0x1000
+    if max_dist > pos:
+        max_dist = pos
+    # Log the longest match we found and its offset.
+    biggest_match = 0
+    biggest_match_pos = 0
+    # Default to only matching up to 18 bytes, unless fewer than 18 bytes remain, in which case we can only match
+    # up to that many bytes.
+    max_len = 0x12
+    if max_len > bytes_left:
+        max_len = bytes_left
+    min_dist = 0x01
+    # Search for matches.
+    for i in range(min_dist, max_dist + 1):
+        num_matched = _compress_compare_bytes(buffer, pos - i, buffer, pos, max_len)
+        if num_matched > biggest_match:
+            biggest_match = num_matched
+            biggest_match_pos = i
+            if biggest_match == max_len:
+                break
+    return biggest_match, biggest_match_pos
+
+
+def _compress_node_is_ref(node: _LZNode) -> bool:
+    return node.len >= 0x03
+
+
+def _compress_get_node_cost(length: int) -> int:
+    if length >= 0x03:
+        num_bytes = 2
+    else:
+        num_bytes = 1
+    return 1 + (num_bytes * 8)
 
 
 def compress_lz77(data: bytes) -> bytes:
@@ -17,51 +77,86 @@ def compress_lz77(data: bytes) -> bytes:
     -------
 
     """
-    def compare_bytes(byte1: bytes, offset1: int, byte2: bytes, offset2: int, len_max: int, abs_len_max: int) -> int:
-        num_matched = 0
-        if len_max > abs_len_max:
-            len_max = abs_len_max
-        for i in range(0, len_max):
-            if byte1[offset1 + 1] == byte2[offset2 + 1]:
-                num_matched += 1
-            else:
-                break
-        if num_matched == len_max:
-            offset1 -= len_max
-            for i in range(0, abs_len_max - len_max):
-                if byte1[offset1 + 1] == byte2[offset2 + 1]:
-                    num_matched += 1
+    nodes = [_LZNode() for _ in range(len(data))]
+    # Iterate over the uncompressed data, starting from the end.
+    pos = len(data)
+    while pos:
+        pos -= 1
+        node = nodes[pos]
+        # Limit the maximum search length when we're near the end of the file.
+        max_search_len = 0x12
+        if max_search_len > (len(data) - pos):
+            max_search_len = len(data) - pos
+        if max_search_len < 0x03:
+            max_search_len = 1
+        # Initialize as 1 for each, since that's all we could use if we weren't compressing.
+        length, dist = 1, 1
+        if max_search_len >= 0x03:
+            length, dist = _compress_search_matches(data, pos)
+        # Treat as direct bytes if it's too short to copy.
+        if length == 0 or length < 0x03:
+            length = 1
+        # If the node goes to the end of the file, the weight is the cost of the node.
+        if pos + length == len(data):
+            node.len = length
+            node.dist = dist
+            node.weight = _compress_get_node_cost(length)
+        # Otherwise, search for possible matches and determine the one with the best cost.
+        else:
+            weight_best = 0xFFFFFFFF  # This was originally UINT_MAX, but that isn't a thing here.
+            len_best = 1
+            while length:
+                weight_next = nodes[pos + length].weight
+                weight = _compress_get_node_cost(length) + weight_next
+                if weight < weight_best:
+                    len_best = length
+                    weight_best = weight
+                length -= 1
+                if length != 0 and length < 0x03:
+                    length = 1
+            node.len = len_best
+            node.dist = dist
+            node.weight = weight_best
+    # Maximum size of the compressed file.
+    max_compressed_size = int(4 + len(data) + (len(data) + 7) / 8)
+    # Write the header data.
+    with io.BytesIO() as buffer:
+        # Write the header data.
+        buffer.write(b'LZ77\x10')  # The LZ type on the Wii is *always* 0x10.
+        buffer.write(int.to_bytes(len(data), 3, 'little'))
+
+        current_node = nodes[0]
+        src_pos = 0
+        while src_pos < len(data):
+            head = 0
+            head_pos = buffer.tell()
+
+            i = 0
+            while i < 8 and src_pos < len(data):
+                length = current_node.len
+                dist = current_node.dist
+                # This is a reference node.
+                if _compress_node_is_ref(current_node):
+                    encoded = ((dist - 0x01) | ((length - 0x03) << 12)) & 0xFF  # This is a uint16_t.
+                    buffer.write(int.to_bytes((encoded >> 8) & 0xFF))
+                    buffer.write(int.to_bytes((encoded >> 0) & 0xFF))
+                    head |= 1 << (7 - i)
+                    head = head & 0xF
+                # This is a direct copy node.
                 else:
-                    break
-        return num_matched
+                    buffer.write(data[src_pos:])
 
-    def search_match(buffer: bytes, pos: int) -> (int, int):
-        bytes_left = len(buffer) - pos
-        # Default to only looking back 4096 bytes, unless we've moved fewer than 4096 bytes, in which case we should
-        # only look as far back as we've gone.
-        max_dist = 0x1000
-        if max_dist > pos:
-            max_dist = pos
-        # We want the longest match we can find.
-        biggest_match = 0
-        biggest_match_pos = 0
-        # Default to only matching up to 18 bytes, unless fewer than 18 bytes remain, in which case we can only match
-        # up to that many bytes.
-        max_len = 0x12
-        if max_len > bytes_left:
-            max_len = bytes_left
-        for i in range(1, max_dist):
-            num_compare = max_len
-            if num_compare > i:
-                num_compare = i
-            if num_compare > max_len:
-                num_compare = max_len
-            num_matched = compare_bytes(buffer, pos - i, buffer, pos, max_len, 0x12)
+                src_pos += length
+                current_node = nodes[src_pos]
 
-    output_data = b'LZ77\x10'
-    # Write the header by finding the size of the uncompressed data.
-    output_data += int.to_bytes(len(data), 3, 'little')
-    search_match(data, 0)
+            pos = buffer.tell()
+            buffer.seek(head_pos)
+            buffer.write(head)
+            buffer.seek(pos)
+
+        buffer.seek(0)
+        out_data = buffer.read()
+    return out_data
 
 
 def decompress_lz77(lz77_data: bytes) -> bytes:
