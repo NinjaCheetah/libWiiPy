@@ -4,6 +4,155 @@
 # See https://wiibrew.org/wiki/LZ77 for details about the LZ77 compression format.
 
 import io
+from dataclasses import dataclass as _dataclass
+
+
+_LZ_MIN_DISTANCE = 0x01   # Minimum distance for each reference.
+_LZ_MAX_DISTANCE = 0x1000   # Maximum distance for each reference.
+_LZ_MIN_LENGTH = 0x03   # Minimum length for each reference.
+_LZ_MAX_LENGTH = 0x12   # Maximum length for each reference.
+
+
+@_dataclass
+class _LZNode:
+    dist: int = 0
+    len: int = 0
+    weight: int = 0
+
+
+def _compress_compare_bytes(byte1: bytes, offset1: int, byte2: bytes, offset2: int, abs_len_max: int) -> int:
+    # Compare bytes up to the maximum length we can match.
+    num_matched = 0
+    while num_matched < abs_len_max:
+        if byte1[offset1 + num_matched] != byte2[offset2 + num_matched]:
+            break
+        num_matched += 1
+    return num_matched
+
+
+def _compress_search_matches(buffer: bytes, pos: int) -> (int, int):
+    bytes_left = len(buffer) - pos
+    global _LZ_MAX_DISTANCE, _LZ_MAX_LENGTH, _LZ_MIN_DISTANCE
+    # Default to only looking back 4096 bytes, unless we've moved fewer than 4096 bytes, in which case we should
+    # only look as far back as we've gone.
+    max_dist = min(_LZ_MAX_DISTANCE, pos)
+    # Default to only matching up to 18 bytes, unless fewer than 18 bytes remain, in which case we can only match
+    # up to that many bytes.
+    max_len = min(_LZ_MAX_LENGTH, bytes_left)
+    # Log the longest match we found and its offset.
+    biggest_match, biggest_match_pos = 0, 0
+    # Search for matches.
+    for i in range(_LZ_MIN_DISTANCE, max_dist + 1):
+        num_matched = _compress_compare_bytes(buffer, pos - i, buffer, pos, max_len)
+        if num_matched > biggest_match:
+            biggest_match = num_matched
+            biggest_match_pos = i
+            if biggest_match == max_len:
+                break
+    return biggest_match, biggest_match_pos
+
+
+def _compress_node_is_ref(node: _LZNode) -> bool:
+    return node.len >= _LZ_MIN_LENGTH
+
+
+def _compress_get_node_cost(length: int) -> int:
+    if length >= _LZ_MIN_LENGTH:
+        num_bytes = 2
+    else:
+        num_bytes = 1
+    return 1 + (num_bytes * 8)
+
+
+def compress_lz77(data: bytes) -> bytes:
+    """
+    Compresses data using the Wii's LZ77 compression algorithm and returns the compressed result.
+
+    Parameters
+    ----------
+    data: bytes
+        The data to compress.
+
+    Returns
+    -------
+    bytes
+        The LZ77-compressed data.
+    """
+    nodes = [_LZNode() for _ in range(len(data))]
+    # Iterate over the uncompressed data, starting from the end.
+    pos = len(data)
+    global _LZ_MAX_LENGTH, _LZ_MIN_LENGTH, _LZ_MIN_DISTANCE
+    while pos:
+        pos -= 1
+        node = nodes[pos]
+        # Limit the maximum search length when we're near the end of the file.
+        max_search_len = min(_LZ_MAX_LENGTH, len(data) - pos)
+        if max_search_len < _LZ_MIN_DISTANCE:
+            max_search_len = 1
+        # Initialize as 1 for each, since that's all we could use if we weren't compressing.
+        length, dist = 1, 1
+        if max_search_len >= _LZ_MIN_LENGTH:
+            length, dist = _compress_search_matches(data, pos)
+        # Treat as direct bytes if it's too short to copy.
+        if length == 0 or length < _LZ_MIN_LENGTH:
+            length = 1
+        # If the node goes to the end of the file, the weight is the cost of the node.
+        if (pos + length) == len(data):
+            node.len = length
+            node.dist = dist
+            node.weight = _compress_get_node_cost(length)
+        # Otherwise, search for possible matches and determine the one with the best cost.
+        else:
+            weight_best = 0xFFFFFFFF  # This was originally UINT_MAX, but that isn't a thing here so 32-bit it is!
+            len_best = 1
+            while length:
+                weight_next = nodes[pos + length].weight
+                weight = _compress_get_node_cost(length) + weight_next
+                if weight < weight_best:
+                    len_best = length
+                    weight_best = weight
+                length -= 1
+                if length != 0 and length < _LZ_MIN_LENGTH:
+                    length = 1
+            node.len = len_best
+            node.dist = dist
+            node.weight = weight_best
+    # Write the header data.
+    with io.BytesIO() as buffer:
+        # Write the header data.
+        buffer.write(b'LZ77\x10')  # The LZ type on the Wii is *always* 0x10.
+        buffer.write(len(data).to_bytes(3, 'little'))
+
+        src_pos = 0
+        while src_pos < len(data):
+            head = 0
+            head_pos = buffer.tell()
+            buffer.write(b'\x00')  # Reserve a byte for the chunk head.
+
+            i = 0
+            while i < 8 and src_pos < len(data):
+                current_node = nodes[src_pos]
+                length = current_node.len
+                dist = current_node.dist
+                # This is a reference node.
+                if _compress_node_is_ref(current_node):
+                    encoded = (((length - _LZ_MIN_LENGTH) & 0xF) << 12) | ((dist - _LZ_MIN_DISTANCE) & 0xFFF)
+                    buffer.write(encoded.to_bytes(2))
+                    head = (head | (1 << (7 - i))) & 0xFF
+                # This is a direct copy node.
+                else:
+                    buffer.write(data[src_pos:src_pos + 1])
+                src_pos += length
+                i += 1
+
+            pos = buffer.tell()
+            buffer.seek(head_pos)
+            buffer.write(head.to_bytes(1))
+            buffer.seek(pos)
+
+        buffer.seek(0)
+        out_data = buffer.read()
+    return out_data
 
 
 def decompress_lz77(lz77_data: bytes) -> bytes:
