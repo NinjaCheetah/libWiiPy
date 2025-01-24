@@ -40,8 +40,7 @@ def _compress_search_matches(buffer: bytes, pos: int) -> (int, int):
     # up to that many bytes.
     max_len = min(_LZ_MAX_LENGTH, bytes_left)
     # Log the longest match we found and its offset.
-    biggest_match = 0
-    biggest_match_pos = 0
+    biggest_match, biggest_match_pos = 0, 0
     # Search for matches.
     for i in range(_LZ_MIN_DISTANCE, max_dist + 1):
         num_matched = _compress_compare_bytes(buffer, pos - i, buffer, pos, max_len)
@@ -67,28 +66,27 @@ def _compress_get_node_cost(length: int) -> int:
 
 def compress_lz77(data: bytes) -> bytes:
     """
+    Compresses data using the Wii's LZ77 compression algorithm and returns the compressed result.
 
     Parameters
     ----------
-    data
+    data: bytes
+        The data to compress.
 
     Returns
     -------
-
+    bytes
+        The LZ77-compressed data.
     """
     nodes = [_LZNode() for _ in range(len(data))]
     # Iterate over the uncompressed data, starting from the end.
     pos = len(data)
     global _LZ_MAX_LENGTH, _LZ_MIN_LENGTH, _LZ_MIN_DISTANCE
-    iters = 0
     while pos:
-        iters += 1
         pos -= 1
         node = nodes[pos]
         # Limit the maximum search length when we're near the end of the file.
-        max_search_len = _LZ_MAX_LENGTH
-        if max_search_len > (len(data) - pos):
-            max_search_len = len(data) - pos
+        max_search_len = min(_LZ_MAX_LENGTH, len(data) - pos)
         if max_search_len < _LZ_MIN_DISTANCE:
             max_search_len = 1
         # Initialize as 1 for each, since that's all we could use if we weren't compressing.
