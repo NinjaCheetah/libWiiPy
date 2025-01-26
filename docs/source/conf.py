@@ -31,7 +31,8 @@ html_logo = "banner.png"
 html_title = "libWiiPy API Docs"
 html_theme_options = {
     "repository_url": "https://github.com/NinjaCheetah/libWiiPy",
-    "use_repository_button": True
+    "use_repository_button": True,
+    "show_toc_level": 3
 }
 
 # MyST Configuration

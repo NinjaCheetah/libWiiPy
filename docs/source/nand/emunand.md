@@ -1,5 +1,7 @@
 # libWiiPy.nand.emunand Module
 
+## Description
+
 The `libWiiPy.nand.emunand` module provides support for creating and managing Wii EmuNANDs. At present, you cannot create an EmuNAND compatible with something like NEEK on a real Wii with the features provided by this library, but you can create an EmuNAND compatible with Dolphin.
 
 ## Module Contents

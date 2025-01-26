@@ -1,7 +1,10 @@
 # libWiiPy.archive Package
 
-## Modules
+## Description
+
 The `libWiiPy.archive` package contains modules for packing and extracting archive formats used by the Wii. This currently includes packing and unpacking support for U8 archives and decompression support for ASH archives.
+
+## Modules
 
 | Module                                 | Description                                             |
 |----------------------------------------|---------------------------------------------------------|
@@ -9,7 +12,7 @@ The `libWiiPy.archive` package contains modules for packing and extracting archi
 | [libWiiPy.archive.lz77](/archive/lz77) | Provides support for the LZ77 compression scheme        |
 | [libWiiPy.archive.u8](/archive/u8)     | Provides support for packing and extracting U8 archives |
 
-### libWiiPy.archive Package Contents
+## Full Package Contents
 
 ```{toctree}
 :maxdepth: 4

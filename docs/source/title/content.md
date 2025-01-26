@@ -1,5 +1,7 @@
 # libWiiPy.title.content Module
 
+## Description
+
 The `libWiiPy.title.content` module provides support for parsing, adding, removing, and editing content files from a digital Wii title.
 
 ## Module Contents

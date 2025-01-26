@@ -1,7 +1,9 @@
 # libWiiPy.title Package
 
+## Description
+The `libWiiPy.title` package contains modules for interacting with Wii titles. This is the most complete package in libWiiPy, as it offers the functionality one would be most likely to need. As a result, it gets the most attention during development and should be the most reliable.
+
 ## Modules
-The `libWiiPy.title` package contains modules for interacting with Wii titles. This is the most complete package in libWiiPy, and therefore offers the most functionality.
 
 | Module                                         | Description                                                                                                                   |
 |------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
@@ -17,7 +19,7 @@ The `libWiiPy.title` package contains modules for interacting with Wii titles. T
 | [libWiiPy.title.util](/title/util)             | Provides some simple utility functions relating to titles                                                                     |
 | [libWiiPy.title.wad](/title/wad)               | Provides support for parsing and editing WAD files, allowing you to load each component into the other available classes      |
 
-### libWiiPy.title Package Contents
+## Full Package Contents
 
 ```{toctree}
 :maxdepth: 4
