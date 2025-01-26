@@ -4,7 +4,7 @@
 # See https://wiibrew.org/wiki/NUS for details about the NUS
 
 import requests
-import hashlib
+#import hashlib
 from typing import List
 from urllib.parse import urlparse as _urlparse
 from .title import Title
