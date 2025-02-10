@@ -128,7 +128,7 @@ class Ticket:
             self.console_id = int.from_bytes(ticket_data.read(4))
             # Title ID.
             ticket_data.seek(0x1DC)
-            self.title_id = binascii.hexlify(ticket_data.read(8))
+            self.title_id = ticket_data.read(8)
             # Unknown data 1.
             ticket_data.seek(0x1E4)
             self.unknown1 = ticket_data.read(2)
@@ -202,7 +202,7 @@ class Ticket:
         # Console ID.
         ticket_data += int.to_bytes(self.console_id, 4)
         # Title ID.
-        ticket_data += binascii.unhexlify(self.title_id)
+        ticket_data += self.title_id
         # Unknown data 1.
         ticket_data += self.unknown1
         # Title version.
@@ -318,6 +318,8 @@ class Ticket:
                 return "Korean"
             case 2:
                 return "vWii"
+            case _:
+                return "Unknown"
 
     def get_title_key(self) -> bytes:
         """
@@ -343,7 +345,7 @@ class Ticket:
         """
         if len(title_id) != 16:
             raise ValueError("Invalid Title ID! Title IDs must be 8 bytes long.")
-        self.title_id = title_id.encode()
+        self.title_id = binascii.unhexlify(title_id.encode())
 
     def set_title_version(self, new_version: str | int) -> None:
         """

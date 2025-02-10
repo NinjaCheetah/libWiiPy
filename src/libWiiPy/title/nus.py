@@ -315,9 +315,10 @@ def _validate_endpoint(endpoint: str) -> str:
         The validated NUS endpoint with the proper path.
     """
     # Find the root of the URL and then assemble the correct URL based on that.
-    new_url = _urlparse(endpoint)
-    if new_url.netloc == "":
-        endpoint_url = "http://" + new_url.path + "/ccs/download/"
-    else:
-        endpoint_url = "http://" + new_url.netloc + "/ccs/download/"
-    return endpoint_url
+    # TODO: Rewrite in a way that makes more sense and un-stub
+    #new_url = _urlparse(endpoint)
+    #if new_url.netloc == "":
+    #    endpoint_url = "http://" + new_url.path + "/ccs/download/"
+    #else:
+    #    endpoint_url = "http://" + new_url.netloc + "/ccs/download/"
+    return endpoint
