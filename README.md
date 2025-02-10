@@ -2,7 +2,7 @@
 # libWiiPy
 libWiiPy is a modern Python 3 library for handling the various files and formats found on the Wii. It aims to be simple to use, well maintained, and offer as many features as reasonably possible in one library, so that a newly-written Python program could do 100% of its Wii-related work with just one library. It also aims to be fully cross-platform, so that any tools written with it can also be cross-platform.
 
-libWiiPy is inspired by [libWiiSharp](https://github.com/TheShadowEevee/libWiiSharp), which was originally created by `Leathl` and is now maintained by [@TheShadowEevee](https://github.com/TheShadowEevee). If you're looking for a Wii library that isn't in Python, then go check it out!
+libWiiPy is inspired by [libWiiSharp](https://github.com/TheShadowEevee/libWiiSharp), which was originally created by `Leathl` and is now maintained by [@TheShadowEevee](https://github.com/TheShadowEevee).
 
 
 # Features
@@ -10,14 +10,18 @@ This list will expand as libWiiPy is developed, but these features are currently
 - TMD and Ticket parsing/editing (`.tmd`, `.tik`)
 - Title parsing/editing, including content encryption/decryption (both retail and development)
 - WAD file parsing/editing (`.wad`)
-- Downloading titles from the NUS
+- Downloading titles and their components from the NUS
+- Certificate, TMD, and Ticket signature verification
 - Packing and unpacking U8 archives (`.app`, `.arc`)
 - Decompressing ASH files (`.ash`, both the standard variants and the variants found in My Pokémon Ranch)
+- Compressing/Decompressing LZ77-compressed files
 - IOS patching
 - NAND-related functionality:
   - EmuNAND title management (currently requires an existing EmuNAND)
   - `content.map` parsing/editing
+  - `setting.txt` parsing/editing
   - `uid.sys` parsing/editing
+- Limited channel banner parsing/editing
 - Assorted miscellaneous features used to make the other core features possible
 
 For a more detailed look at what's available in libWiiPy, check out our [API docs](https://ninjacheetah.github.io/libWiiPy).
@@ -68,6 +72,3 @@ Thank you to all of the contributors to the documentation on the WiiBrew pages t
 
 ### One additional special thanks to [@DamiDoop](https://github.com/DamiDoop)!
 She made the very cool banner you can see at the top of this README, and has also helped greatly with my sanity throughout debugging this library.
-
-**Note:** While libWiiPy is directly inspired by libWiiSharp and aims to have feature parity with it, no code from either libWiiSharp or Wii.py was used in the making of this library. All code is original and is written by [@NinjaCheetah](https://github.com/NinjaCheetah), [@rvtr](https://github.com/rvtr), and any other GitHub contributors.
-

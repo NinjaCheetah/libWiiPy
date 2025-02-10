@@ -6,7 +6,7 @@
 import requests
 #import hashlib
 from typing import List
-from urllib.parse import urlparse as _urlparse
+#from urllib.parse import urlparse as _urlparse
 from .title import Title
 from .tmd import TMD
 from .ticket import Ticket
