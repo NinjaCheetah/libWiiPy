@@ -194,6 +194,8 @@ class Title:
         bytes
             The decrypted content listed in the content record.
         """
+        if self.ticket.title_id == "":
+            raise ValueError("A Ticket must be loaded to get decrypted content.")
         dec_content = self.content.get_content_by_index(index, self.ticket.get_title_key(), skip_hash)
         return dec_content
 
@@ -213,6 +215,8 @@ class Title:
         bytes
             The decrypted content listed in the content record.
         """
+        if self.ticket.title_id == "":
+            raise ValueError("A Ticket must be loaded to get decrypted content.")
         dec_content = self.content.get_content_by_cid(cid, self.ticket.get_title_key(), skip_hash)
         return dec_content
 

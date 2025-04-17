@@ -75,7 +75,7 @@ class Ticket:
         self.title_version: int = 0  # Version of the ticket's associated title.
         self.permitted_titles: bytes = b''  # Permitted titles mask
         # "Permit mask. The current disc title is ANDed with the inverse of this mask to see if the result matches the
-        # Permitted Titles Mask."
+        # Permitted Titles Mask." -WiiBrew
         self.permit_mask: bytes = b''
         self.title_export_allowed: int = 0  # Whether title export is allowed with a PRNG key or not.
         self.common_key_index: int = 0  # Which common key should be used. 0 = Common Key, 1 = Korean Key, 2 = vWii Key
