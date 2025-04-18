@@ -128,6 +128,10 @@ class EmuNAND:
         uid_sys = _UidSys()
         if not uid_sys_path.exists():
             uid_sys.create()
+        else:
+            uid_sys.load(uid_sys_path.read_bytes())
+        uid_sys.add(title.tmd.title_id)
+        uid_sys_path.write_bytes(uid_sys.dump())
 
     def uninstall_title(self, tid: str) -> None:
         """

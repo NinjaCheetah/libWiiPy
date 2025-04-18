@@ -77,7 +77,8 @@ class UidSys:
 
     def add(self, title_id: str | bytes) -> int:
         """
-        Adds a new Title ID to the uid.sys file and returns the UID assigned to that title.
+        Adds a new Title ID to the uid.sys file and returns the UID assigned to that title. The new entry will only
+        be added if the provided Title ID doesn't already have an assigned UID.
 
         Parameters
         ----------
@@ -106,6 +107,11 @@ class UidSys:
             title_id_converted = title_id
         else:
             raise TypeError("Title ID type is not valid! It must be either type str or bytes.")
+        # Ensure this TID hasn't already been assigned a UID. If it has, just exit early and return the UID.
+        if self.uid_entries.count != 0:
+            for entry in self.uid_entries:
+                if entry.title_id == title_id_converted:
+                    return entry.uid
         # Generate the new UID by incrementing the current highest UID by 1.
         try:
             new_uid = self.uid_entries[-1].uid + 1
