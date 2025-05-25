@@ -11,4 +11,5 @@ The `libWiiPy.title.nus` module provides support for downloading digital Wii tit
    :members:
    :undoc-members:
    :show-inheritance:
+   :special-members: __call__
 ```

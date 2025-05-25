@@ -17,7 +17,13 @@ release = 'main'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['myst_parser', 'sphinx.ext.napoleon', 'sphinx_copybutton', 'sphinx_tippy', 'sphinx_design']
+extensions = [
+    'myst_parser',
+    'sphinx.ext.napoleon',
+    'sphinx_copybutton',
+    'sphinx_tippy',
+    'sphinx_design'
+]
 
 templates_path = ['_templates']
 exclude_patterns = ["Thumbs.db", ".DS_Store"]

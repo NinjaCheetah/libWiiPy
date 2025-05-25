@@ -14,16 +14,10 @@ class IMD5Header:
 
     An IMD5 header is always 32 bytes long.
 
-    Attributes
-    ----------
-    magic : str
-        Magic number for the header, should be "IMD5".
-    file_size : int
-        The size of the file this header precedes.
-    zeros : int
-        8 bytes of zero padding.
-    md5_hash : bytes
-        The MD5 hash of the file this header precedes.
+    :ivar magic: Magic number for the header, should be "IMD5".
+    :ivar file_size: The size of the file this header precedes.
+    :ivar zeros: 8 bytes of zero padding.
+    :ivar md5_hash: The MD5 hash of the file this header precedes.
     """
     magic: str  # Should always be "IMD5"
     file_size: int

@@ -5,7 +5,7 @@
 
 import requests
 #import hashlib
-from typing import List
+from typing import Any, List, Protocol
 #from urllib.parse import urlparse as _urlparse
 from .title import Title
 from .tmd import TMD
@@ -14,12 +14,35 @@ from .ticket import Ticket
 _nus_endpoint = ["http://nus.cdn.shop.wii.com/ccs/download/", "http://ccs.cdn.wup.shop.nintendo.net/ccs/download/"]
 
 
+class DownloadCallback(Protocol):
+    """
+    The format of a callable passed to a NUS download function.
+    """
+    def __call__(self, done: int, total: int) -> Any:
+        """
+        This function will be called with the current number of bytes downloaded and the total size of the file being
+        downloaded.
+
+        Parameters
+        ----------
+        done : int
+            The number of bytes already downloaded.
+        total : int
+            The total size of the file being downloaded.
+        """
+        ...
+
+
 def download_title(title_id: str, title_version: int = None, wiiu_endpoint: bool = False,
-                   endpoint_override: str = None) -> Title:
+                   endpoint_override: str = None, progress: DownloadCallback = lambda done, total: None) -> Title:
     """
     Download an entire title and all of its contents, then load the downloaded components into a Title object for
-    further use. This method is NOT recommended for general use, as it has absolutely no verbosity. It is instead
+    further use. This method is NOT recommended for general use, as it has extremely limited verbosity. It is instead
     recommended to call the individual download methods instead to provide more flexibility and output.
+
+    Be aware that you will receive fairly vague feedback from this function if you attach a progress callback. The
+    callback will be connected to each of the individual functions called by this function, but there will be no
+    indication of which function is currently running, just the progress of its download.
 
     Parameters
     ----------
@@ -32,27 +55,34 @@ def download_title(title_id: str, title_version: int = None, wiiu_endpoint: bool
     endpoint_override: str, optional
         A custom endpoint URL to use instead of the standard Wii or Wii U endpoints. Defaults to no override, and if
         set entirely overrides the "wiiu_endpoint" parameter.
+    progress: DownloadCallback, optional
+        A callback function used to return the progress of the downloads. The provided callable must match the signature
+        defined in DownloadCallback.
 
     Returns
     -------
     Title
         A Title object containing all the data from the downloaded title.
+
+    See Also
+    --------
+    libWiiPy.title.nus.DownloadCallback
     """
     # First, create the new title.
     title = Title()
     # Download and load the certificate chain, TMD, and Ticket.
     title.load_cert_chain(download_cert_chain(wiiu_endpoint, endpoint_override))
-    title.load_tmd(download_tmd(title_id, title_version, wiiu_endpoint, endpoint_override))
-    title.load_ticket(download_ticket(title_id, wiiu_endpoint, endpoint_override))
+    title.load_tmd(download_tmd(title_id, title_version, wiiu_endpoint, endpoint_override, progress))
+    title.load_ticket(download_ticket(title_id, wiiu_endpoint, endpoint_override, progress))
     # Download all contents
     title.load_content_records()
-    title.content.content_list = download_contents(title_id, title.tmd, wiiu_endpoint, endpoint_override)
+    title.content.content_list = download_contents(title_id, title.tmd, wiiu_endpoint, endpoint_override, progress)
     # Return the completed title.
     return title
 
 
 def download_tmd(title_id: str, title_version: int = None, wiiu_endpoint: bool = False,
-                 endpoint_override: str = None) -> bytes:
+                 endpoint_override: str = None, progress: DownloadCallback = lambda done, total: None) -> bytes:
     """
     Downloads the TMD of the Title specified in the object. Will download the latest version by default, or another
     version if it was manually specified in the object.
@@ -68,11 +98,18 @@ def download_tmd(title_id: str, title_version: int = None, wiiu_endpoint: bool =
     endpoint_override: str, optional
         A custom endpoint URL to use instead of the standard Wii or Wii U endpoints. Defaults to no override, and if
         set entirely overrides the "wiiu_endpoint" parameter.
+    progress: DownloadCallback, optional
+        A callback function used to return the progress of the download. The provided callable must match the signature
+        defined in DownloadCallback.
 
     Returns
     -------
     bytes
         The TMD file from the NUS.
+
+    See Also
+    --------
+    libWiiPy.title.nus.DownloadCallback
     """
     # Build the download URL. The structure is download/<TID>/tmd for latest and download/<TID>/tmd.<version> for
     # when a specific version is requested.
@@ -89,7 +126,7 @@ def download_tmd(title_id: str, title_version: int = None, wiiu_endpoint: bool =
         tmd_url += "." + str(title_version)
     # Make the request.
     try:
-        tmd_request = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+        response = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
     except requests.exceptions.ConnectionError:
         if endpoint_override:
             raise ValueError("A connection could not be made to the NUS endpoint. Please make sure that your endpoint "
@@ -97,11 +134,16 @@ def download_tmd(title_id: str, title_version: int = None, wiiu_endpoint: bool =
         else:
             raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     # Handle a 404 if the TID/version doesn't exist.
-    if tmd_request.status_code != 200:
+    if response.status_code != 200:
         raise ValueError("The requested Title ID or TMD version does not exist. Please check the Title ID and Title"
                          " version and then try again.")
-    # Save the raw TMD.
-    raw_tmd = tmd_request.content
+    total_size = int(response.headers["Content-Length"])
+    progress(0, total_size)
+    # Stream the TMD's data in chunks so that we can post updates to the callback function (assuming one was supplied).
+    raw_tmd = b""
+    for chunk in response.iter_content(512):
+        raw_tmd += chunk
+        progress(len(raw_tmd), total_size)
     # Use a TMD object to load the data and then return only the actual TMD.
     tmd_temp = TMD()
     tmd_temp.load(raw_tmd)
@@ -109,7 +151,8 @@ def download_tmd(title_id: str, title_version: int = None, wiiu_endpoint: bool =
     return tmd
 
 
-def download_ticket(title_id: str, wiiu_endpoint: bool = False, endpoint_override: str = None) -> bytes:
+def download_ticket(title_id: str, wiiu_endpoint: bool = False, endpoint_override: str = None,
+                    progress: DownloadCallback = lambda done, total: None) -> bytes:
     """
     Downloads the Ticket of the Title specified in the object. This will only work if the Title ID specified is for
     a free title.
@@ -123,11 +166,18 @@ def download_ticket(title_id: str, wiiu_endpoint: bool = False, endpoint_overrid
     endpoint_override: str, optional
         A custom endpoint URL to use instead of the standard Wii or Wii U endpoints. Defaults to no override, and if
         set entirely overrides the "wiiu_endpoint" parameter.
+    progress: DownloadCallback, optional
+        A callback function used to return the progress of the download. The provided callable must match the signature
+        defined in DownloadCallback.
 
     Returns
     -------
     bytes
         The Ticket file from the NUS.
+
+    See Also
+    --------
+    libWiiPy.title.nus.DownloadCallback
     """
     # Build the download URL. The structure is download/<TID>/cetk, and cetk will only exist if this is a free
     # title.
@@ -141,18 +191,23 @@ def download_ticket(title_id: str, wiiu_endpoint: bool = False, endpoint_overrid
     ticket_url = endpoint_url + title_id + "/cetk"
     # Make the request.
     try:
-        ticket_request = requests.get(url=ticket_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+        response = requests.get(url=ticket_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
     except requests.exceptions.ConnectionError:
         if endpoint_override:
             raise ValueError("A connection could not be made to the NUS endpoint. Please make sure that your endpoint "
                              "override is valid.")
         else:
             raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
-    if ticket_request.status_code != 200:
+    if response.status_code != 200:
         raise ValueError("The requested Title ID does not exist, or refers to a non-free title. Tickets can only"
                          " be downloaded for titles that are free on the NUS.")
-    # Save the raw cetk file.
-    cetk = ticket_request.content
+    total_size = int(response.headers["Content-Length"])
+    progress(0, total_size)
+    # Stream the Ticket's data just like with the TMD.
+    cetk = b""
+    for chunk in response.iter_content(chunk_size=1024):
+        cetk += chunk
+        progress(len(cetk), total_size)
     # Use a Ticket object to load only the Ticket data from cetk and return it.
     ticket_temp = Ticket()
     ticket_temp.load(cetk)
@@ -212,7 +267,7 @@ def download_cert_chain(wiiu_endpoint: bool = False, endpoint_override: str = No
 
 
 def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False,
-                     endpoint_override: str = None) -> bytes:
+                     endpoint_override: str = None, progress: DownloadCallback = lambda done, total: None) -> bytes:
     """
     Downloads a specified content for the title specified in the object.
 
@@ -227,11 +282,18 @@ def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False
     endpoint_override: str, optional
         A custom endpoint URL to use instead of the standard Wii or Wii U endpoints. Defaults to no override, and if
         set entirely overrides the "wiiu_endpoint" parameter.
+    progress: DownloadCallback, optional
+        A callback function used to return the progress of the download. The provided callable must match the signature
+        defined in DownloadCallback.
 
     Returns
     -------
     bytes
         The downloaded content.
+
+    See Also
+    --------
+    libWiiPy.title.nus.DownloadCallback
     """
     # Build the download URL. The structure is download/<TID>/<Content ID>.
     content_id_hex = hex(content_id)[2:]
@@ -247,23 +309,29 @@ def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False
     content_url = endpoint_url + title_id + "/000000" + content_id_hex
     # Make the request.
     try:
-        content_request = requests.get(url=content_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+        response = requests.get(url=content_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
     except requests.exceptions.ConnectionError:
         if endpoint_override:
             raise ValueError("A connection could not be made to the NUS endpoint. Please make sure that your endpoint "
                              "override is valid.")
         else:
             raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
-    if content_request.status_code != 200:
+    if response.status_code != 200:
         raise ValueError("The requested Title ID does not exist, or an invalid Content ID is present in the"
                          " content records provided.\n Failed while downloading Content ID: 000000" +
                          content_id_hex)
-    content_data = content_request.content
-    return content_data
+    total_size = int(response.headers["Content-Length"])
+    progress(0, total_size)
+    # Stream the content just like the TMD/Ticket.
+    content = b""
+    for chunk in response.iter_content(chunk_size=1024):
+        content += chunk
+        progress(len(content), total_size)
+    return content
 
 
-def download_contents(title_id: str, tmd: TMD, wiiu_endpoint: bool = False,
-                      endpoint_override: str = None) -> List[bytes]:
+def download_contents(title_id: str, tmd: TMD, wiiu_endpoint: bool = False, endpoint_override: str = None,
+                      progress: DownloadCallback = lambda done, total: None) -> List[bytes]:
     """
     Downloads all the contents for the title specified in the object. This requires a TMD to already be available
     so that the content records can be accessed.
@@ -279,11 +347,18 @@ def download_contents(title_id: str, tmd: TMD, wiiu_endpoint: bool = False,
     endpoint_override: str, optional
         A custom endpoint URL to use instead of the standard Wii or Wii U endpoints. Defaults to no override, and if
         set entirely overrides the "wiiu_endpoint" parameter.
+    progress: DownloadCallback, optional
+        A callback function used to return the progress of the downloads. The provided callable must match the signature
+        defined in DownloadCallback.
 
     Returns
     -------
     List[bytes]
         A list of all the downloaded contents.
+
+    See Also
+    --------
+    libWiiPy.title.nus.DownloadCallback
     """
     # Retrieve the content records from the TMD.
     content_records = tmd.content_records
@@ -295,7 +370,7 @@ def download_contents(title_id: str, tmd: TMD, wiiu_endpoint: bool = False,
     content_list = []
     for content_id in content_ids:
         # Call self.download_content() for each Content ID.
-        content = download_content(title_id, content_id, wiiu_endpoint, endpoint_override)
+        content = download_content(title_id, content_id, wiiu_endpoint, endpoint_override, progress)
         content_list.append(content)
     return content_list
 

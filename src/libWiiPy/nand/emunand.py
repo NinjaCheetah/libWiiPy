@@ -174,12 +174,8 @@ class EmuNAND:
         An InstalledTitles object that is used to track a title type and any titles that belong to that type that are
         installed to an EmuNAND.
 
-        Attributes
-        ----------
-        type : str
-            The type (Title ID high) of the installed titles.
-        titles : List[str]
-            The Title ID low of each installed title.
+        :ivar type: The type (Title ID high) of the installed titles.
+        :ivar titles: The Title ID low of each installed title.
         """
         type: str
         titles: List[str]
