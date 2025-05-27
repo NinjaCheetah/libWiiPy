@@ -23,7 +23,8 @@ classifiers = [
 ]
 dependencies = [
     "pycryptodome",
-    "requests"
+    "requests",
+    "types-requests"
 ]
 keywords = ["Wii", "wii"]
 

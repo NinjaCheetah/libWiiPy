@@ -12,7 +12,7 @@ from typing import List
 from enum import IntEnum as _IntEnum
 from ..types import _ContentRecord
 from ..shared import _bitmask
-from .util import title_ver_dec_to_standard, title_ver_standard_to_dec
+from .util import title_ver_standard_to_dec
 
 
 class TMD:
@@ -36,7 +36,7 @@ class TMD:
     """
     def __init__(self):
         self.blob_header: bytes = b''
-        self.signature_type: int = 0
+        self.signature_type: bytes = b''
         self.signature: bytes = b''
         self.signature_issuer: str = ""  # Follows the format "Root-CA%08x-CP%08x"
         self.tmd_version: int = 0  # This seems to always be 0 no matter what?
@@ -55,7 +55,6 @@ class TMD:
         self.reserved2: bytes = b''  # Other "Reserved" data from WiiBrew.
         self.access_rights: int = 0
         self.title_version: int = 0  # The version of the associated title.
-        self.title_version_converted: int = 0  # The title version in vX.X format.
         self.num_contents: int = 0  # The number of contents contained in the associated title.
         self.boot_index: int = 0  # The content index that contains the bootable executable.
         self.minor_version: int = 0  # Minor version (unused typically).
@@ -137,8 +136,6 @@ class TMD:
             # Version number straight from the TMD.
             tmd_data.seek(0x1DC)
             self.title_version = int.from_bytes(tmd_data.read(2))
-            # Calculate the converted version number via util module.
-            self.title_version_converted = title_ver_dec_to_standard(self.title_version, self.title_id, bool(self.vwii))
             # The number of contents listed in the TMD.
             tmd_data.seek(0x1DE)
             self.num_contents = int.from_bytes(tmd_data.read(2))
@@ -305,6 +302,8 @@ class TMD:
                 return "None"
             case 4:
                 return "KOR"
+            case _:
+                raise ValueError(f"Title contains unknown region \"{self.region}\".")
 
     def get_title_type(self) -> str:
         """
@@ -500,7 +499,7 @@ class TMD:
         Parameters
         ----------
         new_version : str, int
-            The new version of the title. See description for valid formats.
+            The new version of the title.
         """
         if type(new_version) is str:
             # Validate string input is in the correct format, then validate that the version isn't higher than v255.0.
@@ -510,8 +509,7 @@ class TMD:
                 raise ValueError("Title version is not valid! String version must be entered in format \"X.X\".")
             if int(version_str_split[0]) > 255 or int(version_str_split[1]) > 255:
                 raise ValueError("Title version is not valid! String version number cannot exceed v255.255.")
-            self.title_version_converted = new_version
-            version_converted = title_ver_standard_to_dec(new_version, self.title_id)
+            version_converted: int = title_ver_standard_to_dec(new_version, self.title_id)
             self.title_version = version_converted
         elif type(new_version) is int:
             # Validate that the version isn't higher than v65280. If the check passes, set that as the title version,
@@ -519,7 +517,5 @@ class TMD:
             if new_version > 65535:
                 raise ValueError("Title version is not valid! Integer version number cannot exceed v65535.")
             self.title_version = new_version
-            version_converted = title_ver_dec_to_standard(new_version, self.title_id, bool(self.vwii))
-            self.title_version_converted = version_converted
         else:
             raise TypeError("Title version type is not valid! Type must be either integer or string.")

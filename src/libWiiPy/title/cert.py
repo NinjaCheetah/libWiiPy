@@ -61,10 +61,10 @@ class Certificate:
         The exponent of this certificate's public key. Combined with the modulus to get the full key.
     """
     def __init__(self):
-        self.type: CertificateType | None = None
+        self.type: CertificateType = CertificateType.RSA_4096
         self.signature: bytes = b''
         self.issuer: str = ""
-        self.pub_key_type: CertificateKeyType | None = None
+        self.pub_key_type: CertificateKeyType  = CertificateKeyType.RSA_4096
         self.child_name: str = ""
         self.pub_key_id: int = 0
         self.pub_key_modulus: int = 0

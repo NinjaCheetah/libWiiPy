@@ -4,6 +4,7 @@
 # See https://wiibrew.org/wiki//title/00000001/00000002/data/setting.txt for information about setting.txt.
 
 import io
+from typing import List
 from ..shared import _pad_bytes
 
 
@@ -53,16 +54,16 @@ class SettingTxt:
         """
         with io.BytesIO(setting_txt) as setting_data:
             global _key  # I still don't actually know what *kind* of encryption this is.
-            setting_txt_dec: [int] = []
+            setting_txt_dec: List[int] = []
             for i in range(0, 256):
                 setting_txt_dec.append(int.from_bytes(setting_data.read(1)) ^ (_key & 0xff))
                 _key = (_key << 1) | (_key >> 31)
-        setting_txt_dec = bytes(setting_txt_dec)
+        setting_txt_bytes = bytes(setting_txt_dec)
         try:
-            setting_str = setting_txt_dec.decode('utf-8')
+            setting_str = setting_txt_bytes.decode('utf-8')
         except UnicodeDecodeError:
-            last_newline_pos = setting_txt_dec.rfind(b'\n')  # This makes sure we don't try to decode any garbage data.
-            setting_str = setting_txt_dec[:last_newline_pos + 1].decode('utf-8')
+            last_newline_pos = setting_txt_bytes.rfind(b'\n')  # This makes sure we don't try to decode any garbage data.
+            setting_str = setting_txt_bytes[:last_newline_pos + 1].decode('utf-8')
         self.load_decrypted(setting_str)
 
     def load_decrypted(self, setting_txt: str) -> None:
@@ -104,13 +105,13 @@ class SettingTxt:
         setting_txt_dec = setting_str.encode()
         global _key
         # This could probably be made more efficient somehow.
-        setting_txt_enc: [int] = []
+        setting_txt_enc: List[int] = []
         with io.BytesIO(setting_txt_dec) as setting_data:
             for i in range(0, len(setting_txt_dec)):
                 setting_txt_enc.append(int.from_bytes(setting_data.read(1)) ^ (_key & 0xff))
                 _key = (_key << 1) | (_key >> 31)
-        setting_txt_enc = _pad_bytes(bytes(setting_txt_enc), 256)
-        return setting_txt_enc
+        setting_txt_bytes = _pad_bytes(bytes(setting_txt_enc), 256)
+        return setting_txt_bytes
 
     def dump_decrypted(self) -> str:
         """

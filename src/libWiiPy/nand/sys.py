@@ -91,11 +91,8 @@ class UidSys:
             The UID assigned to the new Title ID.
         """
         if type(title_id) is bytes:
-            # This catches the format b'0000000100000002'
-            if len(title_id) == 16:
-                title_id_converted = title_id.encode()
             # This catches the format b'\x00\x00\x00\x01\x00\x00\x00\x02'
-            elif len(title_id) == 8:
+            if len(title_id) == 8:
                 title_id_converted = binascii.hexlify(title_id).decode()
             # If it isn't one of those lengths, it cannot possibly be valid, so reject it.
             else:

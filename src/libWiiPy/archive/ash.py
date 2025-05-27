@@ -8,10 +8,11 @@
 # See <link pending> for details about the ASH compression format.
 
 import io
-from dataclasses import dataclass as _dataclass
+from dataclasses import dataclass
+from typing import List
 
 
-@_dataclass
+@dataclass
 class _ASHBitReader:
     """
     An _ASHBitReader class used to parse individual words in an ASH file. Private class used by the ASH module.
@@ -93,7 +94,7 @@ def _ash_bit_reader_read_bits(bit_reader: _ASHBitReader, num_bits: int):
     return bits
 
 
-def _ash_read_tree(bit_reader: _ASHBitReader, width: int, left_tree: [int], right_tree: [int]):
+def _ash_read_tree(bit_reader: _ASHBitReader, width: int, left_tree: List[int], right_tree: List[int]):
     # Read either the symbol or distance tree from the ASH file, and return the root of that tree.
     work = [0] * (2 * (1 << width))
     work_pos = 0

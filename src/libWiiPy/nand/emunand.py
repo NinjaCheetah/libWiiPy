@@ -7,7 +7,7 @@ import os
 import pathlib
 import shutil
 from dataclasses import dataclass as _dataclass
-from typing import List
+from typing import Callable, List
 from ..title.ticket import Ticket
 from ..title.title import Title
 from ..title.tmd import TMD
@@ -32,7 +32,7 @@ class EmuNAND:
     emunand_root : pathlib.Path
         The path to the EmuNAND root directory.
     """
-    def __init__(self, emunand_root: str | pathlib.Path, callback: callable = None):
+    def __init__(self, emunand_root: str | pathlib.Path, callback: Callable | None = None):
         self.emunand_root = pathlib.Path(emunand_root)
         self.log = callback if callback is not None else None
 

@@ -66,16 +66,16 @@ class ContentRegion:
                     start_offset += 64 - (content.content_size % 64)
                 self.content_start_offsets.append(start_offset)
             # Build a list of all the encrypted content data.
-            for content in range(self.num_contents):
+            for idx in range(self.num_contents):
                 # Seek to the start of the content based on the list of offsets.
-                content_region_data.seek(self.content_start_offsets[content])
+                content_region_data.seek(self.content_start_offsets[idx])
                 # Calculate the number of bytes we need to read by adding bytes up the nearest multiple of 16 if needed.
-                bytes_to_read = self.content_records[content].content_size
-                if (bytes_to_read % 16) != 0:
-                    bytes_to_read += 16 - (bytes_to_read % 16)
+                content_size = self.content_records[idx].content_size
+                if (content_size % 16) != 0:
+                    content_size += 16 - (content_size % 16)
                 # Read the file based on the size of the content in the associated record, then append that data to
                 # the list of content.
-                content_enc = content_region_data.read(bytes_to_read)
+                content_enc = content_region_data.read(content_size)
                 self.content_list.append(content_enc)
 
     def dump(self) -> tuple[bytes, int]:
@@ -336,8 +336,8 @@ class ContentRegion:
         enc_content = encrypt_content(dec_content, title_key, index)
         self.add_enc_content(enc_content, cid, index, content_type, content_size, content_hash)
 
-    def set_enc_content(self, enc_content: bytes, index: int, content_size: int, content_hash: bytes, cid: int = None,
-                        content_type: int = None) -> None:
+    def set_enc_content(self, enc_content: bytes, index: int, content_size: int, content_hash: bytes,
+                        cid: int | None = None, content_type: int | None = None) -> None:
         """
         Sets the content at the provided content index to the provided new encrypted content. The provided hash and
         content size are set in the corresponding content record. A new Content ID or content type can also be
@@ -373,8 +373,8 @@ class ContentRegion:
             self.content_list.append(b'')
         self.content_list[index] = enc_content
 
-    def set_content(self, dec_content: bytes, index: int, title_key: bytes, cid: int = None,
-                    content_type: int = None) -> None:
+    def set_content(self, dec_content: bytes, index: int, title_key: bytes, cid: int | None = None,
+                    content_type: int | None = None) -> None:
         """
         Sets the content at the provided content index to the provided new decrypted content. The hash and content size
         of this content will be generated and then set in the corresponding content record. A new Content ID or content

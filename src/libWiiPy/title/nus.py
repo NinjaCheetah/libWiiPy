@@ -33,8 +33,8 @@ class DownloadCallback(Protocol):
         ...
 
 
-def download_title(title_id: str, title_version: int = None, wiiu_endpoint: bool = False,
-                   endpoint_override: str = None, progress: DownloadCallback = lambda done, total: None) -> Title:
+def download_title(title_id: str, title_version: int | None = None, wiiu_endpoint: bool = False,
+                   endpoint_override: str | None = None, progress: DownloadCallback = lambda done, total: None) -> Title:
     """
     Download an entire title and all of its contents, then load the downloaded components into a Title object for
     further use. This method is NOT recommended for general use, as it has extremely limited verbosity. It is instead
@@ -81,8 +81,8 @@ def download_title(title_id: str, title_version: int = None, wiiu_endpoint: bool
     return title
 
 
-def download_tmd(title_id: str, title_version: int = None, wiiu_endpoint: bool = False,
-                 endpoint_override: str = None, progress: DownloadCallback = lambda done, total: None) -> bytes:
+def download_tmd(title_id: str, title_version: int | None = None, wiiu_endpoint: bool = False,
+                 endpoint_override: str | None = None, progress: DownloadCallback = lambda done, total: None) -> bytes:
     """
     Downloads the TMD of the Title specified in the object. Will download the latest version by default, or another
     version if it was manually specified in the object.
@@ -151,7 +151,7 @@ def download_tmd(title_id: str, title_version: int = None, wiiu_endpoint: bool =
     return tmd
 
 
-def download_ticket(title_id: str, wiiu_endpoint: bool = False, endpoint_override: str = None,
+def download_ticket(title_id: str, wiiu_endpoint: bool = False, endpoint_override: str | None = None,
                     progress: DownloadCallback = lambda done, total: None) -> bytes:
     """
     Downloads the Ticket of the Title specified in the object. This will only work if the Title ID specified is for
@@ -215,7 +215,7 @@ def download_ticket(title_id: str, wiiu_endpoint: bool = False, endpoint_overrid
     return ticket
 
 
-def download_cert_chain(wiiu_endpoint: bool = False, endpoint_override: str = None) -> bytes:
+def download_cert_chain(wiiu_endpoint: bool = False, endpoint_override: str | None = None) -> bytes:
     """
     Downloads the signing certificate chain used by all WADs. This uses System Menu 4.3U as the source.
 
@@ -266,8 +266,8 @@ def download_cert_chain(wiiu_endpoint: bool = False, endpoint_override: str = No
     return cert_chain
 
 
-def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False,
-                     endpoint_override: str = None, progress: DownloadCallback = lambda done, total: None) -> bytes:
+def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False, endpoint_override: str | None = None,
+                      progress: DownloadCallback = lambda done, total: None) -> bytes:
     """
     Downloads a specified content for the title specified in the object.
 
@@ -330,7 +330,7 @@ def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False
     return content
 
 
-def download_contents(title_id: str, tmd: TMD, wiiu_endpoint: bool = False, endpoint_override: str = None,
+def download_contents(title_id: str, tmd: TMD, wiiu_endpoint: bool = False, endpoint_override: str | None = None,
                       progress: DownloadCallback = lambda done, total: None) -> List[bytes]:
     """
     Downloads all the contents for the title specified in the object. This requires a TMD to already be available

@@ -178,7 +178,7 @@ class Title:
         self.tmd.set_title_version(title_version)
         self.ticket.set_title_version(title_version)
 
-    def get_content_by_index(self, index: id, skip_hash=False) -> bytes:
+    def get_content_by_index(self, index: int, skip_hash=False) -> bytes:
         """
         Gets an individual content from the content region based on the provided index, in decrypted form.
 
@@ -321,8 +321,8 @@ class Title:
         # Update the TMD to match.
         self.tmd.content_records = self.content.content_records
 
-    def set_enc_content(self, enc_content: bytes, index: int, content_size: int, content_hash: bytes, cid: int = None,
-                        content_type: int = None) -> None:
+    def set_enc_content(self, enc_content: bytes, index: int, content_size: int, content_hash: bytes,
+                        cid: int | None = None, content_type: int | None = None) -> None:
         """
         Sets the content at the provided index to the provided new encrypted content. The provided hash and content size
         are set in the corresponding content record. A new Content ID or content type can also be specified, but if it
@@ -350,7 +350,8 @@ class Title:
         # Update the TMD to match.
         self.tmd.content_records = self.content.content_records
 
-    def set_content(self, dec_content: bytes, index: int, cid: int = None, content_type: int = None) -> None:
+    def set_content(self, dec_content: bytes, index: int, cid: int | None = None,
+                    content_type: int | None = None) -> None:
         """
         Sets the content at the provided index to the provided new decrypted content. The hash and content size of this
         content will be generated and then set in the corresponding content record. A new Content ID or content type can

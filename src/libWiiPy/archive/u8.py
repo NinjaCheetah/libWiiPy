@@ -68,16 +68,16 @@ class U8Archive:
         self.root_node: _U8Node = _U8Node(0, 0, 0, 0)
         self.imet_header: IMETHeader = IMETHeader()
 
-    def load(self, u8_data: bytes) -> None:
+    def load(self, u8: bytes) -> None:
         """
         Loads raw U8 data into a new U8 object. This allows for extracting the file and updating its contents.
 
         Parameters
         ----------
-        u8_data : bytes
+        u8 : bytes
             The data for the U8 file to load.
         """
-        with io.BytesIO(u8_data) as u8_data:
+        with io.BytesIO(u8) as u8_data:
             # Read the first 4 bytes of the file to ensure that it's a U8 archive.
             u8_data.seek(0x0)
             self.u8_magic = u8_data.read(4)
@@ -126,7 +126,7 @@ class U8Archive:
             # Seek back before the root node so that it gets read with all the rest.
             u8_data.seek(u8_data.tell() - 12)
             # Iterate over the number of nodes that the root node lists.
-            for node in range(root_node_size):
+            for _ in range(root_node_size):
                 node_type = int.from_bytes(u8_data.read(1))
                 node_name_offset = int.from_bytes(u8_data.read(3))
                 node_data_offset = int.from_bytes(u8_data.read(4))
@@ -160,7 +160,7 @@ class U8Archive:
         # This is 0 because the header size DOES NOT include the initial 32 bytes describing the file.
         header_size = 0
         # Add 12 bytes for each node, since that's how many bytes each one is made up of.
-        for node in range(len(self.u8_node_list)):
+        for _ in range(len(self.u8_node_list)):
             header_size += 12
         # Add the number of bytes used for each file/folder name in the string table.
         for file_name in self.file_name_list:
@@ -170,13 +170,13 @@ class U8Archive:
         # Adjust all nodes to place file data in the same order as the nodes. Why isn't it already like this?
         current_data_offset = data_offset
         current_name_offset = 0
-        for node in range(len(self.u8_node_list)):
-            if self.u8_node_list[node].type == 0:
-                self.u8_node_list[node].data_offset = _align_value(current_data_offset, 32)
-                current_data_offset += _align_value(self.u8_node_list[node].size, 32)
+        for idx in range(len(self.u8_node_list)):
+            if self.u8_node_list[idx].type == 0:
+                self.u8_node_list[idx].data_offset = _align_value(current_data_offset, 32)
+                current_data_offset += _align_value(self.u8_node_list[idx].size, 32)
             # Calculate the name offsets, including the extra 1 for the NULL byte at the end of each name.
-            self.u8_node_list[node].name_offset = current_name_offset
-            current_name_offset += len(self.file_name_list[node]) + 1
+            self.u8_node_list[idx].name_offset = current_name_offset
+            current_name_offset += len(self.file_name_list[idx]) + 1
         # Begin joining all the U8 archive data into bytes.
         u8_data = b''
         # Magic number.
@@ -300,7 +300,7 @@ def _pack_u8_dir(u8_archive: U8Archive, current_path, node_count, parent_node):
     return u8_archive, node_count
 
 
-def pack_u8(input_path, generate_imet=False, imet_titles:List[str]=None) -> bytes:
+def pack_u8(input_path, generate_imet=False, imet_titles:List[str] | None = None) -> bytes:
     """
     Packs the provided file or folder into a new U8 archive, and returns the raw file data for it.
 
@@ -513,13 +513,15 @@ class IMETHeader:
                 raise ValueError(f"The specified language is not valid!")
             return self.channel_names[target_languages]
         # If multiple channel names were requested.
-        else:
+        elif type(target_languages) == List:
             channel_names = []
             for lang in target_languages:
                 if lang not in self.LocalizedTitles:
                     raise ValueError(f"The specified language at index {target_languages.index(lang)} is not valid!")
                 channel_names.append(self.channel_names[lang])
             return channel_names
+        else:
+            raise TypeError("Target languages must be type int or List[int]!")
 
     def set_channel_names(self, channel_names: Tuple[int, str] | List[Tuple[int, str]]) -> None:
         """
@@ -544,7 +546,7 @@ class IMETHeader:
                                  f"42 characters!")
             self.channel_names[channel_names[0]] = channel_names[1]
         # If a list of channel names was provided.
-        else:
+        elif type(channel_names) == list:
             for name in channel_names:
                 if name[0] not in self.LocalizedTitles:
                     raise ValueError(f"The target language \"{name[0]}\" for the name at index {channel_names.index(name)} "
@@ -553,3 +555,5 @@ class IMETHeader:
                     raise ValueError(f"The channel name \"{name[1]}\" at index {channel_names.index(name)} is too long! "
                                      f"Channel names cannot exceed 42 characters!")
                 self.channel_names[name[0]] = name[1]
+        else:
+            raise TypeError("Channel names must be type Tuple[int, str] or List[Tuple[int, str]]!")

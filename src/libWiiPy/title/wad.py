@@ -49,17 +49,17 @@ class WAD:
         self.wad_content_data: bytes = b''
         self.wad_meta_data: bytes = b''
 
-    def load(self, wad_data: bytes) -> None:
+    def load(self, wad: bytes) -> None:
         """
         Loads raw WAD data and sets all attributes of the WAD object. This allows for manipulating an already
         existing WAD file.
 
         Parameters
         ----------
-        wad_data : bytes
+        wad : bytes
             The data for the WAD file to load.
         """
-        with io.BytesIO(wad_data) as wad_data:
+        with io.BytesIO(wad) as wad_data:
             # Read the first 8 bytes of the file to ensure that it's a WAD. Has two possible valid values for the two
             # different types of WADs that might be encountered.
             wad_data.seek(0x0)
@@ -311,7 +311,7 @@ class WAD:
         # Calculate the size of the new Ticket data.
         self.wad_tik_size = len(tik_data)
 
-    def set_content_data(self, content_data, size: int = None) -> None:
+    def set_content_data(self, content_data, size: int | None = None) -> None:
         """
         Sets the content data of the WAD. Also calculates the new size.
 

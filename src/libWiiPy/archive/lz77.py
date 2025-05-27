@@ -5,7 +5,7 @@
 
 import io
 from dataclasses import dataclass as _dataclass
-from typing import List as _List
+from typing import List, Tuple
 
 
 _LZ_MIN_DISTANCE = 0x01   # Minimum distance for each reference.
@@ -21,7 +21,7 @@ class _LZNode:
     weight: int = 0
 
 
-def _compress_compare_bytes(buffer: _List[int], offset1: int, offset2: int, abs_len_max: int) -> int:
+def _compress_compare_bytes(buffer: List[int], offset1: int, offset2: int, abs_len_max: int) -> int:
     # Compare bytes up to the maximum length we can match. Start by comparing the first 3 bytes, since that's the
     # minimum match length and this allows for a more optimized early exit.
     num_matched = 0
@@ -32,7 +32,7 @@ def _compress_compare_bytes(buffer: _List[int], offset1: int, offset2: int, abs_
     return num_matched
 
 
-def _compress_search_matches_optimized(buffer: _List[int], pos: int) -> (int, int):
+def _compress_search_matches_optimized(buffer: List[int], pos: int) -> Tuple[int, int]:
     bytes_left = len(buffer) - pos
     global _LZ_MAX_DISTANCE, _LZ_MIN_LENGTH, _LZ_MAX_LENGTH, _LZ_MIN_DISTANCE
     # Default to only looking back 4096 bytes, unless we've moved fewer than 4096 bytes, in which case we should
@@ -54,7 +54,7 @@ def _compress_search_matches_optimized(buffer: _List[int], pos: int) -> (int, in
     return biggest_match, biggest_match_pos
 
 
-def _compress_search_matches_greedy(buffer: _List[int], pos: int) -> (int, int):
+def _compress_search_matches_greedy(buffer: List[int], pos: int) -> Tuple[int, int]:
     # Finds and returns the first valid match, rather that finding the best one.
     bytes_left = len(buffer) - pos
     global _LZ_MAX_DISTANCE, _LZ_MAX_LENGTH, _LZ_MIN_DISTANCE
