@@ -34,7 +34,7 @@ class ContentRegion:
         The total number of contents stored in the region.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.content_records: List[_ContentRecord] = []
         self.content_region_size: int = 0  # Size of the content region.
         self.num_contents: int = 0  # Number of contents in the content region.
@@ -525,7 +525,7 @@ class SharedContentMap:
         The shared content records stored in content.map.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.shared_records: List[_SharedContentRecord] = []
 
     def load(self, content_map: bytes) -> None:

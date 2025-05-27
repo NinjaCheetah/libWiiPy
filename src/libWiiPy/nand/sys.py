@@ -36,7 +36,7 @@ class UidSys:
         The entries stored in the uid.sys file.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.uid_entries: List[_UidSysEntry] = []
 
     def load(self, uid_sys: bytes) -> None:

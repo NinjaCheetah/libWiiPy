@@ -33,7 +33,7 @@ class Title:
     content: ContentRegion
         A ContentRegion object containing the title's contents.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.wad: _WAD = _WAD()
         self.cert_chain: _CertificateChain = _CertificateChain()
         self.tmd: _TMD = _TMD()

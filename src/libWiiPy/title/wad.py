@@ -29,7 +29,7 @@ class WAD:
     wad_meta_size : int
         The size of the WAD's meta/footer.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.wad_hdr_size: int = 64
         self.wad_type: str = "Is"
         self.wad_version: bytes = b'\x00\x00'

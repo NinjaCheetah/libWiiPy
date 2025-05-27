@@ -60,7 +60,7 @@ class Certificate:
     pub_key_exponent: int
         The exponent of this certificate's public key. Combined with the modulus to get the full key.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.type: CertificateType = CertificateType.RSA_4096
         self.signature: bytes = b''
         self.issuer: str = ""
@@ -151,7 +151,7 @@ class CertificateChain:
     ticket_cert: Certificate
         The XS (Ticket) certificate from the chain.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.ca_cert: Certificate = Certificate()
         self.tmd_cert: Certificate = Certificate()
         self.ticket_cert: Certificate = Certificate()

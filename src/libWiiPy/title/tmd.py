@@ -34,7 +34,7 @@ class TMD:
     num_contents : int
         The number of contents listed in the TMD.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.blob_header: bytes = b''
         self.signature_type: bytes = b''
         self.signature: bytes = b''

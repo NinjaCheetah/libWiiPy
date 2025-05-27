@@ -57,7 +57,7 @@ class U8Archive:
     imet_header: IMETHeader
         The IMET header of the U8 archive, if one exists. Otherwise, an empty IMETHeader object.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.u8_magic = b''
         self.u8_node_list: List[_U8Node] = []  # All the nodes in the header of a U8 file.
         self.file_name_list: List[str] = []
@@ -369,7 +369,7 @@ class IMETHeader:
     md5_hash : bytes
         MD5 sum of the entire header, with this field being all zeros during the hashing.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.magic: str = ""  # Should always be "IMET"
         self.header_size: int = 0  # Always 1536? I assumed this would mean something, but it's just the header length.
         self.imet_version: int = 0  # Always 3?

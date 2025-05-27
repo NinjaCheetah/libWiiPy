@@ -20,7 +20,7 @@ class IOSPatcher:
     dip_module_index : int
         The content index that DIP resides in and where DIP patches are applied. -1 if DIP patches are not applied.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.title: Title = Title()
         self.es_module_index: int = -1
         self.dip_module_index: int = -1

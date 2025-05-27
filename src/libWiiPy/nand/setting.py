@@ -33,7 +33,7 @@ class SettingTxt:
     game : str
         Another region code, possibly set by the hidden region select channel.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.area: str = ""
         self.model: str = ""
         self.dvd: int = 0

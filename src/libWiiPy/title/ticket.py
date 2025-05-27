@@ -57,7 +57,7 @@ class Ticket:
     common_key_index : int
         The index of the common key required to decrypt this ticket's Title Key.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         # If this is a dev ticket
         self.is_dev: bool = False  # Defaults to false, set to true during load if this ticket is using dev certs.
         # Signature blob header
