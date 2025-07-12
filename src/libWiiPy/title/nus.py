@@ -134,9 +134,12 @@ def download_tmd(title_id: str, title_version: int | None = None, wiiu_endpoint:
         else:
             raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     # Handle a 404 if the TID/version doesn't exist.
-    if response.status_code != 200:
+    if response.status_code == 404:
         raise ValueError("The requested Title ID or TMD version does not exist. Please check the Title ID and Title"
                          " version and then try again.")
+    elif response.status_code != 200:
+        raise Exception(f"An unknown error occurred while downloading the TMD. "
+                        f"Got HTTP status code: {response.status_code}")
     total_size = int(response.headers["Content-Length"])
     progress(0, total_size)
     # Stream the TMD's data in chunks so that we can post updates to the callback function (assuming one was supplied).
@@ -198,9 +201,12 @@ def download_ticket(title_id: str, wiiu_endpoint: bool = False, endpoint_overrid
                              "override is valid.")
         else:
             raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
-    if response.status_code != 200:
+    if response.status_code == 404:
         raise ValueError("The requested Title ID does not exist, or refers to a non-free title. Tickets can only"
                          " be downloaded for titles that are free on the NUS.")
+    elif response.status_code != 200:
+        raise Exception(f"An unknown error occurred while downloading the Ticket. "
+                        f"Got HTTP status code: {response.status_code}")
     total_size = int(response.headers["Content-Length"])
     progress(0, total_size)
     # Stream the Ticket's data just like with the TMD.
@@ -316,10 +322,13 @@ def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False
                              "override is valid.")
         else:
             raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
-    if response.status_code != 200:
+    if response.status_code == 404:
         raise ValueError("The requested Title ID does not exist, or an invalid Content ID is present in the"
                          " content records provided.\n Failed while downloading Content ID: 000000" +
                          content_id_hex)
+    elif response.status_code != 200:
+        raise Exception(f"An unknown error occurred while downloading the content. "
+                        f"Got HTTP status code: {response.status_code}")
     total_size = int(response.headers["Content-Length"])
     progress(0, total_size)
     # Stream the content just like the TMD/Ticket.

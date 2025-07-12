@@ -34,7 +34,7 @@ class EmuNAND:
     """
     def __init__(self, emunand_root: str | pathlib.Path, callback: Callable | None = None):
         self.emunand_root = pathlib.Path(emunand_root)
-        self.log = callback if callback is not None else None
+        self.log = callback if callback is not None else lambda x: None
 
         self.import_dir = self.emunand_root.joinpath("import")
         self.meta_dir = self.emunand_root.joinpath("meta")
@@ -70,12 +70,14 @@ class EmuNAND:
         skip_hash : bool, optional
             Skip the hash check and install the title regardless of its hashes. Defaults to false.
         """
+        self.log(f"[PROGRESS] Starting install of title with Title ID {title.tmd.title_id}...")
         # Save the upper and lower portions of the Title ID, because these are used as target install directories.
         tid_upper = title.tmd.title_id[:8]
         tid_lower = title.tmd.title_id[8:]
 
         # Tickets are installed as <tid_lower>.tik in /ticket/<tid_upper>/
         ticket_dir = self.ticket_dir.joinpath(tid_upper)
+        self.log(f"[PROGRESS] Installing ticket to \"{ticket_dir}\"...")
         ticket_dir.mkdir(exist_ok=True)
         ticket_dir.joinpath(f"{tid_lower}.tik").write_bytes(title.ticket.dump())
 
@@ -86,19 +88,25 @@ class EmuNAND:
         title_dir = title_dir.joinpath(tid_lower)
         title_dir.mkdir(exist_ok=True)
         content_dir = title_dir.joinpath("content")
+        self.log(f"[PROGRESS] Installing TMD to \"{content_dir}\"...")
         if content_dir.exists():
             shutil.rmtree(content_dir)  # Clear the content directory so old contents aren't left behind.
         content_dir.mkdir(exist_ok=True)
         content_dir.joinpath("title.tmd").write_bytes(title.tmd.dump())
+        self.log(f"[PROGRESS] Installing content to \"{content_dir}\"...")
+        if skip_hash:
+            self.log("[WARN] Not checking content hashes! Content validity will not be verified.")
         for content_file in range(0, title.tmd.num_contents):
             if title.tmd.content_records[content_file].content_type == 1:
                 content_file_name = f"{title.tmd.content_records[content_file].content_id:08X}".lower()
+                self.log(f"[PROGRESS] Installing content \"{content_file_name}.app\" to \"{content_dir}\"... ")
                 content_dir.joinpath(f"{content_file_name}.app").write_bytes(
                     title.get_content_by_index(content_file, skip_hash=skip_hash))
         title_dir.joinpath("data").mkdir(exist_ok=True)  # Empty directory used for save data for the title.
 
         # Shared contents need to be installed to /shared1/, with incremental names determined by /shared1/content.map.
         content_map_path = self.shared1_dir.joinpath("content.map")
+        self.log(f"[PROGRESS] Installing shared content to \"{self.shared1_dir}\"...")
         content_map = _SharedContentMap()
         existing_hashes = []
         if content_map_path.exists():
@@ -108,7 +116,10 @@ class EmuNAND:
         for content_file in range(0, title.tmd.num_contents):
             if title.tmd.content_records[content_file].content_type == 32769:
                 if title.tmd.content_records[content_file].content_hash not in existing_hashes:
+                    self.log(f"[PROGRESS] Adding shared content hash to content.map...")
                     content_file_name = content_map.add_content(title.tmd.content_records[content_file].content_hash)
+                    self.log(f"[PROGRESS] Installing shared content \"{content_file_name}.app\" to "
+                             f"\"{self.shared1_dir}\"...")
                     self.shared1_dir.joinpath(f"{content_file_name}.app").write_bytes(
                         title.get_content_by_index(content_file, skip_hash=skip_hash))
         self.shared1_dir.joinpath("content.map").write_bytes(content_map.dump())
@@ -120,6 +131,7 @@ class EmuNAND:
             meta_dir = self.meta_dir.joinpath(tid_upper)
             meta_dir.mkdir(exist_ok=True)
             meta_dir = meta_dir.joinpath(tid_lower)
+            self.log(f"[PROGRESS] Installing meta data to \"{meta_dir}\"...")
             meta_dir.mkdir(exist_ok=True)
             meta_dir.joinpath("title.met").write_bytes(title.wad.get_meta_data())
 
@@ -127,11 +139,25 @@ class EmuNAND:
         uid_sys_path = self.sys_dir.joinpath("uid.sys")
         uid_sys = _UidSys()
         if not uid_sys_path.exists():
+            self.log("[WARN] uid.sys does not exist! Creating it with the default entry.")
             uid_sys.create()
         else:
             uid_sys.load(uid_sys_path.read_bytes())
+        self.log("[PROGRESS] Adding title to uid.sys and assigning a new UID...")
         uid_sys.add(title.tmd.title_id)
         uid_sys_path.write_bytes(uid_sys.dump())
+
+        # Check for a cert.sys and initialize it using the certs in the WAD if it doesn't exist.
+        cert_sys_path = self.sys_dir.joinpath("cert.sys")
+        if not cert_sys_path.exists():
+            self.log("[WARN] cert.sys does not exist! Creating it using certs from the installed title...")
+            cert_sys_data = b''
+            cert_sys_data += title.cert_chain.ticket_cert.dump()
+            cert_sys_data += title.cert_chain.ca_cert.dump()
+            cert_sys_data += title.cert_chain.tmd_cert.dump()
+            cert_sys_path.write_bytes(cert_sys_data)
+
+        self.log("[PROGRESS] Completed title installation.")
 
     def uninstall_title(self, tid: str) -> None:
         """
