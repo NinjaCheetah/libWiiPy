@@ -4,14 +4,16 @@
 # See https://wiibrew.org/wiki/Title for details about how titles are formatted
 
 import math
+
 from .cert import (CertificateChain as _CertificateChain,
                    verify_ca_cert as _verify_ca_cert, verify_cert_sig as _verify_cert_sig,
                    verify_tmd_sig as _verify_tmd_sig, verify_ticket_sig as _verify_ticket_sig)
 from .content import ContentRegion as _ContentRegion
+from .crypto import encrypt_title_key
 from .ticket import Ticket as _Ticket
 from .tmd import TMD as _TMD
+from .types import ContentType
 from .wad import WAD as _WAD
-from .crypto import encrypt_title_key
 
 
 class Title:
@@ -243,7 +245,7 @@ class Title:
         # For contents, get their sizes from the content records, because they store the intended sizes of the decrypted
         # contents, which are usually different from the encrypted sizes.
         for record in self.content.content_records:
-            if record.content_type == 32769:
+            if record.content_type == ContentType.SHARED:
                 if absolute:
                     title_size += record.content_size
             else:
@@ -443,15 +445,15 @@ class Title:
         --------
         libWiiPy.title.cert
         """
-        # The entire chain needs to be verified, so start with the CA cert and work our way down. If anything fails
-        # along the way, future steps don't matter so exit the descending if's and return False.
+        # I did not understand short-circuiting when I originally wrote this code, and it was 5 nested if statements
+        # which looked silly. I now understand that this is functionally identical!
         try:
-            if _verify_ca_cert(self.cert_chain.ca_cert) is True:
-                if _verify_cert_sig(self.cert_chain.ca_cert, self.cert_chain.tmd_cert) is True:
-                    if _verify_tmd_sig(self.cert_chain.tmd_cert, self.tmd) is True:
-                        if _verify_cert_sig(self.cert_chain.ca_cert, self.cert_chain.ticket_cert) is True:
-                            if _verify_ticket_sig(self.cert_chain.ticket_cert, self.ticket) is True:
-                                return True
+            if _verify_ca_cert(self.cert_chain.ca_cert) and \
+                    _verify_cert_sig(self.cert_chain.ca_cert, self.cert_chain.tmd_cert) and \
+                    _verify_tmd_sig(self.cert_chain.tmd_cert, self.tmd) and \
+                    _verify_cert_sig(self.cert_chain.ca_cert, self.cert_chain.ticket_cert) and \
+                    _verify_ticket_sig(self.cert_chain.ticket_cert, self.ticket):
+                        return True
         except ValueError:
             raise ValueError("This title's certificate chain is not valid, or does not match the signature type of "
                              "the TMD/Ticket.")

@@ -10,9 +10,9 @@ import math
 import struct
 from typing import List
 from enum import IntEnum as _IntEnum
-from ..types import _ContentRecord
-from ..shared import _bitmask
-from .util import title_ver_standard_to_dec
+
+from .types import ContentRecord, ContentType, TitleType, Region
+from .versions import title_ver_standard_to_dec
 
 
 class TMD:
@@ -58,7 +58,7 @@ class TMD:
         self.num_contents: int = 0  # The number of contents contained in the associated title.
         self.boot_index: int = 0  # The content index that contains the bootable executable.
         self.minor_version: int = 0  # Minor version (unused typically).
-        self.content_records: List[_ContentRecord] = []
+        self.content_records: List[ContentRecord] = []
 
     def load(self, tmd: bytes) -> None:
         """
@@ -151,7 +151,7 @@ class TMD:
                 tmd_data.seek(0x1E4 + (36 * content))
                 content_record_hdr = struct.unpack(">LHH4x4s20s", tmd_data.read(36))
                 self.content_records.append(
-                    _ContentRecord(int(content_record_hdr[0]), int(content_record_hdr[1]),
+                    ContentRecord(int(content_record_hdr[0]), int(content_record_hdr[1]),
                                    int(content_record_hdr[2]), int.from_bytes(content_record_hdr[3]),
                                    binascii.hexlify(content_record_hdr[4])))
 
@@ -251,7 +251,8 @@ class TMD:
             self.minor_version = current_int
             # Trim off the first 320 bytes, because we're only looking for the hash of the TMD's body.
             # This is a try-except because an OverflowError will be thrown if the number being used to brute-force the
-            # hash gets too big, as it is only a 16-bit integer. If that happens, then fakesigning has failed.
+            # hash gets too big, as it is only a 16-bit integer. If that happens, then fakesigning has failed. This
+            # shouldn't ever realistically happen, though.
             try:
                 test_hash = hashlib.sha1(self.dump()[320:]).hexdigest()
             except OverflowError:
@@ -273,8 +274,7 @@ class TMD:
         """
         if self.signature != b'\x00' * 256:
             return False
-        test_hash = hashlib.sha1(self.dump()[320:]).hexdigest()
-        if test_hash[:2] != '00':
+        if hashlib.sha1(self.dump()[320:]).hexdigest()[:2] != '00':
             return False
         return True
 
@@ -292,15 +292,15 @@ class TMD:
             The region of the title.
         """
         match self.region:
-            case 0:
+            case Region.JPN:
                 return "JPN"
-            case 1:
+            case Region.USA:
                 return "USA"
-            case 2:
+            case Region.EUR:
                 return "EUR"
-            case 3:
-                return "None"
-            case 4:
+            case Region.WORLD:
+                return "World"
+            case Region.KOR:
                 return "KOR"
             case _:
                 raise ValueError(f"Title contains unknown region \"{self.region}\".")
@@ -318,19 +318,19 @@ class TMD:
             The type of the title.
         """
         match self.title_id[:8]:
-            case '00000001':
+            case TitleType.SYSTEM:
                 return "System"
-            case '00010000':
+            case TitleType.GAME:
                 return "Game"
-            case '00010001':
+            case TitleType.CHANNEL:
                 return "Channel"
-            case '00010002':
+            case TitleType.SYSTEM_CHANNEL:
                 return "SystemChannel"
-            case '00010004':
+            case TitleType.GAME_CHANNEL:
                 return "GameChannel"
-            case '00010005':
+            case TitleType.DLC:
                 return "DLC"
-            case '00010008':
+            case TitleType.HIDDEN_CHANNEL:
                 return "HiddenChannel"
             case _:
                 return "Unknown"
@@ -360,20 +360,20 @@ class TMD:
         # This is the literal index in the list of content that we're going to get.
         target_index = current_indices.index(content_index)
         match self.content_records[target_index].content_type:
-            case 1:
+            case ContentType.NORMAL:
                 return "Normal"
-            case 2:
+            case ContentType.DEVELOPMENT:
                 return "Development/Unknown"
-            case 3:
+            case ContentType.HASH_TREE:
                 return "Hash Tree"
-            case 16385:
+            case ContentType.DLC:
                 return "DLC"
-            case 32769:
+            case ContentType.SHARED:
                 return "Shared"
             case _:
                 return "Unknown"
 
-    def get_content_record(self, record) -> _ContentRecord:
+    def get_content_record(self, record) -> ContentRecord:
         """
         Gets the content record at the specified index.
 
@@ -390,8 +390,8 @@ class TMD:
         if record < self.num_contents:
             return self.content_records[record]
         else:
-            raise IndexError("Invalid content record! TMD lists '" + str(self.num_contents - 1) +
-                             "' contents but index was '" + str(record) + "'!")
+            raise IndexError(f"Invalid content record! TMD lists \"{self.num_contents - 1}\" contents "
+                             f"but index was \"{record}\"!")
 
     def get_content_size(self, absolute=False, dlc=False) -> int:
         """
@@ -415,13 +415,13 @@ class TMD:
         """
         title_size = 0
         for record in self.content_records:
-            if record.content_type == 0x8001:
+            if record.content_type == ContentType.SHARED:
                 if absolute:
                     title_size += record.content_size
-            elif record.content_type == 0x4001:
+            elif record.content_type == ContentType.DLC:
                 if dlc:
                     title_size += record.content_size
-            elif record.content_type != 3:
+            elif record.content_type != ContentType.DEVELOPMENT:
                 title_size += record.content_size
         return title_size
 
@@ -450,10 +450,6 @@ class TMD:
         blocks = math.ceil(title_size_bytes / 131072)
         return blocks
 
-    class AccessFlags(_IntEnum):
-        AHB = 0
-        DVD_VIDEO = 1
-
     def get_access_right(self, flag: int) -> bool:
         """
         Gets whether the specified access rights flag is enabled or not. This is done by checking the specified bit.
@@ -473,7 +469,7 @@ class TMD:
         --------
         libWiiPy.title.tmd.TMD.AccessFlags
         """
-        return bool(self.access_rights & _bitmask(flag))
+        return bool(self.access_rights & (1 << flag))
 
     def set_title_id(self, title_id) -> None:
         """
@@ -512,10 +508,17 @@ class TMD:
             version_converted: int = title_ver_standard_to_dec(new_version, self.title_id)
             self.title_version = version_converted
         elif type(new_version) is int:
-            # Validate that the version isn't higher than v65280. If the check passes, set that as the title version,
-            # then convert to standard form and set that as well.
-            if new_version > 65535:
+            # Validate that the version isn't higher than 0xFFFF (v65535).
+            if new_version > 0xFFFF:
                 raise ValueError("Title version is not valid! Integer version number cannot exceed v65535.")
             self.title_version = new_version
         else:
             raise TypeError("Title version type is not valid! Type must be either integer or string.")
+
+
+class AccessFlags(_IntEnum):
+    """
+    Flags set in a TMD's access rights field used to enable specific feature access.
+    """
+    AHB = 0
+    DVD_VIDEO = 1

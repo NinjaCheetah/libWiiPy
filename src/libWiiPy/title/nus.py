@@ -302,9 +302,6 @@ def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False
     libWiiPy.title.nus.DownloadCallback
     """
     # Build the download URL. The structure is download/<TID>/<Content ID>.
-    content_id_hex = hex(content_id)[2:]
-    if len(content_id_hex) < 2:
-        content_id_hex = "0" + content_id_hex
     if endpoint_override is not None:
         endpoint_url = _validate_endpoint(endpoint_override)
     else:
@@ -312,7 +309,7 @@ def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False
             endpoint_url = _nus_endpoint[1]
         else:
             endpoint_url = _nus_endpoint[0]
-    content_url = endpoint_url + title_id + "/000000" + content_id_hex
+    content_url = f"{endpoint_url}{title_id}/{content_id:08X}"
     # Make the request.
     try:
         response = requests.get(url=content_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
@@ -323,9 +320,8 @@ def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False
         else:
             raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     if response.status_code == 404:
-        raise ValueError("The requested Title ID does not exist, or an invalid Content ID is present in the"
-                         " content records provided.\n Failed while downloading Content ID: 000000" +
-                         content_id_hex)
+        raise ValueError(f"The requested Title ID does not exist, or an invalid Content ID is present in the"
+                         f" content records provided.\n Failed while downloading Content ID: {content_id:08X}")
     elif response.status_code != 200:
         raise Exception(f"An unknown error occurred while downloading the content. "
                         f"Got HTTP status code: {response.status_code}")

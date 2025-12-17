@@ -9,7 +9,7 @@ import hashlib
 from dataclasses import dataclass as _dataclass
 from .crypto import decrypt_title_key
 from typing import List
-from .util import title_ver_standard_to_dec
+from .versions import title_ver_standard_to_dec
 
 
 @_dataclass
@@ -281,8 +281,7 @@ class Ticket:
         """
         if self.signature != b'\x00' * 256:
             return False
-        test_hash = hashlib.sha1(self.dump()[320:]).hexdigest()
-        if test_hash[:2] != '00':
+        if hashlib.sha1(self.dump()[320:]).hexdigest()[:2] != '00':
             return False
         return True
 
@@ -295,8 +294,7 @@ class Ticket:
         str
             The Title ID of the title.
         """
-        title_id_str = str(self.title_id.decode())
-        return title_id_str
+        return str(self.title_id.decode())
 
     def get_common_key_type(self) -> str:
         """
@@ -370,8 +368,8 @@ class Ticket:
             version_converted = title_ver_standard_to_dec(new_version, str(self.title_id.decode()))
             self.title_version = version_converted
         elif type(new_version) is int:
-            # Validate that the version isn't higher than v65280. If the check passes, set that as the title version.
-            if new_version > 65535:
+            # Validate that the version isn't higher than 0xFFFF (v65535).
+            if new_version > 0xFFFF:
                 raise ValueError("Title version is not valid! Integer version number cannot exceed v65535.")
             self.title_version = new_version
         else:

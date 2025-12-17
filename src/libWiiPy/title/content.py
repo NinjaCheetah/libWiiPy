@@ -9,7 +9,7 @@ import hashlib
 from typing import List
 from dataclasses import dataclass as _dataclass
 from enum import IntEnum as _IntEnum
-from ..types import _ContentRecord
+from .types import ContentRecord
 from ..shared import _pad_bytes, _align_value
 from .crypto import decrypt_content, encrypt_content
 
@@ -28,20 +28,20 @@ class ContentRegion:
 
     Attributes
     ----------
-    content_records : List[_ContentRecord]
+    content_records : List[ContentRecord]
         The content records for the content stored in the region.
     num_contents : int
         The total number of contents stored in the region.
     """
 
     def __init__(self) -> None:
-        self.content_records: List[_ContentRecord] = []
+        self.content_records: List[ContentRecord] = []
         self.content_region_size: int = 0  # Size of the content region.
         self.num_contents: int = 0  # Number of contents in the content region.
         self.content_start_offsets: List[int] = [0]  # The start offsets of each content in the content region.
         self.content_list: List[bytes] = []
 
-    def load(self, content_region: bytes, content_records: List[_ContentRecord]) -> None:
+    def load(self, content_region: bytes, content_records: List[ContentRecord]) -> None:
         """
         Loads the raw content region and builds a list of all the contents.
 
@@ -49,7 +49,7 @@ class ContentRegion:
         ----------
         content_region : bytes
             The raw data for the content region being loaded.
-        content_records : list[_ContentRecord]
+        content_records : list[ContentRecord]
             A list of ContentRecord objects detailing all contents contained in the region.
         """
         self.content_records = content_records
@@ -303,7 +303,7 @@ class ContentRegion:
                 raise ValueError("Content with an index of " + str(index) + " already exists!")
         # If we're good, then append all the data and create a new ContentRecord().
         self.content_list.append(enc_content)
-        self.content_records.append(_ContentRecord(cid, index, content_type, content_size, content_hash))
+        self.content_records.append(ContentRecord(cid, index, content_type, content_size, content_hash))
         self.num_contents += 1
 
     def add_content(self, dec_content: bytes, cid: int, content_type: int, title_key: bytes) -> None:

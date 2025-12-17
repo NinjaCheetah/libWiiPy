@@ -5,33 +5,47 @@
 
 import io
 from enum import IntEnum as _IntEnum
-from ..shared import _align_value, _pad_bytes
-from .ticket import Ticket
-from .tmd import TMD
+
 from Crypto.Hash import SHA1
 from Crypto.PublicKey import RSA
 from Crypto.Signature import pkcs1_15
 
+from ..shared import _align_value, _pad_bytes
+from .ticket import Ticket
+from .tmd import TMD
+
 
 class CertificateType(_IntEnum):
+    """
+    The type of a certificate.
+    """
     RSA_4096 = 0x00010000
     RSA_2048 = 0x00010001
     ECC = 0x00010002
 
 
 class CertificateSignatureLength(_IntEnum):
+    """
+    The length of a certificate's signature.
+    """
     RSA_4096 = 0x200
     RSA_2048 = 0x100
     ECC = 0x3C
 
 
 class CertificateKeyType(_IntEnum):
+    """
+    The type of key contained in a certificate.
+    """
     RSA_4096 = 0x00000000
     RSA_2048 = 0x00000001
     ECC = 0x00000002
 
 
 class CertificateKeyLength(_IntEnum):
+    """
+    The length of the key contained in a certificate.
+    """
     RSA_4096 = 0x200
     RSA_2048 = 0x100
     ECC = 0x3C

@@ -33,13 +33,12 @@ def get_common_key(common_key_index, dev=False) -> bytes:
     match common_key_index:
         case 0:
             if dev:
-                common_key_bin = binascii.unhexlify(development_key)
+                return binascii.unhexlify(development_key)
             else:
-                common_key_bin = binascii.unhexlify(common_key)
+                return binascii.unhexlify(common_key)
         case 1:
-            common_key_bin = binascii.unhexlify(korean_key)
+            return binascii.unhexlify(korean_key)
         case 2:
-            common_key_bin = binascii.unhexlify(vwii_key)
+            return binascii.unhexlify(vwii_key)
         case _:
-            common_key_bin = binascii.unhexlify(common_key)
-    return common_key_bin
+            return binascii.unhexlify(common_key)

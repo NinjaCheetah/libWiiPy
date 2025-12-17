@@ -16,8 +16,9 @@ The `libWiiPy.title` package contains modules for interacting with Wii titles. T
 | [libWiiPy.title.ticket](/title/ticket)         | Provides support for parsing and editing Tickets used for content decryption                                                  |
 | [libWiiPy.title.title](/title/title.title)     | Provides high-level support for parsing and editing an entire title with the context of each component                        |
 | [libWiiPy.title.tmd](/title/tmd)               | Provides support for parsing and editing TMDs (Title Metadata)                                                                |
-| [libWiiPy.title.util](/title/util)             | Provides some simple utility functions relating to titles                                                                     |
 | [libWiiPy.title.wad](/title/wad)               | Provides support for parsing and editing WAD files, allowing you to load each component into the other available classes      |
+| [libWiiPy.title.types](/title/types)           | Provides shared types used across the title module.                                                                           |
+| [libWiiPy.title.versions](/title/versions)     | Provides utility functions for converting the format that a title's version is in.                                            |
 
 ## Full Package Contents
 
@@ -33,6 +34,7 @@ The `libWiiPy.title` package contains modules for interacting with Wii titles. T
 /title/ticket
 /title/title.title
 /title/tmd
-/title/util
 /title/wad
+/title/types
+/title/versions
 ```

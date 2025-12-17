@@ -1,10 +1,9 @@
-# "title/util.py" from libWiiPy by NinjaCheetah & Contributors
+# "title/versions.py" from libWiiPy by NinjaCheetah & Contributors
 # https://github.com/NinjaCheetah/libWiiPy
 #
-# General title-related utilities that don't fit within a specific module.
+# Functions for converting the format that a title's version is in.
 
-import math
-from ..shared import _wii_menu_versions, _vwii_menu_versions
+from ..constants import _WII_MENU_VERSIONS, _VWII_MENU_VERSIONS
 
 
 def title_ver_dec_to_standard(version: int, title_id: str, vwii: bool = False) -> str:
@@ -27,26 +26,18 @@ def title_ver_dec_to_standard(version: int, title_id: str, vwii: bool = False) -
     str
         The version of the title, in standard form.
     """
-    version_out = ""
     if title_id == "0000000100000002":
-        if vwii:
-            try:
-                version_out = list(_vwii_menu_versions.keys())[list(_vwii_menu_versions.values()).index(version)]
-            except ValueError:
-                version_out = ""
-        else:
-            try:
-                version_out = list(_wii_menu_versions.keys())[list(_wii_menu_versions.values()).index(version)]
-            except ValueError:
-                version_out = ""
+        try:
+            if vwii:
+                return list(_VWII_MENU_VERSIONS.keys())[list(_VWII_MENU_VERSIONS.values()).index(version)]
+            else:
+                return list(_WII_MENU_VERSIONS.keys())[list(_WII_MENU_VERSIONS.values()).index(version)]
+        except ValueError:
+            raise ValueError(f"Unrecognized System Menu version \"{version}\".")
     else:
-        # For most channels, we need to get the floored value of version / 256 for the major version, and the version %
-        # 256 as the minor version. Minor versions > 9 are intended, as Nintendo themselves frequently used them.
-        version_upper = math.floor(version / 256)
-        version_lower = version % 256
-        version_out = f"{version_upper}.{version_lower}"
-
-    return version_out
+        # Typical titles use a two-byte version format where the upper byte is the major version, and the lower byte is
+        # the minor version.
+        return f"{version >> 8}.{version & 0xFF}"
 
 
 def title_ver_standard_to_dec(version: str, title_id: str) -> int:
@@ -68,13 +59,15 @@ def title_ver_standard_to_dec(version: str, title_id: str) -> int:
     int
         The version of the title, in decimal form.
     """
-    version_out = 0
     if title_id == "0000000100000002":
-        raise ValueError("The System Menu's version cannot currently be converted.")
+        for key in _WII_MENU_VERSIONS.keys():
+            if version.casefold() == key.casefold():
+                return _WII_MENU_VERSIONS[key]
+        for key in _VWII_MENU_VERSIONS.keys():
+            if version.casefold() == key.casefold():
+                return _VWII_MENU_VERSIONS[key]
+        raise ValueError(f"Unrecognized System Menu version \"{version}\".")
     else:
         version_str_split = version.split(".")
-        version_upper = int(version_str_split[0]) * 256
-        version_lower = int(version_str_split[1])
-        version_out = version_upper + version_lower
-
-    return version_out
+        version_out = (int(version_str_split[0]) << 8) + int(version_str_split[1])
+        return version_out

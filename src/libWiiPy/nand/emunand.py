@@ -8,6 +8,7 @@ import pathlib
 import shutil
 from dataclasses import dataclass as _dataclass
 from typing import Callable, List
+
 from ..title.ticket import Ticket
 from ..title.title import Title
 from ..title.tmd import TMD

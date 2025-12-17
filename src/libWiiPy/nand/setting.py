@@ -8,7 +8,7 @@ from typing import List
 from ..shared import _pad_bytes
 
 
-_key = 0x73B5DBFA
+_KEY = 0x73B5DBFA
 
 class SettingTxt:
     """
@@ -53,11 +53,11 @@ class SettingTxt:
             The data of an encrypted setting.txt file.
         """
         with io.BytesIO(setting_txt) as setting_data:
-            global _key  # I still don't actually know what *kind* of encryption this is.
+            global _KEY  # I still don't actually know what *kind* of encryption this is.
             setting_txt_dec: List[int] = []
             for i in range(0, 256):
-                setting_txt_dec.append(int.from_bytes(setting_data.read(1)) ^ (_key & 0xff))
-                _key = (_key << 1) | (_key >> 31)
+                setting_txt_dec.append(int.from_bytes(setting_data.read(1)) ^ (_KEY & 0xff))
+                _KEY = (_KEY << 1) | (_KEY >> 31)
         setting_txt_bytes = bytes(setting_txt_dec)
         try:
             setting_str = setting_txt_bytes.decode('utf-8')
@@ -103,13 +103,13 @@ class SettingTxt:
         """
         setting_str = self.dump_decrypted()
         setting_txt_dec = setting_str.encode()
-        global _key
+        global _KEY
         # This could probably be made more efficient somehow.
         setting_txt_enc: List[int] = []
         with io.BytesIO(setting_txt_dec) as setting_data:
             for i in range(0, len(setting_txt_dec)):
-                setting_txt_enc.append(int.from_bytes(setting_data.read(1)) ^ (_key & 0xff))
-                _key = (_key << 1) | (_key >> 31)
+                setting_txt_enc.append(int.from_bytes(setting_data.read(1)) ^ (_KEY & 0xff))
+                _KEY = (_KEY << 1) | (_KEY >> 31)
         setting_txt_bytes = _pad_bytes(bytes(setting_txt_enc), 256)
         return setting_txt_bytes
 

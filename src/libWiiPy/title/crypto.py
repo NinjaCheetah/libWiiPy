@@ -10,7 +10,6 @@ from Crypto.Cipher import AES as _AES
 def _convert_tid_to_iv(title_id: str | bytes) -> bytes:
     # Converts a Title ID in various formats into the format required to act as an IV. Private function used by other
     # crypto functions.
-    title_key_iv = b''
     if type(title_id) is bytes:
         # This catches the format b'0000000100000002'
         if len(title_id) == 16:
