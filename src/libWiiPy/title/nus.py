@@ -14,6 +14,10 @@ from .ticket import Ticket
 _nus_endpoint = ["http://nus.cdn.shop.wii.com/ccs/download/", "http://ccs.cdn.wup.shop.nintendo.net/ccs/download/"]
 
 
+class NUSConnectionError(Exception):
+    pass
+
+
 class DownloadCallback(Protocol):
     """
     The format of a callable passed to a NUS download function.
@@ -126,13 +130,13 @@ def download_tmd(title_id: str, title_version: int | None = None, wiiu_endpoint:
         tmd_url += "." + str(title_version)
     # Make the request.
     try:
-        response = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+        response = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True, timeout=5)
     except requests.exceptions.ConnectionError:
         if endpoint_override:
             raise ValueError("A connection could not be made to the NUS endpoint. Please make sure that your endpoint "
                              "override is valid.")
         else:
-            raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
+            raise NUSConnectionError("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     # Handle a 404 if the TID/version doesn't exist.
     if response.status_code == 404:
         raise ValueError("The requested Title ID or TMD version does not exist. Please check the Title ID and Title"
@@ -144,9 +148,12 @@ def download_tmd(title_id: str, title_version: int | None = None, wiiu_endpoint:
     progress(0, total_size)
     # Stream the TMD's data in chunks so that we can post updates to the callback function (assuming one was supplied).
     raw_tmd = b""
-    for chunk in response.iter_content(512):
-        raw_tmd += chunk
-        progress(len(raw_tmd), total_size)
+    try:
+        for chunk in response.iter_content(512):
+            raw_tmd += chunk
+            progress(len(raw_tmd), total_size)
+    except requests.exceptions.ConnectionError:
+        raise NUSConnectionError("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     # Use a TMD object to load the data and then return only the actual TMD.
     tmd_temp = TMD()
     tmd_temp.load(raw_tmd)
@@ -194,13 +201,13 @@ def download_ticket(title_id: str, wiiu_endpoint: bool = False, endpoint_overrid
     ticket_url = endpoint_url + title_id + "/cetk"
     # Make the request.
     try:
-        response = requests.get(url=ticket_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+        response = requests.get(url=ticket_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True, timeout=5)
     except requests.exceptions.ConnectionError:
         if endpoint_override:
             raise ValueError("A connection could not be made to the NUS endpoint. Please make sure that your endpoint "
                              "override is valid.")
         else:
-            raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
+            raise NUSConnectionError("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     if response.status_code == 404:
         raise ValueError("The requested Title ID does not exist, or refers to a non-free title. Tickets can only"
                          " be downloaded for titles that are free on the NUS.")
@@ -211,9 +218,12 @@ def download_ticket(title_id: str, wiiu_endpoint: bool = False, endpoint_overrid
     progress(0, total_size)
     # Stream the Ticket's data just like with the TMD.
     cetk = b""
-    for chunk in response.iter_content(chunk_size=1024):
-        cetk += chunk
-        progress(len(cetk), total_size)
+    try:
+        for chunk in response.iter_content(chunk_size=1024):
+            cetk += chunk
+            progress(len(cetk), total_size)
+    except requests.exceptions.ConnectionError:
+        raise NUSConnectionError("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     # Use a Ticket object to load only the Ticket data from cetk and return it.
     ticket_temp = Ticket()
     ticket_temp.load(cetk)
@@ -249,14 +259,14 @@ def download_cert_chain(wiiu_endpoint: bool = False, endpoint_override: str | No
     tmd_url = endpoint_url + "0000000100000002/tmd.513"
     cetk_url = endpoint_url + "0000000100000002/cetk"
     try:
-        tmd = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
-        cetk = requests.get(url=cetk_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True).content
+        tmd = requests.get(url=tmd_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True, timeout=5).content
+        cetk = requests.get(url=cetk_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True, timeout=5).content
     except requests.exceptions.ConnectionError:
         if endpoint_override:
             raise ValueError("A connection could not be made to the NUS endpoint. Please make sure that your endpoint "
                              "override is valid.")
         else:
-            raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
+            raise NUSConnectionError("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     # Assemble the certificate chain.
     cert_chain = b''
     # Certificate Authority data.
@@ -312,13 +322,13 @@ def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False
     content_url = f"{endpoint_url}{title_id}/{content_id:08X}"
     # Make the request.
     try:
-        response = requests.get(url=content_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True)
+        response = requests.get(url=content_url, headers={'User-Agent': 'wii libnup/1.0'}, stream=True, timeout=5)
     except requests.exceptions.ConnectionError:
         if endpoint_override:
             raise ValueError("A connection could not be made to the NUS endpoint. Please make sure that your endpoint "
                              "override is valid.")
         else:
-            raise Exception("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
+            raise NUSConnectionError("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     if response.status_code == 404:
         raise ValueError(f"The requested Title ID does not exist, or an invalid Content ID is present in the"
                          f" content records provided.\n Failed while downloading Content ID: {content_id:08X}")
@@ -329,9 +339,12 @@ def download_content(title_id: str, content_id: int, wiiu_endpoint: bool = False
     progress(0, total_size)
     # Stream the content just like the TMD/Ticket.
     content = b""
-    for chunk in response.iter_content(chunk_size=1024):
-        content += chunk
-        progress(len(content), total_size)
+    try:
+        for chunk in response.iter_content(chunk_size=1024):
+            content += chunk
+            progress(len(content), total_size)
+    except requests.exceptions.ConnectionError:
+        raise NUSConnectionError("A connection could not be made to the NUS endpoint. The NUS may be unavailable.")
     return content
 
 
