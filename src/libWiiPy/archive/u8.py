@@ -54,6 +54,8 @@ class U8Archive:
         The size of the U8 archive header.
     data_offset : int
         The offset of the data region of the U8 archive.
+    build_tag: bytes
+        The build-tag data of the U8 archive, if one exists. Otherwise, an empty bytes object.
     imet_header: IMETHeader
         The IMET header of the U8 archive, if one exists. Otherwise, an empty IMETHeader object.
     """
@@ -66,6 +68,7 @@ class U8Archive:
         self.header_size: int = 0
         self.data_offset: int = 0
         self.root_node: _U8Node = _U8Node(0, 0, 0, 0)
+        self.build_tag = b''
         self.imet_header: IMETHeader = IMETHeader()
 
     def load(self, u8: bytes) -> None:
@@ -105,11 +108,15 @@ class U8Archive:
                         self.u8_magic = u8_data.read(4)
                         if self.u8_magic != b'\x55\xAA\x38\x2D':
                             raise TypeError("This is not a valid U8 archive!")
-                        # Parse the IMET header, then continue parsing the U8 archive.
-                        u8_data.seek(0x40)
+                        # Load the build tag and parse the IMET header, then continue parsing the U8 archive.
+                        u8_data.seek(0x00)
+                        self.build_tag = u8_data.read(0x40)
                         self.imet_header.load(u8_data.read(0x600))
                     else:
                         raise TypeError("This is not a valid U8 archive!")
+                # Seek past the U8 magic again
+                u8_data.seek(u8_data.tell() + 4)
+            u8_base_offset = u8_data.tell() - 4
             # Offset of the root node, which will always be 0x20.
             self.root_node_offset = int.from_bytes(u8_data.read(4))
             # The size of the U8 header.
@@ -143,7 +150,7 @@ class U8Archive:
                 name = str(name_bin.decode())
                 self.file_name_list.append(name)
                 if node.type == 0:
-                    u8_data.seek(node.data_offset)
+                    u8_data.seek(u8_base_offset + node.data_offset)
                     self.file_data_list.append(u8_data.read(node.size))
                 else:
                     self.file_data_list.append(b'')
@@ -178,7 +185,7 @@ class U8Archive:
             self.u8_node_list[idx].name_offset = current_name_offset
             current_name_offset += len(self.file_name_list[idx]) + 1
         # Begin joining all the U8 archive data into bytes.
-        u8_data = b''
+        u8_data = bytearray()
         # Magic number.
         u8_data += b'\x55\xAA\x38\x2D'
         # Root node offset (this is always 0x20).
@@ -203,8 +210,12 @@ class U8Archive:
         # Iterate all file data and dump it.
         for file in self.file_data_list:
             u8_data += _pad_bytes(file, 32)
+        # Insert the build tag and/or IMET header, if applicable.
+        if self.imet_header.magic:
+            u8_data[0:0] = self.imet_header.dump()
+        u8_data[0:0] = self.build_tag
         # Return the U8 archive.
-        return u8_data
+        return bytes(u8_data)
 
 
 def extract_u8(u8_data, output_folder) -> None:
