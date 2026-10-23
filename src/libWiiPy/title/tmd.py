@@ -284,7 +284,7 @@ class TMD:
         hardware region that this title is designed and allowed to be run on.
 
         Can be one of several possible values:
-        'JPN', 'USA', 'EUR', 'None', or 'KOR'.
+        'JPN', 'USA', 'EUR', 'World', or 'KOR'.
 
         Returns
         -------
@@ -310,7 +310,7 @@ class TMD:
         Gets the type of the title this TMD describes. The title_type field is not related to these types.
 
         Can be one of several possible values:
-        'System', 'Game', 'Channel', 'SystemChannel', 'GameChannel', or 'HiddenChannel'
+        'System', 'Game', 'Channel', 'SystemChannel', 'GameChannel', 'DLC', 'HiddenChannel', or 'Unknown'.
 
         Returns
         -------
@@ -340,7 +340,7 @@ class TMD:
         Gets the type of content contained in the TMD's associated title.
 
         Can be one of several possible values:
-        'Normal', 'Development/Unknown', 'Hash Tree', 'DLC', or 'Shared'
+        'Normal', 'Development/Unknown', 'Hash Tree', 'DLC', 'Shared', or 'Unknown'.
 
         Parameters
         ----------
